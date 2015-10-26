@@ -4,6 +4,7 @@
 #define SPACE_INVADERS_TD_H
 
 #include "consts.h"
+#include "EntityManager.h"
 
 const unsigned int NUM_GRID_ROWS = 12;
 const unsigned int NUM_GRID_COLS = 32;
@@ -25,7 +26,7 @@ public:
 private:
 	const float GRID_PULSE_TIME = 2.0f;
 	const float GRID_PULSE_AMOUNT = 0.05f;
-
+	EntityManager entityMgr;
 	float currGridPulseTime;
 	gridState grid[NUM_GRID_ROWS][NUM_GRID_COLS];
 };

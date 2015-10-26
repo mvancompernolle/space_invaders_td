@@ -75,6 +75,12 @@
     <ClCompile Include="src\SpaceInvadersTD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Entity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\Audio.h">
@@ -141,6 +147,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="includes\SpaceInvadersTD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\Entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\Component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\EntityManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -122,6 +122,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Entity.cpp" />
+    <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\SpaceInvadersTD.cpp" />
     <ClCompile Include="src\Audio.cpp" />
     <ClCompile Include="src\BoxRenderer.cpp" />
@@ -144,6 +146,9 @@
     <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\Component.h" />
+    <ClInclude Include="includes\Entity.h" />
+    <ClInclude Include="includes\EntityManager.h" />
     <ClInclude Include="includes\Audio.h" />
     <ClInclude Include="includes\BoxRenderer.h" />
     <ClInclude Include="includes\Button.h" />
