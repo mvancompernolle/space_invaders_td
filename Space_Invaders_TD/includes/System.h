@@ -3,15 +3,18 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "EntityManager.h"
+#include "Entity.h"
+#include "Component.h"
+#include <vector>
 
 class System {
 public:
-	System( EntityManager* mgr );
+	System();
 	~System();
-	virtual void update( float dt ) = 0;
-private:
-	EntityManager* entities;
+	bool condition( unsigned componentTypes );
+	virtual void update( const Entity& entity, float dt ) = 0;
+protected:
+	unsigned int flags;
 };
 
 #endif // SYSTEM_H

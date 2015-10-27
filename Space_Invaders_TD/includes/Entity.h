@@ -8,16 +8,17 @@
 
 class Entity {
 public:
+	// list of possible componenets
+	HealthComponent				*health;
+	WorldComponent				*world;
+	RenderComponent				*render;
+	MovementComponent			*movement;
+	unsigned					componentTypes;
+
 	Entity();
+	Entity( unsigned components );
 	~Entity();
-	unsigned long getID() const;
-	void addComponentType( COMPONENT_TYPE type );
-	const std::vector<COMPONENT_TYPE>& getComponents() const;
-	bool operator==( const Entity& rhs );
 private:
-	static unsigned long currID;
-	unsigned long ID;
-	std::vector<COMPONENT_TYPE> componentTypes;
 };
 
 #endif // ENTITY_H

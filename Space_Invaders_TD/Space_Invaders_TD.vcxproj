@@ -122,8 +122,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\MovementSystem.cpp" />
+    <ClCompile Include="src\EntityFactory.cpp" />
     <ClCompile Include="src\Entity.cpp" />
-    <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\SpaceInvadersTD.cpp" />
     <ClCompile Include="src\Audio.cpp" />
     <ClCompile Include="src\BoxRenderer.cpp" />
@@ -144,11 +145,12 @@
     <ClCompile Include="src\SpriteRenderer.cpp" />
     <ClCompile Include="src\TextRenderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\EntityFactory.h" />
     <ClInclude Include="includes\Component.h" />
     <ClInclude Include="includes\Entity.h" />
-    <ClInclude Include="includes\EntityManager.h" />
     <ClInclude Include="includes\Audio.h" />
     <ClInclude Include="includes\BoxRenderer.h" />
     <ClInclude Include="includes\Button.h" />
@@ -171,6 +173,8 @@
     <ClInclude Include="includes\TextRenderer.h" />
     <ClInclude Include="includes\Texture.h" />
     <ClInclude Include="includes\SpaceInvadersTD.h" />
+    <ClInclude Include="includes\System.h" />
+    <ClInclude Include="includes\MovementSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

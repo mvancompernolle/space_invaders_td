@@ -11,7 +11,10 @@ struct Component {
 };
 
 enum SHAPE { RECTANGLE, CIRCLE };
-enum COMPONENT_TYPE { HEALTH, WORLD, RENDER };
+enum COMPONENT_TYPE {
+	HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
+	MOVEMENT = RENDER << 1, AI = MOVEMENT << 1,
+};
 
 struct HealthComponent : Component {
 	const static COMPONENT_TYPE type = HEALTH;
@@ -39,8 +42,32 @@ struct RenderComponent : Component {
 	glm::vec3 color;
 	GLuint textureID;
 	RenderComponent() : textureID( 0 ) {}
-	RenderComponent( const GLuint tID ) :
+	RenderComponent( GLuint tID ) :
 		textureID( tID ) {
+
+	}
+};
+
+struct MovementComponent : Component {
+	const static COMPONENT_TYPE type = MOVEMENT;
+	glm::vec2 vel;
+	float defSpeed;
+	MovementComponent() : vel( glm::vec2(0.0f) ), defSpeed(0.0f) {}
+	MovementComponent( glm::vec2 vel, float speed ) :
+		vel( vel ), defSpeed( speed ) {
+
+	}
+};
+
+enum AI_TYPE { ENEMY };
+
+struct AIComponent : Component {
+	const static COMPONENT_TYPE type = AI;
+	AI_TYPE AIType;
+	glm::vec2 target;
+	AIComponent() : target( glm::vec2( 0.0f ) ), AIType( ENEMY ) {}
+	AIComponent( glm::vec2 target, AI_TYPE AIType ) :
+		target(target), AIType( AIType ) {
 
 	}
 };

@@ -1,26 +1,16 @@
 #include "Entity.h"
 
-unsigned long Entity::currID = 0;
-
-Entity::Entity() : ID(currID++) {
+Entity::Entity() : health(nullptr), render(nullptr), world(nullptr) {
 }
 
+Entity::Entity( unsigned components ) {
+	componentTypes = components;
+
+	health = ( 0 | HEALTH ) & components ? new HealthComponent : nullptr;
+	world = ( 0 | WORLD ) & components ? new WorldComponent : nullptr;
+	render = ( 0 | RENDER ) & components ? new RenderComponent : nullptr;
+	movement = ( 0 | MOVEMENT ) & components ? new MovementComponent : nullptr;
+}
 
 Entity::~Entity() {
-}
-
-unsigned long Entity::getID() const {
-	return ID;
-}
-
-const std::vector<COMPONENT_TYPE>& Entity::getComponents() const {
-	return componentTypes;
-}
-
-bool Entity::operator==( const Entity& rhs ) {
-	return ID == rhs.getID();
-}
-
-void Entity::addComponentType( COMPONENT_TYPE type ) {
-	componentTypes.push_back( type );
 }
