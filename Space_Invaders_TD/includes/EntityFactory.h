@@ -13,9 +13,10 @@ public:
 	EntityFactory();
 	~EntityFactory();
 	static std::vector<Entity>& getData();
-	static Entity* createEnemy();
-	static Entity* createBaseTower();
-	static Entity* createPlayer();
+	static Entity createEnemy();
+	static Entity createBaseTower();
+	static Entity createPlayer();
+	static Entity createSpawner();
 private:
 	static std::vector<Entity> entities; 
 };

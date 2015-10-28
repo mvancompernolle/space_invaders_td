@@ -13,8 +13,10 @@ public:
 	~System();
 	bool condition( unsigned componentTypes );
 	virtual void update( const Entity& entity, float dt ) = 0;
+	void adjustEntityVector( std::vector<Entity>& src );
 protected:
 	unsigned int flags;
+	std::vector<Entity> additions, removals;
 };
 
 #endif // SYSTEM_H

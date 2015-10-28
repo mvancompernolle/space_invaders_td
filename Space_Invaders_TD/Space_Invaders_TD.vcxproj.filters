@@ -87,7 +87,10 @@
     <ClCompile Include="src\MovementSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\AISystem.cpp">
+    <ClCompile Include="src\PathSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpawnSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -173,10 +176,13 @@
     <ClInclude Include="includes\MovementSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="includes\AISystem.h">
+    <ClInclude Include="includes\Grid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="includes\Grid.h">
+    <ClInclude Include="includes\PathSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\SpawnSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -122,7 +122,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\AISystem.cpp" />
+    <ClCompile Include="src\SpawnSystem.cpp" />
+    <ClCompile Include="src\PathSystem.cpp" />
     <ClCompile Include="src\MovementSystem.cpp" />
     <ClCompile Include="src\EntityFactory.cpp" />
     <ClCompile Include="src\Entity.cpp" />
@@ -149,7 +150,7 @@
     <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="includes\AISystem.h" />
+    <ClInclude Include="includes\PathSystem.h" />
     <ClInclude Include="includes\EntityFactory.h" />
     <ClInclude Include="includes\Component.h" />
     <ClInclude Include="includes\Entity.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="includes\SpaceInvadersTD.h" />
     <ClInclude Include="includes\System.h" />
     <ClInclude Include="includes\MovementSystem.h" />
+    <ClInclude Include="includes\SpawnSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

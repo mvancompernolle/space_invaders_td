@@ -3,7 +3,8 @@
 #include "ResourceManager.h"
 #include "EntityFactory.h"
 #include "MovementSystem.h"
-#include "AISystem.h"
+#include "PathSystem.h"
+#include "SpawnSystem.h"
 #include <ctime>
 #include <cassert>
 
@@ -11,6 +12,7 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
 	ResourceManager::loadTexture( "enemy.png", GL_TRUE, "enemy" );
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
+	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
 }
 
 
@@ -32,26 +34,53 @@ void SpaceInvadersTD::init() {
 		}
 	}
 
-	// spawn an enemy
-	EntityFactory::createEnemy();
-
 	// spawn towers
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS / 3 ) + NUM_GRID_ROWS / 3 * 2 );
-	for ( int i = 0; i < 400; ++i ) {
+	
+	/*for ( int i = 0; i < 400; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
+	}*/
+	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
+		placeBaseTower( 20, i );
+	}
+	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
+		placeBaseTower( 22, i );
+	}
+	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
+		placeBaseTower( 24, i );
+	}
+	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
+		placeBaseTower( 26, i );
+	}
+	for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
+		placeBaseTower( 28, i );
 	}
 
 	// create systems
 	systems.push_back( new MovementSystem);
-	systems.push_back( new AISystem );
-	AISystem* ai = (AISystem*) systems[1];
-	ai->calcOptimalPath( glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ), rand() % ( NUM_GRID_ROWS / 3 ) ), dest, grid );
+	systems.push_back( new PathSystem );
+	systems.push_back( new SpawnSystem );
+	PathSystem* path = (PathSystem*) systems[1];
+	path->calcOptimalPath( glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ), rand() % ( NUM_GRID_ROWS / 3 ) ), dest, grid );
 
 	// set game values
 	currGridPulseTime = 0.0f;
+
+	// spawn an enemy
+	EntityFactory::getData().push_back(EntityFactory::createEnemy());
+	// create portal
+	Entity ent = EntityFactory::createSpawner();
+	ent.spawn->spawnRate = 0.5f;
+	for ( int i = 0; i < 20; i++ ) {
+		SpawnInfo info;
+		info.num = 20;
+		info.spawnType = nullptr;
+		ent.spawn->spawnTypes.push_back( info );
+		EntityFactory::getData().push_back( ent );
+	}
 
 	// load background
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
@@ -64,9 +93,13 @@ STATE SpaceInvadersTD::update( const float dt ) {
 	for ( auto& system : systems ) {
 		for ( Entity& ent : EntityFactory::getData() ) {
 			if ( system->condition( ent.componentTypes ) ) {
+				// update any entities that use the system
 				system->update( ent, dt );
 			}
 		}
+		// add any changes to entities caused by the system
+		system->adjustEntityVector( EntityFactory::getData() );
+		// reset the systems entity additiosn / removals
 	}
 
 	return GAME;
@@ -114,10 +147,11 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	assert( x >= 0 && x < NUM_GRID_COLS && y >= 0 && y < NUM_GRID_ROWS );
 
 	// create the tower
-	Entity* ent = EntityFactory::createBaseTower();
+	Entity ent = EntityFactory::createBaseTower();
 	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
-	ent->world->size = glm::vec2( gridSize );
-	ent->world->pos = glm::vec2( x * gridSize, y * gridSize );
+	ent.world->size = glm::vec2( gridSize );
+	ent.world->pos = glm::vec2( x * gridSize, y * gridSize );
+	EntityFactory::getData().push_back( ent );
 
 	// mark that position as taken
 	grid[y][x].taken = true;

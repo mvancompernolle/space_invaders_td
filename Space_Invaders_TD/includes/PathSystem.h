@@ -17,10 +17,10 @@ struct GridNode {
 	}
 };
 
-class AISystem : public System {
+class PathSystem : public System {
 public:
-	AISystem();
-	~AISystem();
+	PathSystem();
+	~PathSystem();
 	void update( const Entity& entity, float dt );
 	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid grid );
 private:

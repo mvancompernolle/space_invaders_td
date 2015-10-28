@@ -9,16 +9,20 @@
 class Entity {
 public:
 	// list of possible componenets
+	static unsigned ID;
+	unsigned myID;
 	HealthComponent				*health;
 	WorldComponent				*world;
 	RenderComponent				*render;
 	MovementComponent			*movement;
-	AIComponent					*ai;
+	PathAIComponent				*path;
+	SpawnComponent				*spawn;
 	unsigned					componentTypes;
 
 	Entity();
 	Entity( const Entity& entity );
 	Entity& operator=( const Entity& entity );
+	bool	operator==( const Entity& entity );
 	Entity( unsigned components );
 	~Entity();
 private:

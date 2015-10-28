@@ -1,20 +1,26 @@
 #include "Entity.h"
 
+unsigned Entity::ID;
+
 Entity::Entity() : health(nullptr), render(nullptr), world(nullptr) {
+	myID = ID++;
 }
 
 Entity::Entity( unsigned components ) {
+	myID = ID++;
 	componentTypes = components;
 
 	health = ( 0 | HEALTH ) & components ? new HealthComponent : nullptr;
 	world = ( 0 | WORLD ) & components ? new WorldComponent : nullptr;
 	render = ( 0 | RENDER ) & components ? new RenderComponent : nullptr;
 	movement = ( 0 | MOVEMENT ) & components ? new MovementComponent : nullptr;
-	ai = ( 0 | AI ) & components ? new AIComponent : nullptr;
+	path = ( 0 | PATH ) & components ? new PathAIComponent : nullptr;
+	spawn = ( 0 | SPAWN ) & components ? new SpawnComponent : nullptr;
 }
 
 Entity::Entity( const Entity& entity ) 
-	: health(nullptr), world(nullptr), render(nullptr), movement(nullptr), ai(nullptr) {
+	: health(nullptr), world(nullptr), render(nullptr), movement(nullptr), path(nullptr), spawn(nullptr) {
+	myID = entity.myID;
 	componentTypes = entity.componentTypes;
 
 	if ( entity.health != nullptr ) { 
@@ -27,7 +33,6 @@ Entity::Entity( const Entity& entity )
 		world->pos = entity.world->pos;
 		world->rotation = entity.world->rotation;
 		world->size = entity.world->size;
-		world->shape = entity.world->shape;
 	}
 	if ( entity.render != nullptr ) {
 		render = new RenderComponent;
@@ -39,16 +44,25 @@ Entity::Entity( const Entity& entity )
 		movement->vel = entity.movement->vel;
 		movement->defSpeed = entity.movement->defSpeed;
 	}
-	if ( entity.ai != nullptr ) {
-		ai = new AIComponent;
-		ai->target = entity.ai->target;
-		ai->pathIndex = entity.ai->pathIndex;
-		ai->AIType = entity.ai->AIType;
+	if ( entity.path != nullptr ) {
+		path = new PathAIComponent;
+		path->target = entity.path->target;
+		path->pathIndex = entity.path->pathIndex;
+	}
+	if ( entity.spawn != nullptr ) {
+		spawn = new SpawnComponent;
+		spawn->spawnRate = entity.spawn->spawnRate;
+		spawn->dt = entity.spawn->dt;
+		spawn->round = entity.spawn->round;
+		spawn->numRounds = entity.spawn->numRounds;
+		spawn->currSpawnNum = entity.spawn->currSpawnNum;
+		spawn->spawnTypes = entity.spawn->spawnTypes;
 	}
 }
 
 Entity& Entity::operator=( const Entity& entity ) {
 	if ( this != &entity ) {
+		myID = entity.myID;
 		componentTypes = entity.componentTypes;
 
 		if ( entity.health != nullptr ) {
@@ -61,7 +75,6 @@ Entity& Entity::operator=( const Entity& entity ) {
 			world->pos = entity.world->pos;
 			world->rotation = entity.world->rotation;
 			world->size = entity.world->size;
-			world->shape = entity.world->shape;
 		}
 		if ( entity.render != nullptr ) {
 			if ( render == nullptr ) { render = new RenderComponent; }
@@ -73,14 +86,26 @@ Entity& Entity::operator=( const Entity& entity ) {
 			movement->vel = entity.movement->vel;
 			movement->defSpeed = entity.movement->defSpeed;
 		}
-		if ( entity.ai != nullptr ) {
-			if ( ai == nullptr ) { ai = new AIComponent; }
-			ai->target = entity.ai->target;
-			ai->AIType = entity.ai->AIType;
-			ai->pathIndex = entity.ai->pathIndex;
+		if ( entity.path != nullptr ) {
+			if ( path == nullptr ) { path = new PathAIComponent; }
+			path->target = entity.path->target;
+			path->pathIndex = entity.path->pathIndex;
+		}
+		if ( entity.spawn != nullptr ) {
+			if ( spawn == nullptr ) { spawn = new SpawnComponent; }
+			spawn->spawnRate = entity.spawn->spawnRate;
+			spawn->dt = entity.spawn->dt;
+			spawn->round = entity.spawn->round;
+			spawn->numRounds = entity.spawn->numRounds;
+			spawn->currSpawnNum = entity.spawn->currSpawnNum;
+			spawn->spawnTypes = entity.spawn->spawnTypes;
 		}
 	}
 	return *this;
+}
+
+bool Entity::operator==( const Entity& entity ) {
+	return ( myID == entity.myID );
 }
 
 Entity::~Entity() {
@@ -88,5 +113,6 @@ Entity::~Entity() {
 	if ( world != nullptr ) { delete world; }
 	if ( render != nullptr ) { delete render; }
 	if ( movement != nullptr ) { delete movement; }
-	if ( ai != nullptr ) { delete ai; }
+	if ( path != nullptr ) { delete path; }
+	if ( spawn != nullptr ) { delete spawn; }
 }
