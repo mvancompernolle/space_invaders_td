@@ -13,9 +13,12 @@ public:
 	WorldComponent				*world;
 	RenderComponent				*render;
 	MovementComponent			*movement;
+	AIComponent					*ai;
 	unsigned					componentTypes;
 
 	Entity();
+	Entity( const Entity& entity );
+	Entity& operator=( const Entity& entity );
 	Entity( unsigned components );
 	~Entity();
 private:

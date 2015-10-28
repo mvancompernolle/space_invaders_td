@@ -5,6 +5,7 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <string>
 
 struct Component {
 
@@ -40,10 +41,10 @@ struct WorldComponent : Component {
 struct RenderComponent : Component {
 	const static COMPONENT_TYPE type = RENDER;
 	glm::vec3 color;
-	GLuint textureID;
-	RenderComponent() : textureID( 0 ) {}
-	RenderComponent( GLuint tID ) :
-		textureID( tID ) {
+	std::string textureName;
+	RenderComponent() {}
+	RenderComponent( std::string texName ) :
+		textureName( texName ) {
 
 	}
 };
@@ -59,15 +60,16 @@ struct MovementComponent : Component {
 	}
 };
 
-enum AI_TYPE { ENEMY };
+enum AI_TYPE { ENEMY, TOWER };
 
 struct AIComponent : Component {
 	const static COMPONENT_TYPE type = AI;
 	AI_TYPE AIType;
 	glm::vec2 target;
-	AIComponent() : target( glm::vec2( 0.0f ) ), AIType( ENEMY ) {}
-	AIComponent( glm::vec2 target, AI_TYPE AIType ) :
-		target(target), AIType( AIType ) {
+	unsigned pathIndex;
+	AIComponent() : target( glm::vec2( 0.0f ) ), pathIndex(0), AIType( ENEMY ) {}
+	AIComponent( glm::vec2 target, unsigned index, AI_TYPE AIType ) :
+		target(target), pathIndex(index), AIType( AIType ) {
 
 	}
 };

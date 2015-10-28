@@ -5,17 +5,14 @@
 
 #include "consts.h"
 #include "System.h"
+#include "Grid.h"
 #include <vector>
+#include <memory>
 
-const unsigned int NUM_GRID_ROWS = 9;
-const unsigned int NUM_GRID_COLS = 24;
+const unsigned int NUM_GRID_ROWS = 24;
+const unsigned int NUM_GRID_COLS = 64;
 const glm::vec3 GRID_COLOR( 0.0f, 0.2f, 0.5f );
 const glm::vec3 GRID_COLOR2( 0.0f );
-
-struct gridState {
-	bool taken;
-	unsigned int heuristic;
-};
 
 class SpaceInvadersTD {
 public:
@@ -23,13 +20,14 @@ public:
 	~SpaceInvadersTD();
 	void init();
 	STATE update( const float dt );
+	void placeBaseTower( unsigned x, unsigned y );
 	void render();
 private:
 	const float GRID_PULSE_TIME = 2.0f;
 	const float GRID_PULSE_AMOUNT = 0.05f;
 	float currGridPulseTime;
-	gridState grid[NUM_GRID_ROWS][NUM_GRID_COLS];
-	std::vector<System> systems;
+	Grid grid;
+	std::vector<System*> systems;
 };
 
 #endif SPACE_INVADERS_TD_H
