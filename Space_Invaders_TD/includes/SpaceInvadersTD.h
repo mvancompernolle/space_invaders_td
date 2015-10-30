@@ -9,8 +9,8 @@
 #include <vector>
 #include <memory>
 
-const unsigned int NUM_GRID_ROWS = 3;
-const unsigned int NUM_GRID_COLS = 8;
+const unsigned int NUM_GRID_ROWS = 15;
+const unsigned int NUM_GRID_COLS = 40;
 const glm::vec3 GRID_COLOR( 0.0f, 0.2f, 0.5f );
 const glm::vec3 GRID_COLOR2( 0.0f );
 

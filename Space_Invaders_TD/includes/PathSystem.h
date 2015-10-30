@@ -7,10 +7,6 @@
 #include "Grid.h"
 #include <vector>
 
-enum DIRECTION {
-	LEFT, RIGHT, UP, DOWN
-};
-
 struct GridNode {
 	glm::ivec2 prev, pos;
 	unsigned score;
@@ -26,12 +22,10 @@ public:
 	PathSystem();
 	~PathSystem();
 	void update( const Entity& entity, float dt );
-	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid grid );
+	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius, const Grid& grid );
 private:
 	std::vector<glm::vec2> path;
-
-	DIRECTION getDirection( glm::uvec2 pos1, glm::uvec2 pos2 );
-	bool isDirection( glm::uvec2 pos1, glm::uvec2 pos2, DIRECTION dir );
+	bool isCollisionBetween( glm::uvec2 curr, glm::uvec2 prev, float radius, const Grid& grid );
 };
 
 #endif AI_SYSTEM_H

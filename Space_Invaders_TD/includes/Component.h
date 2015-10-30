@@ -51,7 +51,7 @@ struct PathAIComponent : Component {
 	const static COMPONENT_TYPE type = PATH;
 	glm::vec2 target;
 	unsigned pathIndex;
-	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex(0) {}
+	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex(-1) {}
 };
 
 struct SpawnInfo {

@@ -17,6 +17,8 @@ void cursorPosCallBack( GLFWwindow* window, GLdouble xPos, GLdouble yPos );
 void mouseButtonCallBack( GLFWwindow* window, GLint button, GLint action, GLint mods );
 void scrollCallBack( GLFWwindow* window, GLdouble xOffset, GLdouble yOffset );
 
+bool paused = false;
+
 int main() {
 	// set resource paths
 	ResourceManager::setShaderPath( "resources/shaders/" );
@@ -82,7 +84,8 @@ int main() {
 		case PLAY:
 			game.init();
 		case GAME:
-			current = game.update( dt );
+			if ( !paused ) 
+				current = game.update( dt );
 			game.render();
 			break;
 
@@ -112,6 +115,12 @@ int main() {
 void keyCallBack( GLFWwindow* window, GLint key, GLint scanCode, GLint action, GLint mode ) {
 	if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS ) {
 		glfwSetWindowShouldClose( window, GL_TRUE );
+	}
+	if ( key == GLFW_KEY_P && action == GLFW_PRESS ) {
+		paused = true;
+	}
+	if ( key == GLFW_KEY_U && action == GLFW_PRESS ) {
+		paused = false;
 	}
 	if ( key >= 0 && key < 1024 ) {
 		if ( action == GLFW_PRESS ) {

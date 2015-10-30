@@ -122,6 +122,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\CollisionSystem.cpp" />
     <ClCompile Include="src\SpawnSystem.cpp" />
     <ClCompile Include="src\PathSystem.cpp" />
     <ClCompile Include="src\MovementSystem.cpp" />
@@ -150,6 +151,7 @@
     <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\CollisionSystem.h" />
     <ClInclude Include="includes\PathSystem.h" />
     <ClInclude Include="includes\EntityFactory.h" />
     <ClInclude Include="includes\Component.h" />
