@@ -7,6 +7,10 @@
 #include "Grid.h"
 #include <vector>
 
+enum DIRECTION {
+	LEFT, RIGHT, UP, DOWN
+};
+
 struct GridNode {
 	glm::ivec2 prev, pos;
 	unsigned score;
@@ -25,6 +29,9 @@ public:
 	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid grid );
 private:
 	std::vector<glm::vec2> path;
+
+	DIRECTION getDirection( glm::uvec2 pos1, glm::uvec2 pos2 );
+	bool isDirection( glm::uvec2 pos1, glm::uvec2 pos2, DIRECTION dir );
 };
 
 #endif AI_SYSTEM_H

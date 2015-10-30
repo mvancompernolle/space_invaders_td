@@ -2,6 +2,7 @@
 #include <cassert>
 #include <queue>
 #include <algorithm>
+#include <iostream>
 
 PathSystem::PathSystem() {
 	flags = PATH | WORLD;
@@ -101,17 +102,49 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 		}
 	}
 
-	// set the path calculate if there was one
+	// perform first pass over path to smoothe it
 	bool pathFound = true;
 	glm::uvec2 currPos = end;
+	std::vector<glm::uvec2> tiles;
+	std::vector<std::pair<glm::uvec2, unsigned>> pathVals;
 	while ( gridNodes[currPos.y][currPos.x].pos != (glm::ivec2) start ) {
-		if ( gridNodes[currPos.y][currPos.x].prev == glm::ivec2( -1 ) ) {
+		glm::ivec2& prev = gridNodes[currPos.y][currPos.x].prev;
+		if ( prev == glm::ivec2( -1 ) ) {
 			pathFound = false;
 			break;
 		}
-		path.push_back( glm::vec2(grid[currPos.y][currPos.x].pos.y, grid[currPos.y][currPos.x].pos.x) );
-		currPos = gridNodes[currPos.y][currPos.x].prev;
+
+		// peform path smoothing by not adding points that don't cause the path to go diagonally accross walls
+		bool skipPathNode = true;
+		// prev up left
+		if ( currPos != start && currPos != end && prev != (glm::ivec2) start) {
+			// get the directions of the prev and next nodes
+			DIRECTION currToPrev = getDirection( tiles.back(), currPos );
+			DIRECTION currToNext = getDirection( (glm::uvec2) gridNodes[currPos.y][currPos.x].prev, currPos );
+			// check cases
+			if ( ( ( ( isDirection( tiles.back(), currPos, UP ) && currToNext == RIGHT ) || ( isDirection( tiles.back(), currPos, RIGHT ) && currToNext == UP ) ) && grid[currPos.y - 1][currPos.x + 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, DOWN ) && currToNext == RIGHT ) || ( isDirection( tiles.back(), currPos, RIGHT ) && currToNext == DOWN ) ) && grid[currPos.y + 1][currPos.x + 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, UP ) && currToNext == LEFT ) || ( isDirection( tiles.back(), currPos, LEFT ) && currToNext == UP ) ) && grid[currPos.y - 1][currPos.x - 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, DOWN ) && currToNext == LEFT ) || ( isDirection( tiles.back(), currPos, LEFT ) && currToNext == DOWN ) ) && grid[currPos.y + 1][currPos.x - 1].taken ) ) {
+				skipPathNode = false;
+			}
+		} else {
+			skipPathNode = false;
+		}
+
+		if ( !skipPathNode ) {
+			tiles.push_back( currPos );
+			pathVals.push_back( std::make_pair(currPos, 0) );
+		} else {
+			pathVals.push_back( std::make_pair( currPos, 1 ) );
+		}
+		// add position to the path
+		path.push_back( grid[currPos.y][currPos.x].pos );
+		currPos = prev;
 	}
+
+	// perform second pass over the path
+
 	std::reverse( path.begin(), path.end() );
 
 	for ( int i = 0; i < grid.size(); ++i ) {
@@ -122,4 +155,29 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 	delete[] heuristic;
 
 	return pathFound;
+}
+
+DIRECTION PathSystem::getDirection( glm::uvec2 pos1, glm::uvec2 pos2 ) {
+	if ( pos1.x < pos2.x ) {
+		return LEFT;
+	} else if ( pos1.x > pos2.x ) {
+		return RIGHT;
+	} else if ( pos1.y < pos2.y ) {
+		return UP;
+	} else {
+		return DOWN;
+	}
+}
+
+bool PathSystem::isDirection( glm::uvec2 pos1, glm::uvec2 pos2, DIRECTION dir ) {
+	switch ( dir ) {
+	case UP:
+		return pos1.y < pos2.y;
+	case DOWN:
+		return pos1.y > pos2.y;
+	case LEFT:
+		return pos1.x < pos2.x;
+	case RIGHT:
+		return pos1.x > pos2.x;
+	}
 }

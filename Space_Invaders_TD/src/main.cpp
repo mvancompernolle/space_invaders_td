@@ -27,7 +27,7 @@ int main() {
 
 	// initialize services
 	Input* input = new GLFWInput();
-	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD" );
+	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD", 1920, 1080 );
 	Graphics *graphics = gr;
 	Audio* audio = new irrKlangAudio();
 

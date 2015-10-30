@@ -30,7 +30,7 @@ void SpaceInvadersTD::init() {
 		grid[i].resize( NUM_GRID_COLS );
 		for ( int j = 0; j < NUM_GRID_COLS; ++j ) {
 			grid[i][j].taken = false;
-			grid[i][j].pos = glm::vec2( gridSize * i, gridSize * j );
+			grid[i][j].pos = glm::vec2( gridSize * j, gridSize * i );
 		}
 	}
 
@@ -44,19 +44,13 @@ void SpaceInvadersTD::init() {
 			placeBaseTower( pos.x, pos.y );
 	}*/
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
-		placeBaseTower( 20, i );
+		placeBaseTower( 5, i );
 	}
 	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
-		placeBaseTower( 22, i );
+		placeBaseTower( 7, i );
 	}
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
-		placeBaseTower( 24, i );
-	}
-	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
-		placeBaseTower( 26, i );
-	}
-	for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
-		placeBaseTower( 28, i );
+		placeBaseTower( 9, i );
 	}
 
 	// create systems
@@ -69,14 +63,12 @@ void SpaceInvadersTD::init() {
 	// set game values
 	currGridPulseTime = 0.0f;
 
-	// spawn an enemy
-	EntityFactory::getData().push_back(EntityFactory::createEnemy());
 	// create portal
 	Entity ent = EntityFactory::createSpawner();
-	ent.spawn->spawnRate = 0.5f;
+	ent.spawn->spawnRate = 2.0f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
-		info.num = 20;
+		info.num = 100;
 		info.spawnType = nullptr;
 		ent.spawn->spawnTypes.push_back( info );
 		EntityFactory::getData().push_back( ent );
