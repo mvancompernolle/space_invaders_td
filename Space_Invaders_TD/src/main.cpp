@@ -104,6 +104,8 @@ int main() {
 	delete graphics;
 	delete audio;
 
+	system( "pause" );
+
 	return 0;
 }
 

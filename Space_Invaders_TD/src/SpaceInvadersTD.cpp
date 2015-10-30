@@ -38,11 +38,12 @@ void SpaceInvadersTD::init() {
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS / 3 ) + NUM_GRID_ROWS / 3 * 2 );
 	
-	/*for ( int i = 0; i < 400; ++i ) {
+	for ( int i = 0; i < 5; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
-	}*/
+	}
+	/*
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 5, i );
 	}
@@ -52,13 +53,13 @@ void SpaceInvadersTD::init() {
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 9, i );
 	}
+	*/
 
 	// create systems
 	systems.push_back( new MovementSystem);
 	systems.push_back( new PathSystem );
 	systems.push_back( new SpawnSystem );
 	PathSystem* path = (PathSystem*) systems[1];
-	path->calcOptimalPath( glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ), rand() % ( NUM_GRID_ROWS / 3 ) ), dest, grid );
 
 	// set game values
 	currGridPulseTime = 0.0f;
@@ -73,6 +74,7 @@ void SpaceInvadersTD::init() {
 		ent.spawn->spawnTypes.push_back( info );
 		EntityFactory::getData().push_back( ent );
 	}
+	path->calcOptimalPath( glm::uvec2( 0 ), dest, grid );
 
 	// load background
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );

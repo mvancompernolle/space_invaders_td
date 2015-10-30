@@ -19,7 +19,7 @@ void PathSystem::update( const Entity& entity, float dt ) {
 		if ( entity.path->pathIndex == path.size() ) {
 			removals.push_back( entity );
 		} else {
-			entity.path->target = path[entity.path->pathIndex];
+			entity.path->target = path[entity.path->pathIndex] - entity.world->size / 2.0f;
 		}
 	} else {
 		// make sure to head towards target
@@ -47,7 +47,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 	// calculate heuristic for each spot on grid
 	for ( int i = 0; i < grid.size(); ++i ) {
 		for ( int j = 0; j < grid.size(); ++j ) {
-			heuristic[i][j] = std::abs( (int)(start.x - end.x) ) + std::abs( (int)(start.y - end.y) );
+			heuristic[i][j] = std::abs( (int)(j - end.x) ) + std::abs( (int)(i - end.y) );
 		}
 	}
 	path.clear();
@@ -69,7 +69,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 			// calculate the nodes cost based on previous nodes cost
 			if ( node.score + 1 < gridNodes[node.pos.y + 1][node.pos.x].score ) {
 				// set the nodes cost
-				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + 1;
+				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + heuristic[node.pos.y + 1][node.pos.x];
 				// set the nodes previous to the current node
 				gridNodes[node.pos.y + 1][node.pos.x].prev = node.pos;
 				// put in the queue if not already
@@ -79,7 +79,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 		// up
 		if ( node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y - 1][node.pos.x].traversed ) {
 			if ( node.score + 1 < gridNodes[node.pos.y - 1][node.pos.x].score ) {
-				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + 1;
+				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + heuristic[node.pos.y - 1][node.pos.x];
 				gridNodes[node.pos.y - 1][node.pos.x].prev = node.pos;
 				open.push( gridNodes[node.pos.y - 1][node.pos.x] );
 			}
@@ -87,7 +87,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 		// left
 		if ( node.pos.x > 0 && !grid[node.pos.y][node.pos.x - 1].taken && !gridNodes[node.pos.y][node.pos.x - 1].traversed ) {
 			if ( node.score + 1 < gridNodes[node.pos.y][node.pos.x - 1].score ) {
-				gridNodes[node.pos.y][node.pos.x-1].score = node.score + 1;
+				gridNodes[node.pos.y][node.pos.x-1].score = node.score + heuristic[node.pos.y][node.pos.x - 1];
 				gridNodes[node.pos.y][node.pos.x-1].prev = node.pos;
 				open.push( gridNodes[node.pos.y][node.pos.x-1] );
 			}
@@ -95,7 +95,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 		// right
 		if ( node.pos.x < grid[0].size() - 1 && !grid[node.pos.y][node.pos.x + 1].taken && !gridNodes[node.pos.y][node.pos.x + 1].traversed ) {
 			if ( node.score + 1 < gridNodes[node.pos.y][node.pos.x + 1].score ) {
-				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + 1;
+				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + heuristic[node.pos.y][node.pos.x + 1];
 				gridNodes[node.pos.y][node.pos.x + 1].prev = node.pos;
 				open.push( gridNodes[node.pos.y][node.pos.x + 1] );
 			}
@@ -136,16 +136,70 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, const Grid g
 			tiles.push_back( currPos );
 			pathVals.push_back( std::make_pair(currPos, 0) );
 		} else {
+			// indicate that this pass wants this node skipped
 			pathVals.push_back( std::make_pair( currPos, 1 ) );
 		}
-		// add position to the path
-		path.push_back( grid[currPos.y][currPos.x].pos );
 		currPos = prev;
 	}
 
 	// perform second pass over the path
+	for ( auto pair : pathVals ) {
+		std::cout << pair.first.x << " " << pair.first.y << " " << pair.second << std::endl;
+	}
 
-	std::reverse( path.begin(), path.end() );
+	/*
+		// start with the 2nd to last node in the path
+	int index = pathVals.size() - 2;
+	currPos = pathVals[index].first;
+	tiles.clear();
+	tiles.push_back( pathVals[index + 1].first );
+	while ( currPos != end ) {
+		glm::ivec2& prev = (glm::ivec2) pathVals[index-1].first;
+
+		// peform path smoothing by not adding points that don't cause the path to go diagonally accross walls
+		bool skipPathNode = true;
+		// prev up left
+		if ( currPos != start && currPos != end && prev != ( glm::ivec2 ) end ) {
+			// get the directions of the prev and next nodes
+			DIRECTION currToPrev = getDirection( tiles.back(), currPos );
+			DIRECTION currToNext = getDirection( ( glm::uvec2 ) gridNodes[currPos.y][currPos.x].prev, currPos );
+			// check cases
+			if ( ( ( ( isDirection( tiles.back(), currPos, UP ) && currToNext == RIGHT ) || ( isDirection( tiles.back(), currPos, RIGHT ) && currToNext == UP ) ) && grid[currPos.y - 1][currPos.x + 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, DOWN ) && currToNext == RIGHT ) || ( isDirection( tiles.back(), currPos, RIGHT ) && currToNext == DOWN ) ) && grid[currPos.y + 1][currPos.x + 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, UP ) && currToNext == LEFT ) || ( isDirection( tiles.back(), currPos, LEFT ) && currToNext == UP ) ) && grid[currPos.y - 1][currPos.x - 1].taken )
+				|| ( ( ( isDirection( tiles.back(), currPos, DOWN ) && currToNext == LEFT ) || ( isDirection( tiles.back(), currPos, LEFT ) && currToNext == DOWN ) ) && grid[currPos.y + 1][currPos.x - 1].taken ) ) {
+				skipPathNode = false;
+			}
+		} else {
+			skipPathNode = false;
+		}
+
+		if ( !skipPathNode ) {
+			tiles.push_back( currPos );
+		} else {
+			// inicate that this pass wants this node skipped
+			pathVals[index].second++;
+		}
+		// add position to the path
+		index--;
+		currPos = pathVals[index].first;
+	}
+
+	// perform second pass over the path
+	std::cout << std::endl;
+	for ( auto pair : pathVals ) {
+		std::cout << pair.first.x << " " << pair.first.y << " " << pair.second << std::endl;
+	}
+	*/
+
+	// create the path
+	float gridSize = grid[0][1].pos.x - grid[0][0].pos.x;
+	for ( int i = pathVals.size()-1; i >= 0; --i ) {
+		if ( pathVals[i].second != 1 ) {
+			path.push_back( grid[pathVals[i].first.y][pathVals[i].first.x].pos + gridSize/2.0f );
+		}
+	}
+	//std::reverse( path.begin(), path.end() );
 
 	for ( int i = 0; i < grid.size(); ++i ) {
 		delete[] gridNodes[i];
