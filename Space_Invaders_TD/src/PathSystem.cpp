@@ -105,18 +105,39 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 
 	glm::ivec2 currPos = (glm::ivec2) end;
 	std::vector<glm::uvec2> addedTiles, allTiles;
+	int lastAddedIndex;
 	while ( currPos != glm::ivec2(-1) ) {
 		glm::ivec2& next = gridNodes[currPos.y][currPos.x].prev;
 
 		if ( ( glm::uvec2 ) currPos != end ) {
 			// check to see if the currPos intersects a wall between the last position
 			if ( ( currPos.x != addedTiles.back().x && currPos.y != addedTiles.back().y ) && isCollisionBetween( ( glm::uvec2 ) currPos, addedTiles.back(), radius, grid ) ) {
-				// if there is, add the previous tile
-				addedTiles.push_back( allTiles.back() );
+				// there was a collision
+
+				glm::uvec2* intermediate = nullptr;
+				// loop over nodes between this one and previous
+				int i;
+				for ( i = lastAddedIndex + 1; i < allTiles.size() - 1; ++i ) {
+					// search for intermediate node that is at an angle to the current and doesn't have a collision inbetween
+					if ( ( currPos.x != allTiles[i].x && currPos.y != allTiles[i].y ) && !isCollisionBetween( ( glm::uvec2 ) currPos, allTiles[i], radius, grid ) ) {
+						intermediate = &allTiles[i];
+						break;
+					}
+				}
+
+				// add the best intermediate node to avoid the collision
+				if ( intermediate == nullptr ) {
+					addedTiles.push_back( allTiles.back() );
+					lastAddedIndex = allTiles.size() - 1;
+				} else {
+					addedTiles.push_back( allTiles[i] );
+					lastAddedIndex = i;
+				}
 			}
 		} else {
 			// if first or last nodes, add to current trail
 			addedTiles.push_back( ( glm::uvec2 ) currPos );
+			lastAddedIndex = allTiles.size();
 		}
 
 		allTiles.push_back( ( glm::uvec2 ) currPos );

@@ -28,6 +28,7 @@ private:
 	float currGridPulseTime;
 	Grid grid;
 	std::vector<System*> systems;
+	std::vector<Entity> entities;
 };
 
 #endif SPACE_INVADERS_TD_H

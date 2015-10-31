@@ -1,4 +1,5 @@
 #include "Entity.h"
+#include "ServiceLocator.h"
 
 unsigned Entity::ID;
 
@@ -16,10 +17,11 @@ Entity::Entity( unsigned components ) {
 	movement = ( 0 | MOVEMENT ) & components ? new MovementComponent : nullptr;
 	path = ( 0 | PATH ) & components ? new PathAIComponent : nullptr;
 	spawn = ( 0 | SPAWN ) & components ? new SpawnComponent : nullptr;
+	keyboard = ( 0 | KEYBOARD ) & components ? new KeyboardInputComponent(this) : nullptr;
 }
 
 Entity::Entity( const Entity& entity ) 
-	: health(nullptr), world(nullptr), render(nullptr), movement(nullptr), path(nullptr), spawn(nullptr) {
+	: health(nullptr), world(nullptr), render(nullptr), movement(nullptr), path(nullptr), spawn(nullptr), keyboard(nullptr) {
 	myID = entity.myID;
 	componentTypes = entity.componentTypes;
 
@@ -57,6 +59,12 @@ Entity::Entity( const Entity& entity )
 		spawn->numRounds = entity.spawn->numRounds;
 		spawn->currSpawnNum = entity.spawn->currSpawnNum;
 		spawn->spawnTypes = entity.spawn->spawnTypes;
+	}
+	if ( entity.keyboard != nullptr ) {
+		keyboard = new KeyboardInputComponent(this);
+		keyboard->onPressFunctions = entity.keyboard->onPressFunctions;
+		keyboard->onReleaseFunctions = entity.keyboard->onReleaseFunctions;
+		ServiceLocator::getInput().addOnKeyObserver( keyboard );
 	}
 }
 
@@ -100,6 +108,11 @@ Entity& Entity::operator=( const Entity& entity ) {
 			spawn->currSpawnNum = entity.spawn->currSpawnNum;
 			spawn->spawnTypes = entity.spawn->spawnTypes;
 		}
+		if ( entity.keyboard != nullptr ) {
+			if ( keyboard == nullptr ) { keyboard = new KeyboardInputComponent(this); }
+			keyboard->onPressFunctions = entity.keyboard->onPressFunctions;
+			keyboard->onReleaseFunctions = entity.keyboard->onReleaseFunctions;
+		}
 	}
 	return *this;
 }
@@ -115,4 +128,8 @@ Entity::~Entity() {
 	if ( movement != nullptr ) { delete movement; }
 	if ( path != nullptr ) { delete path; }
 	if ( spawn != nullptr ) { delete spawn; }
+	if ( keyboard != nullptr ) { 
+		ServiceLocator::getInput().removeOnKeyObserver( keyboard );	
+		delete keyboard; 
+	}
 }

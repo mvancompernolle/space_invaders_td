@@ -122,6 +122,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\OnKeyObserver.cpp" />
+    <ClCompile Include="src\OnKeySubject.cpp" />
     <ClCompile Include="src\CollisionSystem.cpp" />
     <ClCompile Include="src\SpawnSystem.cpp" />
     <ClCompile Include="src\PathSystem.cpp" />
@@ -182,6 +184,8 @@
     <ClInclude Include="includes\System.h" />
     <ClInclude Include="includes\MovementSystem.h" />
     <ClInclude Include="includes\SpawnSystem.h" />
+    <ClInclude Include="includes\OnKeySubject.h" />
+    <ClInclude Include="includes\OnKeyObserver.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

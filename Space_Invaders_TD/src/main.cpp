@@ -103,7 +103,7 @@ int main() {
 	}
 
 	//delete graphics;
-	delete input;
+	//delete input;
 	delete graphics;
 	delete audio;
 

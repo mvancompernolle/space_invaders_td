@@ -7,6 +7,7 @@
 #include "SpawnSystem.h"
 #include <ctime>
 #include <cassert>
+#include <iostream>
 
 SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
@@ -40,7 +41,7 @@ void SpaceInvadersTD::init() {
 	
 	for ( int i = 0; i < 200; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
-		if ( pos != dest )
+		if ( pos != dest || pos != glm::uvec2(0) )
 			placeBaseTower( pos.x, pos.y );
 	}
 	/*
@@ -56,9 +57,10 @@ void SpaceInvadersTD::init() {
 	*/
 
 	/*glm::uvec2 dest = glm::uvec2( 7, 2 );
-	placeBaseTower( 3, 0 );
-	placeBaseTower( 3, 1 );
-	placeBaseTower( 6, 2 );*/
+	placeBaseTower( 6, 1 );
+	placeBaseTower( 5, 1 );
+	placeBaseTower( 2, 2 );
+	placeBaseTower( 1, 0 );*/
 
 	// create systems
 	systems.push_back( new MovementSystem);
@@ -71,15 +73,46 @@ void SpaceInvadersTD::init() {
 
 	// create portal
 	Entity ent = EntityFactory::createSpawner();
-	ent.spawn->spawnRate = 2.0f;
+	ent.spawn->spawnRate = 1.0f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
 		info.num = 1000;
 		info.spawnType = nullptr;
 		ent.spawn->spawnTypes.push_back( info );
-		EntityFactory::getData().push_back( ent );
+		entities.push_back( ent );
 	}
-	path->calcOptimalPath( glm::uvec2( 0 ), dest, 16, grid );
+	path->calcOptimalPath( glm::uvec2( 0 ), dest, 64, grid );
+
+	// create player
+	Entity ent2 = EntityFactory::createPlayer();
+	// init world data
+	ent2.world->pos = glm::vec2( GAME_WIDTH / 2, GAME_HEIGHT * 0.7F );
+	ent2.world->size = glm::vec2( 32 );
+	// init movement data
+	ent2.movement->vel = glm::vec2( 0.0f, 0.0f );
+	ent2.movement->defSpeed = 300.0f;
+	// init render data
+	ent2.render->color = glm::vec3( 1.0f );
+	ent2.render->textureName = "enemy";
+	// init keyboard input
+	ent2.keyboard->onPressFunctions[(unsigned)KEY_A] = [] (Entity* entity) {
+		entity->movement->vel = glm::vec2( -1, 0 ) * entity->movement->defSpeed;
+	};
+	ent2.keyboard->onPressFunctions[(unsigned)KEY_D] = [] ( Entity* entity ) {
+		entity->movement->vel = glm::vec2( 1, 0 ) * entity->movement->defSpeed;
+	};
+	ent2.keyboard->onReleaseFunctions[(unsigned)KEY_A] = [] ( Entity* entity ) {
+		if ( glm::normalize( entity->movement->vel ) == glm::vec2( -1, 0 ) ) {
+			entity->movement->vel = glm::vec2( 0, 0 );
+		}
+	};
+	ent2.keyboard->onReleaseFunctions[(unsigned)KEY_D] = [] ( Entity* entity ) {
+		if ( glm::normalize( entity->movement->vel ) == glm::vec2( 1, 0 ) ) {
+			entity->movement->vel = glm::vec2( 0, 0 );
+		}
+	};
+	ServiceLocator::getInput().addOnKeyObserver( ent2.keyboard );
+	entities.push_back( ent2 );
 
 	// load background
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
@@ -90,14 +123,14 @@ STATE SpaceInvadersTD::update( const float dt ) {
 	currGridPulseTime += dt * 3.14;
 
 	for ( auto& system : systems ) {
-		for ( Entity& ent : EntityFactory::getData() ) {
+		for ( Entity& ent : entities ) {
 			if ( system->condition( ent.componentTypes ) ) {
 				// update any entities that use the system
 				system->update( ent, dt );
 			}
 		}
 		// add any changes to entities caused by the system
-		system->adjustEntityVector( EntityFactory::getData() );
+		system->adjustEntityVector( entities );
 		// reset the systems entity additiosn / removals
 	}
 
@@ -122,7 +155,7 @@ void SpaceInvadersTD::render() {
 
 	// render entities
 	unsigned renderFlags = WORLD | RENDER;
-	for ( Entity& ent : EntityFactory::getData() ) {
+	for ( Entity& ent : entities ) {
 		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
 			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( ent.render->textureName ), ent.world->pos,
 				ent.world->size, ent.world->rotation );
@@ -131,7 +164,7 @@ void SpaceInvadersTD::render() {
 
 	// render health bars
 	renderFlags = WORLD | HEALTH;
-	for ( Entity& ent : EntityFactory::getData() ) {
+	for ( Entity& ent : entities ) {
 		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
 			ServiceLocator::getGraphics().draw2DBox( ent.world->pos - glm::vec2( 0.0f, ent.world->size.y * 0.2f ),
 				glm::vec2( ent.world->size.x , ent.world->size.y * 0.2f ), glm::vec3( 1.0f, 0.0f, 1.0f ) );
@@ -150,7 +183,7 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
 	ent.world->size = glm::vec2( gridSize );
 	ent.world->pos = glm::vec2( x * gridSize, y * gridSize );
-	EntityFactory::getData().push_back( ent );
+	entities.push_back( ent );
 
 	// mark that position as taken
 	grid[y][x].taken = true;

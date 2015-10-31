@@ -17,6 +17,7 @@ public:
 	MovementComponent			*movement;
 	PathAIComponent				*path;
 	SpawnComponent				*spawn;
+	KeyboardInputComponent		*keyboard;
 	unsigned					componentTypes;
 
 	Entity();

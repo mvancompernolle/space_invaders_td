@@ -12,13 +12,10 @@ class EntityFactory {
 public:
 	EntityFactory();
 	~EntityFactory();
-	static std::vector<Entity>& getData();
 	static Entity createEnemy();
 	static Entity createBaseTower();
 	static Entity createPlayer();
 	static Entity createSpawner();
-private:
-	static std::vector<Entity> entities; 
 };
 
 #endif // ENTITY_FACTORY

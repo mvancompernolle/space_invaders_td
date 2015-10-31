@@ -7,6 +7,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include <functional>
+#include <map>
+#include "OnKeyObserver.h"
 
 class Entity;
 
@@ -17,7 +20,8 @@ struct Component {
 enum SHAPE { RECTANGLE, CIRCLE };
 enum COMPONENT_TYPE {
 	HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
-	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1, COLLISION = PATH << 1
+	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
+	COLLISION = PATH << 1, KEYBOARD = COLLISION << 1
 };
 
 struct HealthComponent : Component {
@@ -71,6 +75,30 @@ struct CollisionComponent : Component {
 	const static COMPONENT_TYPE type = COLLISION;
 	SHAPE shape;
 	CollisionComponent() : shape( RECTANGLE ) {}
+};
+
+struct KeyboardInputComponent : public OnKeyObserver {
+public:
+	Entity* parent;
+	std::map<unsigned, std::function<void(Entity*)>> onPressFunctions;
+	std::map<unsigned, std::function<void(Entity*)>> onReleaseFunctions;
+
+	KeyboardInputComponent( Entity* ent ) : parent( ent ) {}
+
+	void onKeyPressed( unsigned key ) {
+		// call function for key if it is set
+		auto it = onPressFunctions.find( key );
+		if ( it != onPressFunctions.end() ) {
+			it->second(parent);
+		}
+	};
+	void onKeyReleased( unsigned key ) {
+		// call function for key if it is set
+		auto it = onReleaseFunctions.find( key );
+		if ( it != onReleaseFunctions.end() ) {
+			it->second(parent);
+		}
+	};
 };
 
 #endif // COMPONENT_H

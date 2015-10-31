@@ -1,16 +1,10 @@
 #include "EntityFactory.h"
 
-std::vector<Entity> EntityFactory::entities = std::vector<Entity>();
-
 EntityFactory::EntityFactory() {
 }
 
 
 EntityFactory::~EntityFactory() {
-}
-
-std::vector<Entity>& EntityFactory::getData() {
-	return entities;
 }
 
 Entity EntityFactory::createEnemy() {
@@ -47,7 +41,7 @@ Entity EntityFactory::createBaseTower() {
 }
 
 Entity EntityFactory::createPlayer() {
-	Entity ent( RENDER | WORLD | MOVEMENT );
+	Entity ent( RENDER | WORLD | MOVEMENT | KEYBOARD );
 	return ent;
 }
 

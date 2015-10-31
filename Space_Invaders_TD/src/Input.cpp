@@ -11,6 +11,7 @@ Input::~Input()
 void Input::setKeyPressed( unsigned int type )
 {
 	keysPressed[inputMap[type]] = GL_TRUE;
+	notifyKeyPress( inputMap[type] );
 }
 
 void Input::setKeyProcessed( unsigned int type )
@@ -24,6 +25,7 @@ void Input::setKeyReleased( unsigned int type )
 {
 	keysPressed[inputMap[type]] = GL_FALSE;
 	keysProcessed[inputMap[type]] = GL_FALSE;
+	notifyKeyRelease( inputMap[type] );
 	notifyRelease( glm::vec2( mouseX, mouseY ) );
 }
 
