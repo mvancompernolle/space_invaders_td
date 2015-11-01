@@ -17,8 +17,8 @@ Entity EntityFactory::createEnemy() {
 	ent.health->currHP = 100.0f;
 	ent.health->maxHP = 100.0f;
 	// init movement data
-	ent.movement->vel = glm::vec2( 350.0f, 0.0f );
-	ent.movement->defSpeed = 300.0f;
+	ent.movement->vel = glm::vec2( 250.0f, 0.0f );
+	ent.movement->defSpeed = 250.0f;
 	// init render data
 	ent.render->color = glm::vec3( 1.0f );
 	ent.render->textureName = "enemy";

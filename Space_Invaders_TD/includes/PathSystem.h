@@ -9,7 +9,7 @@
 
 struct GridNode {
 	glm::ivec2 prev, pos;
-	unsigned score;
+	float score;
 	bool traversed;
 
 	friend bool operator<( const GridNode& l, const GridNode& r ) {

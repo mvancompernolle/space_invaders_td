@@ -39,13 +39,13 @@ void SpaceInvadersTD::init() {
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
 	
-	for ( int i = 0; i < 200; ++i ) {
+	for ( int i = 0; i < 300; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
-		if ( pos != dest || pos != glm::uvec2(0) )
+		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
 	}
-	/*
-	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
+	
+	/*for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 5, i );
 	}
 	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
@@ -53,8 +53,9 @@ void SpaceInvadersTD::init() {
 	}
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 9, i );
-	}
-	*/
+	}*/
+	
+	
 
 	/*glm::uvec2 dest = glm::uvec2( 7, 2 );
 	placeBaseTower( 6, 1 );
@@ -73,6 +74,7 @@ void SpaceInvadersTD::init() {
 
 	// create portal
 	Entity ent = EntityFactory::createSpawner();
+	ent.world->pos = glm::vec2( 0, (NUM_GRID_ROWS * gridSize) / 2.0f);
 	ent.spawn->spawnRate = 1.0f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
@@ -81,7 +83,7 @@ void SpaceInvadersTD::init() {
 		ent.spawn->spawnTypes.push_back( info );
 		entities.push_back( ent );
 	}
-	path->calcOptimalPath( glm::uvec2( 0 ), dest, 64, grid );
+	path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
 
 	// create player
 	Entity ent2 = EntityFactory::createPlayer();
@@ -163,7 +165,7 @@ void SpaceInvadersTD::render() {
 	}
 
 	// render health bars
-	renderFlags = WORLD | HEALTH;
+	/*renderFlags = WORLD | HEALTH;
 	for ( Entity& ent : entities ) {
 		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
 			ServiceLocator::getGraphics().draw2DBox( ent.world->pos - glm::vec2( 0.0f, ent.world->size.y * 0.2f ),
@@ -172,7 +174,7 @@ void SpaceInvadersTD::render() {
 			ServiceLocator::getGraphics().draw2DBox( ent.world->pos - glm::vec2( -padding, ent.world->size.y * 0.2f - padding ),
 				glm::vec2( (ent.world->size.x - (2.0f * padding)) * (ent.health->currHP / ent.health->maxHP), ent.world->size.y * 0.2f - (2.0f * padding) ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 		}
-	}
+	}*/
 }
 
 void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {

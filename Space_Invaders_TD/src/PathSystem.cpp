@@ -4,6 +4,7 @@
 #include <queue>
 #include <algorithm>
 #include <iostream>
+#include <limits>
 
 PathSystem::PathSystem() {
 	flags = PATH | WORLD;
@@ -38,7 +39,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 
 		// init values
 		for ( int j = 0; j < grid[i].size(); ++j ) {
-			gridNodes[i][j].score = ~0;
+			gridNodes[i][j].score = std::numeric_limits<float>::max();
 			gridNodes[i][j].prev = glm::vec2( -1 );
 			gridNodes[i][j].traversed = false;
 			gridNodes[i][j].pos = glm::uvec2( j, i );
@@ -55,8 +56,10 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 
 	// create a priority queue for the open list
 	std::priority_queue<GridNode> open;
+	float diagonalCost = std::sqrt( 2.0f ), sideCost = 1.0f;
 
 	// add start point to the open list
+	gridNodes[start.y][start.x].score = 0.0f;
 	open.push( gridNodes[start.y][start.x] );
 
 	while ( !open.empty() ) {
@@ -68,9 +71,9 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 		// down
 		if ( node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x].traversed ) {
 			// calculate the nodes cost based on previous nodes cost
-			if ( node.score + 1 < gridNodes[node.pos.y + 1][node.pos.x].score ) {
+			if ( node.score + sideCost < gridNodes[node.pos.y + 1][node.pos.x].score ) {
 				// set the nodes cost
-				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + 1;
+				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + sideCost;
 				// set the nodes previous to the current node
 				gridNodes[node.pos.y + 1][node.pos.x].prev = node.pos;
 				// put in the queue if not already
@@ -79,34 +82,72 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 		}
 		// up
 		if ( node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y - 1][node.pos.x].traversed ) {
-			if ( node.score + 1 < gridNodes[node.pos.y - 1][node.pos.x].score ) {
-				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + 1;
+			if ( node.score + sideCost < gridNodes[node.pos.y - 1][node.pos.x].score ) {
+				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + sideCost;
 				gridNodes[node.pos.y - 1][node.pos.x].prev = node.pos;
 				open.push( gridNodes[node.pos.y - 1][node.pos.x] );
 			}
 		}
 		// left
 		if ( node.pos.x > 0 && !grid[node.pos.y][node.pos.x - 1].taken && !gridNodes[node.pos.y][node.pos.x - 1].traversed ) {
-			if ( node.score + 1 < gridNodes[node.pos.y][node.pos.x - 1].score ) {
-				gridNodes[node.pos.y][node.pos.x - 1].score = node.score + 1;
+			if ( node.score + sideCost < gridNodes[node.pos.y][node.pos.x - 1].score ) {
+				gridNodes[node.pos.y][node.pos.x - 1].score = node.score + sideCost;
 				gridNodes[node.pos.y][node.pos.x - 1].prev = node.pos;
 				open.push( gridNodes[node.pos.y][node.pos.x - 1] );
 			}
 		}
 		// right
 		if ( node.pos.x < grid[0].size() - 1 && !grid[node.pos.y][node.pos.x + 1].taken && !gridNodes[node.pos.y][node.pos.x + 1].traversed ) {
-			if ( node.score + 1 < gridNodes[node.pos.y][node.pos.x + 1].score ) {
-				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + 1;
+			if ( node.score + sideCost < gridNodes[node.pos.y][node.pos.x + 1].score ) {
+				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + sideCost;
 				gridNodes[node.pos.y][node.pos.x + 1].prev = node.pos;
 				open.push( gridNodes[node.pos.y][node.pos.x + 1] );
 			}
 		}
+
+
+		// up / right
+		if ( node.pos.x < grid[0].size() - 1 && node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken 
+			&& !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y][node.pos.x + 1].traversed ) {
+			if ( node.score + diagonalCost < gridNodes[node.pos.y - 1][node.pos.x + 1].score ) {
+				gridNodes[node.pos.y - 1][node.pos.x + 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y - 1][node.pos.x + 1].prev = node.pos;
+				open.push( gridNodes[node.pos.y - 1][node.pos.x + 1] );
+			}
+		}
+		// down / right
+		if ( node.pos.x < grid[0].size() - 1 && node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken 
+			&& !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x + 1].traversed ) {
+			if ( node.score + diagonalCost < gridNodes[node.pos.y + 1][node.pos.x + 1].score ) {
+				gridNodes[node.pos.y + 1][node.pos.x + 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y + 1][node.pos.x + 1].prev = node.pos;
+				open.push( gridNodes[node.pos.y + 1][node.pos.x + 1] );
+			}
+		}
+		// down / left
+		if ( node.pos.x > 0 && node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x - 1].taken && !grid[node.pos.y][node.pos.x - 1].taken
+			&& !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x - 1].traversed ) {
+			if ( node.score + diagonalCost < gridNodes[node.pos.y + 1][node.pos.x - 1].score ) {
+				gridNodes[node.pos.y + 1][node.pos.x - 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y + 1][node.pos.x - 1].prev = node.pos;
+				open.push( gridNodes[node.pos.y + 1][node.pos.x - 1] );
+			}
+		}
+		// up / left
+		if ( node.pos.x > 0 && node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x - 1].taken && !grid[node.pos.y][node.pos.x - 1].taken
+			&& !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y - 1][node.pos.x - 1].traversed ) {
+			if ( node.score + diagonalCost < gridNodes[node.pos.y - 1][node.pos.x - 1].score ) {
+				gridNodes[node.pos.y - 1][node.pos.x - 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y - 1][node.pos.x - 1].prev = node.pos;
+				open.push( gridNodes[node.pos.y - 1][node.pos.x - 1] );
+			}
+		}
 	}
 
-	glm::ivec2 currPos = (glm::ivec2) end;
+	glm::ivec2 currPos = ( glm::ivec2 ) end;
 	std::vector<glm::uvec2> addedTiles, allTiles;
 	int lastAddedIndex;
-	while ( currPos != glm::ivec2(-1) ) {
+	while ( currPos != glm::ivec2( -1 ) ) {
 		glm::ivec2& next = gridNodes[currPos.y][currPos.x].prev;
 
 		if ( ( glm::uvec2 ) currPos != end ) {
@@ -186,8 +227,8 @@ bool PathSystem::isCollisionBetween( glm::uvec2 curr, glm::uvec2 prev, float rad
 				std::vector<glm::vec2> tile;
 				tile.push_back( glm::vec2( j, i ) );
 				tile.push_back( glm::vec2( j + 1, i ) );
-				tile.push_back( glm::vec2( j + 1, i + 1) );
-				tile.push_back( glm::vec2( j, i + 1) );
+				tile.push_back( glm::vec2( j + 1, i + 1 ) );
+				tile.push_back( glm::vec2( j, i + 1 ) );
 				if ( CollisionSystem::arePolygonsIntersecting( pathRect, tile ) ) {
 					return true;
 				}

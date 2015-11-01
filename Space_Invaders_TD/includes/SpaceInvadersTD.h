@@ -9,8 +9,9 @@
 #include <vector>
 #include <memory>
 
-const unsigned int NUM_GRID_ROWS = 15;
-const unsigned int NUM_GRID_COLS = 40;
+// maximum should be 18 by 48 = 864 tiles
+const unsigned int NUM_GRID_ROWS = 18;
+const unsigned int NUM_GRID_COLS = 48;
 const glm::vec3 GRID_COLOR( 0.0f, 0.2f, 0.5f );
 const glm::vec3 GRID_COLOR2( 0.0f );
 
