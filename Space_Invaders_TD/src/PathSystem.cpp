@@ -32,24 +32,25 @@ void PathSystem::update( const Entity& entity, float dt ) {
 
 bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius, const Grid& grid ) {
 	GridNode** gridNodes = new GridNode*[grid.size()];
-	unsigned** heuristic = new unsigned*[grid.size()];
+	float** heuristic = new float*[grid.size()];
 	for ( int i = 0; i < grid.size(); ++i ) {
 		gridNodes[i] = new GridNode[grid[i].size()];
-		heuristic[i] = new unsigned[grid[i].size()];
+		heuristic[i] = new float[grid[i].size()];
 
 		// init values
 		for ( int j = 0; j < grid[i].size(); ++j ) {
 			gridNodes[i][j].score = std::numeric_limits<float>::max();
 			gridNodes[i][j].prev = glm::vec2( -1 );
 			gridNodes[i][j].traversed = false;
+			gridNodes[i][j].queued = false;
 			gridNodes[i][j].pos = glm::uvec2( j, i );
 		}
 	}
 
 	// calculate heuristic for each spot on grid
 	for ( int i = 0; i < grid.size(); ++i ) {
-		for ( int j = 0; j < grid.size(); ++j ) {
-			heuristic[i][j] = std::abs( (int)( j - end.x ) ) + std::abs( (int)( i - end.y ) );
+		for ( int j = 0; j < grid[i].size(); ++j ) {
+			heuristic[i][j] = 0.0f; // std::sqrt( std::pow( std::abs( (int)( j - end.x ) ), 2 ) + std::pow( std::abs( (int)( i - end.y ) ), 2 ) );
 		}
 	}
 	path.clear();
@@ -60,6 +61,7 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 
 	// add start point to the open list
 	gridNodes[start.y][start.x].score = 0.0f;
+	gridNodes[start.y][start.x].queued = true;
 	open.push( gridNodes[start.y][start.x] );
 
 	while ( !open.empty() ) {
@@ -68,78 +70,103 @@ bool PathSystem::calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius
 		open.pop();
 		// mark it as traversed
 		gridNodes[node.pos.y][node.pos.x].traversed = true;
+		gridNodes[node.pos.y][node.pos.x].queued = false;
 		// down
 		if ( node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x].traversed ) {
 			// calculate the nodes cost based on previous nodes cost
 			if ( node.score + sideCost < gridNodes[node.pos.y + 1][node.pos.x].score ) {
 				// set the nodes cost
-				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + sideCost;
+				gridNodes[node.pos.y + 1][node.pos.x].score = node.score + sideCost + heuristic[node.pos.y + 1][node.pos.x];
 				// set the nodes previous to the current node
 				gridNodes[node.pos.y + 1][node.pos.x].prev = node.pos;
 				// put in the queue if not already
-				open.push( gridNodes[node.pos.y + 1][node.pos.x] );
+				if ( !gridNodes[node.pos.y + 1][node.pos.x].queued ) {
+					open.push( gridNodes[node.pos.y + 1][node.pos.x] );
+					gridNodes[node.pos.y + 1][node.pos.x].queued = true;
+				}
 			}
 		}
 		// up
 		if ( node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y - 1][node.pos.x].traversed ) {
 			if ( node.score + sideCost < gridNodes[node.pos.y - 1][node.pos.x].score ) {
-				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + sideCost;
+				gridNodes[node.pos.y - 1][node.pos.x].score = node.score + sideCost + heuristic[node.pos.y - 1][node.pos.x];
 				gridNodes[node.pos.y - 1][node.pos.x].prev = node.pos;
-				open.push( gridNodes[node.pos.y - 1][node.pos.x] );
+				if ( !gridNodes[node.pos.y - 1][node.pos.x].queued ) {
+					open.push( gridNodes[node.pos.y - 1][node.pos.x] );
+					gridNodes[node.pos.y - 1][node.pos.x].queued = true;
+				}
 			}
 		}
 		// left
 		if ( node.pos.x > 0 && !grid[node.pos.y][node.pos.x - 1].taken && !gridNodes[node.pos.y][node.pos.x - 1].traversed ) {
 			if ( node.score + sideCost < gridNodes[node.pos.y][node.pos.x - 1].score ) {
-				gridNodes[node.pos.y][node.pos.x - 1].score = node.score + sideCost;
+				gridNodes[node.pos.y][node.pos.x - 1].score = node.score + sideCost + heuristic[node.pos.y][node.pos.x - 1];
 				gridNodes[node.pos.y][node.pos.x - 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y][node.pos.x - 1] );
+				if ( !gridNodes[node.pos.y][node.pos.x - 1].queued ) {
+					open.push( gridNodes[node.pos.y][node.pos.x - 1] );
+					gridNodes[node.pos.y][node.pos.x - 1].queued = true;
+				}
 			}
 		}
 		// right
 		if ( node.pos.x < grid[0].size() - 1 && !grid[node.pos.y][node.pos.x + 1].taken && !gridNodes[node.pos.y][node.pos.x + 1].traversed ) {
 			if ( node.score + sideCost < gridNodes[node.pos.y][node.pos.x + 1].score ) {
-				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + sideCost;
+				gridNodes[node.pos.y][node.pos.x + 1].score = node.score + sideCost + heuristic[node.pos.y][node.pos.x + 1];
 				gridNodes[node.pos.y][node.pos.x + 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y][node.pos.x + 1] );
+				if ( !gridNodes[node.pos.y][node.pos.x + 1].queued ) {
+					open.push( gridNodes[node.pos.y][node.pos.x + 1] );
+					gridNodes[node.pos.y][node.pos.x + 1].queued = true;
+				}
 			}
 		}
 
 
 		// up / right
-		if ( node.pos.x < grid[0].size() - 1 && node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken 
+		if ( node.pos.x < grid[0].size() - 1 && node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken
 			&& !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y][node.pos.x + 1].traversed ) {
 			if ( node.score + diagonalCost < gridNodes[node.pos.y - 1][node.pos.x + 1].score ) {
-				gridNodes[node.pos.y - 1][node.pos.x + 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y - 1][node.pos.x + 1].score = node.score + diagonalCost + heuristic[node.pos.y - 1][node.pos.x + 1];
 				gridNodes[node.pos.y - 1][node.pos.x + 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y - 1][node.pos.x + 1] );
+				if ( !gridNodes[node.pos.y - 1][node.pos.x + 1].queued ) {
+					open.push( gridNodes[node.pos.y - 1][node.pos.x + 1] );
+					gridNodes[node.pos.y - 1][node.pos.x + 1].queued = true;
+				}
 			}
 		}
 		// down / right
-		if ( node.pos.x < grid[0].size() - 1 && node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken 
+		if ( node.pos.x < grid[0].size() - 1 && node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x + 1].taken && !grid[node.pos.y][node.pos.x + 1].taken
 			&& !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x + 1].traversed ) {
 			if ( node.score + diagonalCost < gridNodes[node.pos.y + 1][node.pos.x + 1].score ) {
-				gridNodes[node.pos.y + 1][node.pos.x + 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y + 1][node.pos.x + 1].score = node.score + diagonalCost + heuristic[node.pos.y + 1][node.pos.x + 1];
 				gridNodes[node.pos.y + 1][node.pos.x + 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y + 1][node.pos.x + 1] );
+				if ( !gridNodes[node.pos.y + 1][node.pos.x + 1].queued ) {
+					open.push( gridNodes[node.pos.y + 1][node.pos.x + 1] );
+					gridNodes[node.pos.y + 1][node.pos.x + 1].queued = true;
+				}
 			}
 		}
 		// down / left
 		if ( node.pos.x > 0 && node.pos.y < grid.size() - 1 && !grid[node.pos.y + 1][node.pos.x - 1].taken && !grid[node.pos.y][node.pos.x - 1].taken
 			&& !grid[node.pos.y + 1][node.pos.x].taken && !gridNodes[node.pos.y + 1][node.pos.x - 1].traversed ) {
 			if ( node.score + diagonalCost < gridNodes[node.pos.y + 1][node.pos.x - 1].score ) {
-				gridNodes[node.pos.y + 1][node.pos.x - 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y + 1][node.pos.x - 1].score = node.score + diagonalCost + heuristic[node.pos.y + 1][node.pos.x - 1];
 				gridNodes[node.pos.y + 1][node.pos.x - 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y + 1][node.pos.x - 1] );
+				if ( !gridNodes[node.pos.y + 1][node.pos.x - 1].queued ) {
+					open.push( gridNodes[node.pos.y + 1][node.pos.x - 1] );
+					gridNodes[node.pos.y + 1][node.pos.x - 1].queued = true;
+				}
 			}
 		}
 		// up / left
 		if ( node.pos.x > 0 && node.pos.y > 0 && !grid[node.pos.y - 1][node.pos.x - 1].taken && !grid[node.pos.y][node.pos.x - 1].taken
 			&& !grid[node.pos.y - 1][node.pos.x].taken && !gridNodes[node.pos.y - 1][node.pos.x - 1].traversed ) {
 			if ( node.score + diagonalCost < gridNodes[node.pos.y - 1][node.pos.x - 1].score ) {
-				gridNodes[node.pos.y - 1][node.pos.x - 1].score = node.score + diagonalCost;
+				gridNodes[node.pos.y - 1][node.pos.x - 1].score = node.score + diagonalCost + heuristic[node.pos.y - 1][node.pos.x - 1];
 				gridNodes[node.pos.y - 1][node.pos.x - 1].prev = node.pos;
-				open.push( gridNodes[node.pos.y - 1][node.pos.x - 1] );
+				if ( !gridNodes[node.pos.y - 1][node.pos.x - 1].queued ) {
+					open.push( gridNodes[node.pos.y - 1][node.pos.x - 1] );
+					gridNodes[node.pos.y - 1][node.pos.x - 1].queued = true;
+				}
 			}
 		}
 	}

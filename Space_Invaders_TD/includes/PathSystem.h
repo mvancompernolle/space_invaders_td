@@ -10,7 +10,7 @@
 struct GridNode {
 	glm::ivec2 prev, pos;
 	float score;
-	bool traversed;
+	bool traversed, queued;
 
 	friend bool operator<( const GridNode& l, const GridNode& r ) {
 		return l.score > r.score;
