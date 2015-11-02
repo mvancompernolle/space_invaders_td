@@ -13,49 +13,45 @@
 
 class Entity;
 
-struct Component {
-
-};
-
 enum SHAPE { RECTANGLE, CIRCLE };
 enum COMPONENT_TYPE {
-	HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
+	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
-	COLLISION = PATH << 1, KEYBOARD = COLLISION << 1
+	COLLISION = PATH << 1, KEYBOARD = COLLISION << 1, COMPONENT_SIZE = KEYBOARD << 1
 };
 
-struct HealthComponent : Component {
+struct HealthComponent {
 	const static COMPONENT_TYPE type = HEALTH;
 	float currHP, maxHP;
-	HealthComponent() : currHP(0.0f), maxHP(0.0f) {}
+	HealthComponent() : currHP( 0.0f ), maxHP( 0.0f ) {}
 };
 
-struct WorldComponent : Component {
+struct WorldComponent {
 	const static COMPONENT_TYPE type = WORLD;
 	glm::vec2 pos, size;
 	float rotation;
 	WorldComponent() : pos( glm::vec2( 0, 0 ) ), size( glm::vec2( 10, 10 ) ) {}
 };
 
-struct RenderComponent : Component {
+struct RenderComponent {
 	const static COMPONENT_TYPE type = RENDER;
 	glm::vec3 color;
 	std::string textureName;
 	RenderComponent() {}
 };
 
-struct MovementComponent : Component {
+struct MovementComponent {
 	const static COMPONENT_TYPE type = MOVEMENT;
 	glm::vec2 vel;
 	float defSpeed;
-	MovementComponent() : vel( glm::vec2(0.0f) ), defSpeed(0.0f) {}
+	MovementComponent() : vel( glm::vec2( 0.0f ) ), defSpeed( 0.0f ) {}
 };
 
-struct PathAIComponent : Component {
+struct PathAIComponent {
 	const static COMPONENT_TYPE type = PATH;
 	glm::vec2 target;
 	unsigned pathIndex;
-	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex(-1) {}
+	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex( -1 ) {}
 };
 
 struct SpawnInfo {
@@ -63,15 +59,15 @@ struct SpawnInfo {
 	Entity* spawnType;
 };
 
-struct SpawnComponent : Component {
+struct SpawnComponent {
 	const static COMPONENT_TYPE type = SPAWN;
 	float spawnRate, dt;
 	unsigned round, numRounds, currSpawnNum;
 	std::vector<SpawnInfo> spawnTypes;
-	SpawnComponent() : spawnRate(1.0f), dt(0.0f), round(0), numRounds(0), currSpawnNum(0) {}
+	SpawnComponent() : spawnRate( 1.0f ), dt( 0.0f ), round( 0 ), numRounds( 0 ), currSpawnNum( 0 ) {}
 };
 
-struct CollisionComponent : Component {
+struct CollisionComponent {
 	const static COMPONENT_TYPE type = COLLISION;
 	SHAPE shape;
 	CollisionComponent() : shape( RECTANGLE ) {}
@@ -80,8 +76,8 @@ struct CollisionComponent : Component {
 struct KeyboardInputComponent : public OnKeyObserver {
 public:
 	Entity* parent;
-	std::map<unsigned, std::function<void(Entity*)>> onPressFunctions;
-	std::map<unsigned, std::function<void(Entity*)>> onReleaseFunctions;
+	std::map<unsigned, std::function<void( Entity* )>> onPressFunctions;
+	std::map<unsigned, std::function<void( Entity* )>> onReleaseFunctions;
 
 	KeyboardInputComponent( Entity* ent ) : parent( ent ) {}
 
@@ -89,14 +85,14 @@ public:
 		// call function for key if it is set
 		auto it = onPressFunctions.find( key );
 		if ( it != onPressFunctions.end() ) {
-			it->second(parent);
+			it->second( parent );
 		}
 	};
 	void onKeyReleased( unsigned key ) {
 		// call function for key if it is set
 		auto it = onReleaseFunctions.find( key );
 		if ( it != onReleaseFunctions.end() ) {
-			it->second(parent);
+			it->second( parent );
 		}
 	};
 };

@@ -6,6 +6,7 @@
 #include "consts.h"
 #include "System.h"
 #include "Grid.h"
+#include "World.h"
 #include <vector>
 #include <memory>
 
@@ -30,6 +31,7 @@ private:
 	Grid grid;
 	std::vector<System*> systems;
 	std::vector<Entity> entities;
+	World world;
 };
 
 #endif SPACE_INVADERS_TD_H

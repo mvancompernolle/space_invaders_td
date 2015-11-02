@@ -17,11 +17,11 @@ void SpawnSystem::update( const Entity& entity, float dt ){
 			entity.spawn->dt -= entity.spawn->spawnRate;
 
 			// spawn an enemy
-			Entity ent = EntityFactory::createEnemy();
+			/*Entity ent = EntityFactory::createEnemy();
 			ent.world->pos = glm::vec2( entity.world->pos );
 			ent.world->size = glm::vec2( entity.world->size );
 			additions.push_back( ent );
-			entity.spawn->currSpawnNum++;
+			entity.spawn->currSpawnNum++;*/
 		}
 	}
 }

@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\CollisionSystem.h" />
+    <ClInclude Include="includes\ComponentPool.h" />
     <ClInclude Include="includes\PathSystem.h" />
     <ClInclude Include="includes\EntityFactory.h" />
     <ClInclude Include="includes\Component.h" />
@@ -186,6 +187,7 @@
     <ClInclude Include="includes\SpawnSystem.h" />
     <ClInclude Include="includes\OnKeySubject.h" />
     <ClInclude Include="includes\OnKeyObserver.h" />
+    <ClInclude Include="includes\World.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

@@ -1,5 +1,7 @@
 #include "EntityFactory.h"
 
+
+
 EntityFactory::EntityFactory() {
 }
 
@@ -7,7 +9,14 @@ EntityFactory::EntityFactory() {
 EntityFactory::~EntityFactory() {
 }
 
-Entity EntityFactory::createEnemy() {
+int EntityFactory::createEntity( World* world, unsigned mask ) {
+	int index = world->entities.create();
+	if ( mask | WORLD ) { world->entities[index].componentIndices[WORLD] = world->worldComponents.create(); }
+
+	return index;
+}
+
+Entity EntityFactory::createEnemy( World* world ) {
 	Entity ent( HEALTH | RENDER | WORLD | MOVEMENT | PATH );
 	
 	// init world data

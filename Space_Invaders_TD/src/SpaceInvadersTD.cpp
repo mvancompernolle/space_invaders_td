@@ -14,6 +14,7 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "enemy.png", GL_TRUE, "enemy" );
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
 	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
+	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
 }
 
 
@@ -63,7 +64,7 @@ void SpaceInvadersTD::init() {
 	placeBaseTower( 2, 2 );
 	placeBaseTower( 1, 0 );*/
 
-	// create systems
+	/*// create systems
 	systems.push_back( new MovementSystem);
 	systems.push_back( new PathSystem );
 	systems.push_back( new SpawnSystem );
@@ -114,10 +115,7 @@ void SpaceInvadersTD::init() {
 		}
 	};
 	ServiceLocator::getInput().addOnKeyObserver( ent2.keyboard );
-	entities.push_back( ent2 );
-
-	// load background
-	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
+	entities.push_back( ent2 );*/
 }
 
 STATE SpaceInvadersTD::update( const float dt ) {

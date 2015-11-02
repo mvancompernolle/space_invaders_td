@@ -4,7 +4,7 @@
 #define	ENTITY_FACTORY_H
 
 #include "Entity.h"
-#include "Component.h"
+#include "World.h"
 #include <vector>
 
 class EntityFactory {
@@ -12,10 +12,12 @@ class EntityFactory {
 public:
 	EntityFactory();
 	~EntityFactory();
-	static Entity createEnemy();
+	static int createEntity( World* world, unsigned mask );
+	static Entity createEnemy( World* world );
 	static Entity createBaseTower();
 	static Entity createPlayer();
 	static Entity createSpawner();
+private:
 };
 
 #endif // ENTITY_FACTORY
