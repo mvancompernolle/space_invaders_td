@@ -4,6 +4,7 @@
 #define COMPONENT_POOL_H
 
 #include "Component.h"
+#include <iostream>
 
 template<typename T>
 class Component {
@@ -44,10 +45,10 @@ public:
 		Component<T> *newComponent = firstAvailable;
 		firstAvailable = newComponent->getNext();
 
-		return ( newComponent - components ) / sizeof( Component<T>* );
+		return ( newComponent - components );
 	}
 
-	void remove( int index ) {
+	void remove( int i ) {
 		// add this particle to the front of the list
 		components[i].setNext( firstAvailable );
 		firstAvailable = components + i;

@@ -45,6 +45,8 @@ void SpaceInvadersTD::init() {
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
 	}
+
+	//int ent = EntityFactory::createEntity( &world, (HEALTH | WORLD | RENDER | MOVEMENT));
 	
 	/*for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 5, i );
@@ -153,14 +155,24 @@ void SpaceInvadersTD::render() {
 		ServiceLocator::getGraphics().draw2DBox( glm::vec2( gridSize * i - 1, 0.0f ), glm::vec2( 2.0f, gridSize * NUM_GRID_ROWS ), GRID_COLOR + std::sin( currGridPulseTime / GRID_PULSE_TIME ) * GRID_PULSE_AMOUNT );
 	}
 
-	// render entities
+	unsigned renderFlags = WORLD | RENDER;
+	for ( int i = 0; i < NUM_ENTITIES; i++ ) {
+		if ( !( ( renderFlags ^ world.entities[i].mask ) & renderFlags ) ) {
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( i, RENDER )];
+			WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( i, WORLD )];
+			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( renderComp.textureName ), worldComp.pos,
+				worldComp.size, worldComp.rotation );
+		}
+	}
+
+	/*// render entities
 	unsigned renderFlags = WORLD | RENDER;
 	for ( Entity& ent : entities ) {
 		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
 			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( ent.render->textureName ), ent.world->pos,
 				ent.world->size, ent.world->rotation );
 		}
-	}
+	}*/
 
 	// render health bars
 	/*renderFlags = WORLD | HEALTH;
@@ -179,11 +191,11 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	assert( x >= 0 && x < NUM_GRID_COLS && y >= 0 && y < NUM_GRID_ROWS );
 
 	// create the tower
-	Entity ent = EntityFactory::createBaseTower();
+	int pos = EntityFactory::createBaseTower( &world );
 	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
-	ent.world->size = glm::vec2( gridSize );
-	ent.world->pos = glm::vec2( x * gridSize, y * gridSize );
-	entities.push_back( ent );
+	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex(pos, WORLD)];
+	worldComp.size = glm::vec2( gridSize );
+	worldComp.pos = glm::vec2( x * gridSize, y * gridSize );
 
 	// mark that position as taken
 	grid[y][x].taken = true;

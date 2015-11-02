@@ -13,10 +13,10 @@ public:
 	EntityFactory();
 	~EntityFactory();
 	static int createEntity( World* world, unsigned mask );
-	static Entity createEnemy( World* world );
-	static Entity createBaseTower();
-	static Entity createPlayer();
-	static Entity createSpawner();
+	static int createEnemy( World* world );
+	static int createBaseTower( World* world );
+	static int createPlayer( World* world );
+	static int createSpawner( World* world );
 private:
 };
 
