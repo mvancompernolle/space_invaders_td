@@ -9,8 +9,7 @@
 class Entity {
 public:
 	// list of possible componenets
-	static unsigned ID;
-	unsigned myID;
+	unsigned					componentTypes;
 	HealthComponent				*health;
 	WorldComponent				*world;
 	RenderComponent				*render;
@@ -18,12 +17,7 @@ public:
 	PathAIComponent				*path;
 	SpawnComponent				*spawn;
 	KeyboardInputComponent		*keyboard;
-	unsigned					componentTypes;
 
-	Entity();
-	Entity( const Entity& entity );
-	Entity& operator=( const Entity& entity );
-	bool	operator==( const Entity& entity );
 	Entity( unsigned components );
 	~Entity();
 private:

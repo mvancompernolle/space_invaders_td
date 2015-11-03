@@ -40,13 +40,13 @@ void SpaceInvadersTD::init() {
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
 	
-	for ( int i = 0; i < 300; ++i ) {
+	for ( int i = 0; i < 0; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
 	}
 
-	//int ent = EntityFactory::createEntity( &world, (HEALTH | WORLD | RENDER | MOVEMENT));
+	int ent = EntityFactory::createEnemy( &world );
 	
 	/*for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 5, i );
@@ -66,28 +66,31 @@ void SpaceInvadersTD::init() {
 	placeBaseTower( 2, 2 );
 	placeBaseTower( 1, 0 );*/
 
-	/*// create systems
+	// create systems
 	systems.push_back( new MovementSystem);
-	systems.push_back( new PathSystem );
+	//systems.push_back( new PathSystem );
 	systems.push_back( new SpawnSystem );
-	PathSystem* path = (PathSystem*) systems[1];
+	//PathSystem* path = (PathSystem*) systems[1];
 
 	// set game values
 	currGridPulseTime = 0.0f;
 
+	
 	// create portal
-	Entity ent = EntityFactory::createSpawner();
-	ent.world->pos = glm::vec2( 0, (NUM_GRID_ROWS * gridSize) / 2.0f);
-	ent.spawn->spawnRate = 1.0f;
+	int pos = EntityFactory::createSpawner( &world );
+	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
+	SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( pos, SPAWN )];
+	worldComp.pos = glm::vec2( 0, (NUM_GRID_ROWS * gridSize) / 2.0f);
+	spawnComp.spawnRate = 1.0f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
 		info.num = 1000;
 		info.spawnType = nullptr;
-		ent.spawn->spawnTypes.push_back( info );
-		entities.push_back( ent );
+		spawnComp.spawnTypes.push_back( info );
 	}
-	path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
+	//path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
 
+	/*
 	// create player
 	Entity ent2 = EntityFactory::createPlayer();
 	// init world data
@@ -125,14 +128,14 @@ STATE SpaceInvadersTD::update( const float dt ) {
 	currGridPulseTime += dt * 3.14;
 
 	for ( auto& system : systems ) {
-		for ( Entity& ent : entities ) {
-			if ( system->condition( ent.componentTypes ) ) {
+		for ( int i = 0; i < NUM_ENTITIES; ++i ) {
+			if ( system->condition( world.entities[i].mask ) ) {
 				// update any entities that use the system
-				system->update( ent, dt );
+				system->update( &world, i, dt );
 			}
 		}
 		// add any changes to entities caused by the system
-		system->adjustEntityVector( entities );
+ 		system->adjustEntityVector( &world );
 		// reset the systems entity additiosn / removals
 	}
 

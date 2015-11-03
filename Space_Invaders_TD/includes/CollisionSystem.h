@@ -12,7 +12,7 @@ class CollisionSystem : public System {
 public:
 	CollisionSystem();
 	~CollisionSystem();
-	virtual void update( const Entity& entity, float dt ) = 0;
+	void update( World* world, int pos, float dt );
 	static bool arePolygonsIntersecting( std::vector<glm::vec2> p1, std::vector<glm::vec2> p2 );
 };
 

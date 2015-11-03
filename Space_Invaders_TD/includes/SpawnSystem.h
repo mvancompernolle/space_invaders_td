@@ -9,7 +9,7 @@ class SpawnSystem : public System {
 public:
 	SpawnSystem();
 	~SpawnSystem();
-	void update( const Entity& entity, float dt );
+	void update( World* world, int pos, float dt );
 };
 
 #endif // SPAWN_SYSTEM_H

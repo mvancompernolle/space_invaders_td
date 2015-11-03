@@ -21,7 +21,7 @@ class PathSystem : public System {
 public:
 	PathSystem();
 	~PathSystem();
-	void update( const Entity& entity, float dt );
+	void update( World* world, int pos, float dt );
 	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius, const Grid& grid );
 private:
 	std::vector<glm::vec2> path;

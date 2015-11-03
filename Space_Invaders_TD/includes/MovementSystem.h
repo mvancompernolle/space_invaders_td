@@ -9,7 +9,7 @@ class MovementSystem : public System {
 public:
 	MovementSystem();
 	~MovementSystem();
-	void update( const Entity& entity, float dt );
+	void update( World* world, int pos, float dt );
 };
 
 #endif // MOVEMENT_SYSTEM

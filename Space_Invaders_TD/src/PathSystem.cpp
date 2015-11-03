@@ -14,19 +14,22 @@ PathSystem::PathSystem() {
 PathSystem::~PathSystem() {
 }
 
-void PathSystem::update( const Entity& entity, float dt ) {
-	if ( entity.path->pathIndex == -1 || glm::distance( entity.world->pos, entity.path->target ) < entity.world->size.x * 0.2f ) {
+void PathSystem::update( World* world, int pos, float dt ) {
+	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( pos, WORLD )];
+	MovementComponent& movComp = world->movementComponents[world->getComponentIndex( pos, MOVEMENT )];
+	PathAIComponent& pathComp = world->pathComponents[world->getComponentIndex( pos, PATH )];
+
+	if ( pathComp.pathIndex == -1 || glm::distance( worldComp.pos, pathComp.target ) < worldComp.size.x * 0.2f ) {
 		//entity.path->pathIndex = (entity.path->pathIndex + 1) % path.size();
-		entity.path->pathIndex++;
-		if ( entity.path->pathIndex == path.size() ) {
-			removals.push_back( entity );
+		pathComp.pathIndex++;
+		if ( pathComp.pathIndex == path.size() ) {
+			removals.push_back( pos );
 		} else {
-			entity.path->target = path[entity.path->pathIndex] - entity.world->size / 2.0f;
+			pathComp.target = path[pathComp.pathIndex] - worldComp.size / 2.0f;
 		}
 	} else {
 		// make sure to head towards target
-		assert( entity.world != nullptr );
-		entity.movement->vel = glm::normalize( entity.path->target - entity.world->pos ) * glm::length( entity.movement->vel );
+		movComp.vel = glm::normalize( pathComp.target - worldComp.pos ) * glm::length( movComp.vel );
 	}
 }
 

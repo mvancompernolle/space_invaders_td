@@ -3,8 +3,9 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include "Entity.h"
+#include "World.h"
 #include "Component.h"
+#include "Entity.h"
 #include <vector>
 
 class System {
@@ -12,11 +13,12 @@ public:
 	System();
 	~System();
 	bool condition( unsigned componentTypes );
-	virtual void update( const Entity& entity, float dt ) = 0;
-	void adjustEntityVector( std::vector<Entity>& src );
+	virtual void update( World* world, int pos, float dt ) = 0;
+	void adjustEntityVector( World* world );
 protected:
 	unsigned int flags;
-	std::vector<Entity> additions, removals;
+	std::vector<int> removals;
+	std::vector<Entity> additions;
 };
 
 #endif // SYSTEM_H

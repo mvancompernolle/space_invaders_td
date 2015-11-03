@@ -11,7 +11,7 @@ CollisionSystem::~CollisionSystem()
 {
 }
 
-void CollisionSystem::update( const Entity& entity, float dt ) {
+void CollisionSystem::update( World* world, int pos, float dt ) {
 
 }
 

@@ -69,7 +69,21 @@ int EntityFactory::createPlayer( World* world ) {
 }
 
 int EntityFactory::createSpawner( World* world ) {
-	return 0;
+	int index = world->entities.create();
+	world->entities[index].mask = ( RENDER | WORLD | SPAWN );
+	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
+	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
+	world->entities[index].componentIndices[SPAWN] = world->spawnComponents.create();
+
+	// initialize values
+	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
+	worldComp.rotation = 0.0f;
+	worldComp.size = glm::vec2( 64 );
+	RenderComponent& renderComp = world->renderComponents[world->entities[index].componentIndices[RENDER]];
+	renderComp.color = glm::vec3( 1.0f );
+	renderComp.textureName = "portal";
+
+	return index;
 }
 
 

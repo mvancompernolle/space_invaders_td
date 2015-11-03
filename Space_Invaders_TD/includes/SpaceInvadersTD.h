@@ -30,7 +30,6 @@ private:
 	float currGridPulseTime;
 	Grid grid;
 	std::vector<System*> systems;
-	std::vector<Entity> entities;
 	World world;
 };
 
