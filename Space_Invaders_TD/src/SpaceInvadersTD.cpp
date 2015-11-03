@@ -83,7 +83,7 @@ void SpaceInvadersTD::init() {
 	spawnComp.spawnRate = 0.5f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
-		info.num = 1000;
+		info.num = 100000;
 		info.spawnType = nullptr;
 		spawnComp.spawnTypes.push_back( info );
 	}
