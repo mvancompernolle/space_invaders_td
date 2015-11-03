@@ -39,19 +39,20 @@ public:
 
 	int create() {
 		// make sure the pool isn't full
-		assert( firstAvailable != nullptr );
+		assert( firstAvailable != nullptr && "NO MORE COMPONENTS AVAILABLE" );
 
 		// remove it from the available list
 		Component<T> *newComponent = firstAvailable;
 		firstAvailable = newComponent->getNext();
 
-		return ( newComponent - components );
+		ptrdiff_t index = newComponent - components;
+		return index;
 	}
 
 	void remove( int i ) {
 		// add this particle to the front of the list
 		components[i].setNext( firstAvailable );
-		firstAvailable = components + i;
+		firstAvailable = &components[i];
 	}
 
 	T& operator[]( int pos ) {

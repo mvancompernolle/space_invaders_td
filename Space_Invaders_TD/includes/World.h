@@ -23,30 +23,29 @@ struct World {
 	ComponentPool<RenderComponent, 2048> renderComponents;
 
 	int getComponentIndex( int pos, COMPONENT_TYPE type ) {
-		return entities[pos].componentIndices[WORLD];
+		return entities[pos].componentIndices[type];
 	}
 
 	void removeEntity( int pos ) {
 		for ( int i = 1; i < COMPONENT_SIZE; i <<= 1 ) {
 			switch ( i & entities[pos].mask ) {
 			case HEALTH:
-				healthComponents.remove( pos );
+				healthComponents.remove( getComponentIndex( pos, HEALTH) );
 				break;
 			case WORLD:
-				worldComponents.remove( pos );
+				worldComponents.remove( getComponentIndex( pos, WORLD ) );
 				break;
 			case RENDER:
-				renderComponents.remove( pos );
+				renderComponents.remove( getComponentIndex( pos, RENDER ) );
 				break;
 			case MOVEMENT:
-				movementComponents.remove( pos );
+				movementComponents.remove( getComponentIndex( pos, MOVEMENT ) );
 				break;
 			case PATH:
-				pathComponents.remove( pos );
+				pathComponents.remove( getComponentIndex( pos, PATH ) );
 				break;
 			case SPAWN:
-				spawnComponents.remove( pos );
-				break;
+				spawnComponents.remove( getComponentIndex( pos, SPAWN ) );
 			}
 		}
 		entities[pos].mask = NONE;

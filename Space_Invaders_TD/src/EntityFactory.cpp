@@ -12,12 +12,12 @@ EntityFactory::~EntityFactory() {
 int EntityFactory::createEntity( World* world, unsigned mask ) {
 	int index = world->entities.create();
 	world->entities[index].mask = mask;
-	if ( mask | WORLD ) { world->entities[index].componentIndices[WORLD] = world->worldComponents.create(); }
-	if ( mask | HEALTH ) { world->entities[index].componentIndices[HEALTH] = world->healthComponents.create(); }
-	if ( mask | RENDER ) { world->entities[index].componentIndices[RENDER] = world->renderComponents.create(); }
-	if ( mask | PATH ) { world->entities[index].componentIndices[PATH] = world->pathComponents.create(); }
-	if ( mask | MOVEMENT ) { world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create(); }
-	if ( mask | SPAWN ) { world->entities[index].componentIndices[SPAWN] = world->spawnComponents.create(); }
+	if ( mask & WORLD ) { world->entities[index].componentIndices[WORLD] = world->worldComponents.create(); }
+	if ( mask & HEALTH ) { world->entities[index].componentIndices[HEALTH] = world->healthComponents.create(); }
+	if ( mask & RENDER ) { world->entities[index].componentIndices[RENDER] = world->renderComponents.create(); }
+	if ( mask & PATH ) { world->entities[index].componentIndices[PATH] = world->pathComponents.create(); }
+	if ( mask & MOVEMENT ) { world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create(); }
+	if ( mask & SPAWN ) { world->entities[index].componentIndices[SPAWN] = world->spawnComponents.create(); }
 	return index;
 }
 
@@ -78,10 +78,12 @@ int EntityFactory::createSpawner( World* world ) {
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
 	worldComp.rotation = 0.0f;
-	worldComp.size = glm::vec2( 64 );
-	RenderComponent& renderComp = world->renderComponents[world->entities[index].componentIndices[RENDER]];
+	worldComp.size = glm::vec2( 32 );
+	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "portal";
+	SpawnComponent& spawnComp = world->spawnComponents[world->getComponentIndex( index, SPAWN )];
+	spawnComp.numRounds = 20;
 
 	return index;
 }

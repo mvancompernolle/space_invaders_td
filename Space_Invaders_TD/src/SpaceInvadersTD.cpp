@@ -39,15 +39,14 @@ void SpaceInvadersTD::init() {
 	// spawn towers
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
-	
-	for ( int i = 0; i < 0; ++i ) {
+
+	for ( int i = 0; i < 350; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
 	}
 
-	int ent = EntityFactory::createEnemy( &world );
-	
+
 	/*for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 5, i );
 	}
@@ -57,8 +56,8 @@ void SpaceInvadersTD::init() {
 	for ( int i = 0; i < NUM_GRID_ROWS-1; ++i ) {
 		placeBaseTower( 9, i );
 	}*/
-	
-	
+
+
 
 	/*glm::uvec2 dest = glm::uvec2( 7, 2 );
 	placeBaseTower( 6, 1 );
@@ -67,28 +66,28 @@ void SpaceInvadersTD::init() {
 	placeBaseTower( 1, 0 );*/
 
 	// create systems
-	systems.push_back( new MovementSystem);
-	//systems.push_back( new PathSystem );
+	systems.push_back( new MovementSystem );
+	systems.push_back( new PathSystem );
 	systems.push_back( new SpawnSystem );
-	//PathSystem* path = (PathSystem*) systems[1];
+	PathSystem* path = (PathSystem*)systems[1];
 
 	// set game values
 	currGridPulseTime = 0.0f;
 
-	
+
 	// create portal
 	int pos = EntityFactory::createSpawner( &world );
 	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
 	SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( pos, SPAWN )];
-	worldComp.pos = glm::vec2( 0, (NUM_GRID_ROWS * gridSize) / 2.0f);
-	spawnComp.spawnRate = 1.0f;
+	worldComp.pos = glm::vec2( 0, ( NUM_GRID_ROWS * gridSize ) / 2.0f );
+	spawnComp.spawnRate = 0.5f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
 		info.num = 1000;
 		info.spawnType = nullptr;
 		spawnComp.spawnTypes.push_back( info );
 	}
-	//path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
+	path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
 
 	/*
 	// create player
@@ -135,7 +134,7 @@ STATE SpaceInvadersTD::update( const float dt ) {
 			}
 		}
 		// add any changes to entities caused by the system
- 		system->adjustEntityVector( &world );
+		system->adjustEntityVector( &world );
 		// reset the systems entity additiosn / removals
 	}
 
@@ -147,7 +146,7 @@ void SpaceInvadersTD::render() {
 	ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "game_background" ), glm::vec2( 0.0f ), glm::vec2( GAME_WIDTH, GAME_HEIGHT ), 0.0f );
 
 	// render game grid lines
-	float gridSize = (float) GAME_WIDTH / NUM_GRID_COLS;
+	float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
 
 	// render horizontal lines
 	for ( int i = 1; i <= NUM_GRID_ROWS; ++i ) {
@@ -168,14 +167,19 @@ void SpaceInvadersTD::render() {
 		}
 	}
 
-	/*// render entities
-	unsigned renderFlags = WORLD | RENDER;
-	for ( Entity& ent : entities ) {
-		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
-			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( ent.render->textureName ), ent.world->pos,
-				ent.world->size, ent.world->rotation );
+	// render health bars
+	renderFlags = WORLD | HEALTH;
+	for ( int i = 0; i < NUM_ENTITIES; i++ ) {
+		if ( !( ( renderFlags ^ world.entities[i].mask ) & renderFlags ) ) {
+			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( i, HEALTH )];
+			WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( i, WORLD )];
+			ServiceLocator::getGraphics().draw2DBox( worldComp.pos - glm::vec2( 0.0f, worldComp.size.y * 0.2f ),
+				glm::vec2( worldComp.size.x, worldComp.size.y * 0.2f ), glm::vec3( 1.0f, 0.0f, 1.0f ) );
+			float padding = 1.0f;
+			ServiceLocator::getGraphics().draw2DBox( worldComp.pos - glm::vec2( -padding, worldComp.size.y * 0.2f - padding ),
+				glm::vec2( ( worldComp.size.x - ( 2.0f * padding ) ) * ( healthComp.currHP / healthComp.maxHP ), worldComp.size.y * 0.2f - ( 2.0f * padding ) ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 		}
-	}*/
+	}
 
 	// render health bars
 	/*renderFlags = WORLD | HEALTH;
@@ -196,7 +200,7 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	// create the tower
 	int pos = EntityFactory::createBaseTower( &world );
 	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
-	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex(pos, WORLD)];
+	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
 	worldComp.size = glm::vec2( gridSize );
 	worldComp.pos = glm::vec2( x * gridSize, y * gridSize );
 
