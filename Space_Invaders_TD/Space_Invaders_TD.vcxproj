@@ -122,6 +122,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\HealthSystem.cpp" />
+    <ClCompile Include="src\PlayerInputSystem.cpp" />
     <ClCompile Include="src\OnKeyObserver.cpp" />
     <ClCompile Include="src\OnKeySubject.cpp" />
     <ClCompile Include="src\CollisionSystem.cpp" />
@@ -153,6 +155,7 @@
     <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\HealthSystem.h" />
     <ClInclude Include="includes\CollisionSystem.h" />
     <ClInclude Include="includes\ComponentPool.h" />
     <ClInclude Include="includes\PathSystem.h" />
@@ -188,6 +191,7 @@
     <ClInclude Include="includes\OnKeySubject.h" />
     <ClInclude Include="includes\OnKeyObserver.h" />
     <ClInclude Include="includes\World.h" />
+    <ClInclude Include="includes\PlayerInputSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

@@ -10,38 +10,38 @@ Input::~Input()
 
 void Input::setKeyPressed( unsigned int type )
 {
-	keysPressed[inputMap[type]] = GL_TRUE;
-	notifyKeyPress( inputMap[type] );
+	keysPressed[type] = GL_TRUE;
+	notifyKeyPress( type );
 }
 
 void Input::setKeyProcessed( unsigned int type )
 {
-	if ( keysPressed[inputMap[type]] ) {
-		keysProcessed[inputMap[type]] = GL_TRUE;
+	if ( keysPressed[type] ) {
+		keysProcessed[type] = GL_TRUE;
 	}
 }
 
 void Input::setKeyReleased( unsigned int type )
 {
-	keysPressed[inputMap[type]] = GL_FALSE;
-	keysProcessed[inputMap[type]] = GL_FALSE;
-	notifyKeyRelease( inputMap[type] );
+	keysPressed[type] = GL_FALSE;
+	keysProcessed[type] = GL_FALSE;
+	notifyKeyRelease( type );
 	notifyRelease( glm::vec2( mouseX, mouseY ) );
 }
 
 void Input::setMouseButtonClicked( unsigned int type ) {
-	keysPressed[inputMap[type]] = GL_TRUE;
+	keysPressed[type] = GL_TRUE;
 	notifyClick( glm::vec2( mouseX, mouseY ) );
 }
 
 GLboolean Input::getKeyPressed( unsigned int type ) const
 {
-	return keysPressed[inputMap.at(type)];
+	return keysPressed[type];
 }
 
 GLboolean Input::keyNotProcessed( unsigned int type ) const
 {
-	return !keysProcessed[inputMap.at(type)];
+	return !keysProcessed[type];
 }
 
 void Input::setMousePos( GLfloat x, GLfloat y ) {
@@ -61,4 +61,8 @@ void Input::scrollOffset( GLfloat x, GLfloat y ) {
 	if ( y != 0 ) {
 		notifyVerticalScroll( y, glm::vec2( mouseX, mouseY ) );
 	}
+}
+
+unsigned Input::getKeyIndex( unsigned key ) const {
+	return (unsigned) inputMap.at(key);
 }

@@ -5,6 +5,7 @@
 
 #include "Entity.h"
 #include "World.h"
+#include "CollisionSystem.h"
 #include <vector>
 
 class EntityFactory {
@@ -12,12 +13,17 @@ class EntityFactory {
 public:
 	EntityFactory();
 	~EntityFactory();
-	static int createEntity( World* world, unsigned mask );
-	static int createEnemy( World* world );
-	static int createBaseTower( World* world );
-	static int createPlayer( World* world );
-	static int createSpawner( World* world );
+	static void setWorld( World* world );
+	static void setCollisionSystem( CollisionSystem* collisionSystem );
+	static void removeEntity( int pos );
+	static int createEntity( unsigned mask );
+	static int createEnemy();
+	static int createBaseTower();
+	static int createPlayer();
+	static int createSpawner();
 private:
+	static World* world;
+	static CollisionSystem* collisionSystem;
 };
 
 #endif // ENTITY_FACTORY

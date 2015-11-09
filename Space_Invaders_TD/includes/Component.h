@@ -10,45 +10,51 @@
 #include <functional>
 #include <map>
 #include "OnKeyObserver.h"
+#include "Input.h"
 
 class Entity;
 
-enum SHAPE { RECTANGLE, CIRCLE };
+enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1};
+enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1};
+
 enum COMPONENT_TYPE {
 	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
-	COLLISION = PATH << 1, KEYBOARD = COLLISION << 1, COMPONENT_SIZE = KEYBOARD << 1
+	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
+	MONEY = DAMAGE << 1,
+	COMPONENT_SIZE = MONEY << 1,
 };
 
 struct HealthComponent {
-	const static COMPONENT_TYPE type = HEALTH;
 	float currHP, maxHP;
-	HealthComponent() : currHP( 0.0f ), maxHP( 0.0f ) {}
+	float voidArmor, plasmaArmor, iceArmor;
+	HealthComponent() : currHP( 0.0f ), maxHP( 0.0f ), voidArmor( 0.5f ), plasmaArmor( 0.5f ), iceArmor( 0.5f ) {}
+};
+
+struct DamageComponent {
+	float trueDmg, voidDmg, plasmaDmg, iceDmg;
+	DamageComponent() : trueDmg( 1.0f ), voidDmg( 1.0f ), plasmaDmg( 1.0f ), iceDmg( 1.0f ) {}
 };
 
 struct WorldComponent {
-	const static COMPONENT_TYPE type = WORLD;
 	glm::vec2 pos, size;
 	float rotation;
 	WorldComponent() : pos( glm::vec2( 0, 0 ) ), size( glm::vec2( 10, 10 ) ) {}
 };
 
 struct RenderComponent {
-	const static COMPONENT_TYPE type = RENDER;
 	glm::vec3 color;
 	std::string textureName;
 	RenderComponent() {}
 };
 
 struct MovementComponent {
-	const static COMPONENT_TYPE type = MOVEMENT;
 	glm::vec2 vel;
 	float defSpeed;
 	MovementComponent() : vel( glm::vec2( 0.0f ) ), defSpeed( 0.0f ) {}
 };
 
 struct PathAIComponent {
-	const static COMPONENT_TYPE type = PATH;
 	glm::vec2 target;
 	unsigned pathIndex;
 	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex( -1 ) {}
@@ -60,7 +66,6 @@ struct SpawnInfo {
 };
 
 struct SpawnComponent {
-	const static COMPONENT_TYPE type = SPAWN;
 	float spawnRate, dt;
 	unsigned round, numRounds, currSpawnNum;
 	std::vector<SpawnInfo> spawnTypes;
@@ -68,33 +73,29 @@ struct SpawnComponent {
 };
 
 struct CollisionComponent {
-	const static COMPONENT_TYPE type = COLLISION;
 	SHAPE shape;
-	CollisionComponent() : shape( RECTANGLE ) {}
+	unsigned collisionID;
+	unsigned collisionMask;
+	CollisionComponent() : shape( RECTANGLE ), collisionID(0), collisionMask(0) {}
 };
 
-struct KeyboardInputComponent : public OnKeyObserver {
-public:
-	Entity* parent;
-	std::map<unsigned, std::function<void( Entity* )>> onPressFunctions;
-	std::map<unsigned, std::function<void( Entity* )>> onReleaseFunctions;
+struct PlayerInputComponent {
+	std::vector<unsigned> leftInputs;
+	std::vector<unsigned> rightInputs;
+	std::vector<unsigned> shootPrimaryInputs;
+	std::vector<unsigned> shootSecondaryInputs;
 
-	KeyboardInputComponent( Entity* ent ) : parent( ent ) {}
+	PlayerInputComponent() {
+		leftInputs.push_back( (unsigned)KEY_A );
+		rightInputs.push_back( (unsigned)KEY_D );
+		shootPrimaryInputs.push_back( (unsigned)MOUSE_BUTTON_LEFT );
+		shootSecondaryInputs.push_back( (unsigned)MOUSE_BUTTON_RIGHT );
+	}
+};
 
-	void onKeyPressed( unsigned key ) {
-		// call function for key if it is set
-		auto it = onPressFunctions.find( key );
-		if ( it != onPressFunctions.end() ) {
-			it->second( parent );
-		}
-	};
-	void onKeyReleased( unsigned key ) {
-		// call function for key if it is set
-		auto it = onReleaseFunctions.find( key );
-		if ( it != onReleaseFunctions.end() ) {
-			it->second( parent );
-		}
-	};
+struct MoneyComponent {
+	int value;
+	MoneyComponent() : value( 0 ) {}
 };
 
 #endif // COMPONENT_H

@@ -29,7 +29,7 @@ int main() {
 
 	// initialize services
 	Input* input = new GLFWInput();
-	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD", 1920, 1080);
+	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD", 1800, 1000);
 	Graphics *graphics = gr;
 	Audio* audio = new irrKlangAudio();
 
@@ -124,9 +124,9 @@ void keyCallBack( GLFWwindow* window, GLint key, GLint scanCode, GLint action, G
 	}
 	if ( key >= 0 && key < 1024 ) {
 		if ( action == GLFW_PRESS ) {
-			ServiceLocator::getInput().setKeyPressed( key );
+			ServiceLocator::getInput().setKeyPressed( ServiceLocator::getInput().getKeyIndex(key) );
 		} else if ( action == GLFW_RELEASE ) {
-			ServiceLocator::getInput().setKeyReleased( key );
+			ServiceLocator::getInput().setKeyReleased( ServiceLocator::getInput().getKeyIndex( key ) );
 		}
 	}
 }
@@ -137,11 +137,11 @@ void cursorPosCallBack( GLFWwindow* window, GLdouble xPos, GLdouble yPos ) {
 
 void mouseButtonCallBack( GLFWwindow* window, GLint button, GLint action, GLint mods ) {
 	if ( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_1 ) {
-		ServiceLocator::getInput().setMouseButtonClicked( button );
+		ServiceLocator::getInput().setMouseButtonClicked( ServiceLocator::getInput().getKeyIndex( button ) );
 	} else if ( action == GLFW_PRESS ) {
-		ServiceLocator::getInput().setKeyPressed( button );
+		ServiceLocator::getInput().setKeyPressed( ServiceLocator::getInput().getKeyIndex( button ) );
 	} else {
-		ServiceLocator::getInput().setKeyReleased( button );
+		ServiceLocator::getInput().setKeyReleased( ServiceLocator::getInput().getKeyIndex( button ) );
 	}
 }
 

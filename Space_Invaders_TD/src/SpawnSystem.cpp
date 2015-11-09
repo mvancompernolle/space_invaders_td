@@ -21,7 +21,7 @@ void SpawnSystem::update( World* world, int pos, float dt ) {
 			spawnComp.dt -= spawnComp.spawnRate;
 
 			// spawn an enemy
-			Entity ent( HEALTH | RENDER | WORLD | MOVEMENT | PATH );
+			Entity ent( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION | MONEY );
 
 			// init world data
 			ent.world.pos = worldComp.pos;
@@ -37,10 +37,16 @@ void SpawnSystem::update( World* world, int pos, float dt ) {
 			ent.render.textureName = "enemy";
 			// init ai data
 			ent.path.target = glm::vec2( 0.0f, 0.0f );
-			additions.push_back( ent );
+			// init collision data
+			ent.collision.collisionID = ENEMY;
+			ent.collision.collisionMask = BULLET;
+			ent.collision.shape = CIRCLE;
+			// init value when killed
+			ent.money.value = 1;
 
 			// increment number of entities spawned
 			spawnComp.currSpawnNum++;
+			additions.push_back( ent );
 		}
 	}
 }

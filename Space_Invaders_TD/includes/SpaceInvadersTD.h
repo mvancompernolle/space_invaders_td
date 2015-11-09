@@ -5,6 +5,7 @@
 
 #include "consts.h"
 #include "System.h"
+#include "CollisionSystem.h"
 #include "Grid.h"
 #include "World.h"
 #include <vector>
@@ -22,15 +23,19 @@ public:
 	~SpaceInvadersTD();
 	void init();
 	STATE update( const float dt );
-	void placeBaseTower( unsigned x, unsigned y );
 	void render();
 private:
 	const float GRID_PULSE_TIME = 2.0f;
 	const float GRID_PULSE_AMOUNT = 0.05f;
 	float currGridPulseTime;
 	Grid grid;
+	unsigned money;
 	std::vector<System*> systems;
 	World world;
+	CollisionSystem collisionSystem;
+
+	void placeBaseTower( unsigned x, unsigned y );
+	void handleCollisionEvents();
 };
 
 #endif SPACE_INVADERS_TD_H

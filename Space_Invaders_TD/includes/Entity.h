@@ -16,7 +16,10 @@ public:
 	MovementComponent			movement;
 	PathAIComponent				path;
 	SpawnComponent				spawn;
-	KeyboardInputComponent		keyboard;
+	PlayerInputComponent        playerInput;
+	CollisionComponent			collision;
+	DamageComponent				damage;
+	MoneyComponent				money;
 
 	Entity( unsigned components );
 	~Entity();

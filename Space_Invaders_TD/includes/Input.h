@@ -32,6 +32,7 @@ public:
 	virtual	void						setMousePos( GLfloat x, GLfloat y );
 	virtual void						scrollOffset( GLfloat x, GLfloat y );
 	virtual glm::vec2					getMousePos() const;
+	unsigned							getKeyIndex( unsigned key ) const;
 protected:
 										Input();
 	std::map<unsigned int, INPUT_TYPE>	inputMap;

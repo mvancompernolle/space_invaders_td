@@ -1,9 +1,10 @@
 #include "CollisionSystem.h"
-
-
+#include "Consts.h"
+#include <algorithm>
 
 CollisionSystem::CollisionSystem()
 {
+	flags = ( COLLISION | WORLD );
 }
 
 
@@ -11,8 +12,54 @@ CollisionSystem::~CollisionSystem()
 {
 }
 
-void CollisionSystem::update( World* world, int pos, float dt ) {
+void CollisionSystem::clearCollisionEvents() {
+	collisions.clear();
+}
 
+void CollisionSystem::registerEntity( unsigned entity ) {
+	registeredEntities.push_back( entity );
+}
+
+void CollisionSystem::unregisterEntity( unsigned entity ) {
+	registeredEntities.erase( std::remove( registeredEntities.begin(), registeredEntities.end(), entity ), registeredEntities.end() );
+}
+
+void CollisionSystem::update( World* world ) {
+
+	for ( int i = 0; i < (int) registeredEntities.size() - 1; ++i ) {
+		for ( int j = i + 1; j < (int) registeredEntities.size(); ++j ) {
+			CollisionComponent& collComp1 = world->collisionComponents[world->getComponentIndex( registeredEntities[i], COLLISION )];
+			CollisionComponent& collComp2 = world->collisionComponents[world->getComponentIndex( registeredEntities[j], COLLISION )];
+
+			// check to see if the two objects collide
+			// make sure both entities have correct components and are set to check for collisions with eachother
+			if ( !( ( flags ^ world->entities[registeredEntities[i]].mask ) & flags ) && !( ( flags ^ world->entities[registeredEntities[j]].mask ) & flags ) 
+				&& (collComp1.collisionMask & collComp2.collisionID) ) {
+				WorldComponent& worldComp1 = world->worldComponents[world->getComponentIndex( registeredEntities[i], WORLD )];
+				WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( registeredEntities[j], WORLD )];
+
+				// check collision based on collision type
+				bool wasCollision = false;
+				unsigned shapes = ( collComp1.shape | collComp2.shape );
+				if ( shapes == RECTANGLE ) {
+					wasCollision = areRectsIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size, worldComp2.size );
+				} else if ( shapes == CIRCLE ) {
+					wasCollision = areCirclesIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size.x / 2.0f, worldComp2.size.x / 2.0f );
+				} else if ( shapes == ( RECTANGLE | CIRCLE ) ) {
+					if ( collComp1.shape == RECTANGLE ) {
+						wasCollision = areRectCircleIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size, worldComp2.size.x / 2.0f, worldComp1.rotation );
+					} else {
+						wasCollision = areRectCircleIntersecting( worldComp2.pos, worldComp1.pos, worldComp2.size, worldComp1.size.x / 2.0f, worldComp2.rotation );
+					}
+				}
+
+				// add collision event if there was one
+				if ( wasCollision ) {
+					createCollisionEvents( registeredEntities[i], registeredEntities[j] );
+				}
+			}
+		}
+	}
 }
 
 bool CollisionSystem::arePolygonsIntersecting( std::vector<glm::vec2> p1, std::vector<glm::vec2> p2 ) {
@@ -68,4 +115,43 @@ bool CollisionSystem::arePolygonsIntersecting( std::vector<glm::vec2> p1, std::v
 
 	}
 	return true;
+}
+
+bool CollisionSystem::areRectsIntersecting( glm::vec2 pos1, glm::vec2 pos2, glm::vec2 size1, glm::vec2 size2 ) {
+	return ( pos1.x + size1.x >= pos2.x ) && ( pos2.x + size2.x >= pos1.x )
+		&& ( pos1.y + size1.y >= pos2.y ) && ( pos2.y + size2.y >= pos1.y );
+}
+
+bool CollisionSystem::areCirclesIntersecting( glm::vec2 pos1, glm::vec2 pos2, float radius1, float radius2 ) {
+	return glm::distance( pos1, pos2 ) <= radius1 + radius2;
+}
+
+bool CollisionSystem::areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 cirPos, glm::vec2 rectSize, float cirRadius, float rectRot ) {
+	glm::vec2 circlePos = cirPos;
+	if ( rectRot != 0.0f ) {
+		// if rectangle is rotated, rotate circle with respect to the rectangles origin center
+		GLfloat angle = -rectRot * ( PI / 180.0f );
+		GLfloat unrotatedCircleX = std::cos( angle ) * ( cirPos.x - rectPos.x ) - std::sin( angle ) * ( cirPos.y - rectPos.y ) + rectPos.x;
+		GLfloat unrotatedCircleY = std::sin( angle ) * ( cirPos.x - rectPos.x ) + std::cos( angle ) * ( cirPos.y - rectPos.y ) + rectPos.y;
+		circlePos = glm::vec2( unrotatedCircleX, unrotatedCircleY ) - cirRadius;
+	}
+
+	// calculate center of ball and rect
+	glm::vec2 centerBall( circlePos + cirRadius );
+	glm::vec2 rectHalfExtents( rectSize.x / 2, rectSize.y / 2 );
+	glm::vec2 centerRect( rectPos.x + rectHalfExtents.x, rectPos.y + rectHalfExtents.y );
+
+	// get direction between ball and rect and clamp it to edge of rectangle
+	glm::vec2 direction = centerBall - centerRect;
+	glm::vec2 clamped = glm::clamp( direction, -rectHalfExtents, rectHalfExtents );
+
+	// find the closest point of rect and se if it is in circle's radius
+	glm::vec2 closest = centerRect + clamped;
+	direction = closest - centerBall;
+
+	return glm::length( direction ) <= cirRadius ;
+}
+
+void CollisionSystem::createCollisionEvents( unsigned ent1, unsigned ent2 ) {
+	collisions.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
 }

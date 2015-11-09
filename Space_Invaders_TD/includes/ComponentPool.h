@@ -10,10 +10,10 @@ template<typename T>
 class Component {
 public:
 	T data;
+	Component<T>* next;
 	Component<T>* getNext() const { return next; }
 	void setNext( Component<T>* n ) { next = n; }
 private:
-	Component<T>* next;
 };
 
 
@@ -45,17 +45,23 @@ public:
 		Component<T> *newComponent = firstAvailable;
 		firstAvailable = newComponent->getNext();
 
+		// set next to null to indicate that it is taken
+		newComponent->setNext( nullptr );
+
 		ptrdiff_t index = newComponent - components;
 		return index;
 	}
 
 	void remove( int i ) {
-		// add this particle to the front of the list
-		components[i].setNext( firstAvailable );
-		firstAvailable = &components[i];
+		if ( components[i].getNext() == nullptr ) {
+			// add this particle to the front of the list
+			components[i].setNext( firstAvailable );
+			firstAvailable = &components[i];
+		}
 	}
 
 	T& operator[]( int pos ) {
+		assert( pos < S && pos > -1 && "Component access out of bounds" );
 		return components[pos].data;
 	}
 

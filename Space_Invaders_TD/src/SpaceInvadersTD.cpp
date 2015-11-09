@@ -5,9 +5,13 @@
 #include "MovementSystem.h"
 #include "PathSystem.h"
 #include "SpawnSystem.h"
+#include "PlayerInputSystem.h"
+#include "HealthSystem.h"
 #include <ctime>
 #include <cassert>
 #include <iostream>
+#include <thread>
+#include <sstream>
 
 SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
@@ -15,6 +19,10 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
 	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
+
+	// initialize entity factor
+	EntityFactory::setWorld( &world );
+	EntityFactory::setCollisionSystem( &collisionSystem );
 }
 
 
@@ -25,6 +33,8 @@ SpaceInvadersTD::~SpaceInvadersTD() {
 }
 
 void SpaceInvadersTD::init() {
+	money = 0;
+
 	// create grid
 	float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
 	grid.resize( NUM_GRID_ROWS );
@@ -40,7 +50,7 @@ void SpaceInvadersTD::init() {
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
 
-	for ( int i = 0; i < 350; ++i ) {
+	for ( int i = 0; i < 100; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
@@ -66,21 +76,23 @@ void SpaceInvadersTD::init() {
 	placeBaseTower( 1, 0 );*/
 
 	// create systems
+	systems.push_back( new PlayerInputSystem );
+	systems.push_back( new HealthSystem );
 	systems.push_back( new MovementSystem );
-	systems.push_back( new PathSystem );
+	PathSystem* path = new PathSystem;
+	systems.push_back( path );
 	systems.push_back( new SpawnSystem );
-	PathSystem* path = (PathSystem*)systems[1];
 
 	// set game values
 	currGridPulseTime = 0.0f;
 
 
 	// create portal
-	int pos = EntityFactory::createSpawner( &world );
+	int pos = EntityFactory::createSpawner();
 	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
 	SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( pos, SPAWN )];
 	worldComp.pos = glm::vec2( 0, ( NUM_GRID_ROWS * gridSize ) / 2.0f );
-	spawnComp.spawnRate = 0.5f;
+	spawnComp.spawnRate = 0.25f;
 	for ( int i = 0; i < 20; i++ ) {
 		SpawnInfo info;
 		info.num = 100000;
@@ -89,37 +101,8 @@ void SpaceInvadersTD::init() {
 	}
 	path->calcOptimalPath( glm::uvec2( 0, ( NUM_GRID_ROWS ) / 2.0f ), dest, 64, grid );
 
-	/*
 	// create player
-	Entity ent2 = EntityFactory::createPlayer();
-	// init world data
-	ent2.world->pos = glm::vec2( GAME_WIDTH / 2, GAME_HEIGHT * 0.7F );
-	ent2.world->size = glm::vec2( 32 );
-	// init movement data
-	ent2.movement->vel = glm::vec2( 0.0f, 0.0f );
-	ent2.movement->defSpeed = 300.0f;
-	// init render data
-	ent2.render->color = glm::vec3( 1.0f );
-	ent2.render->textureName = "enemy";
-	// init keyboard input
-	ent2.keyboard->onPressFunctions[(unsigned)KEY_A] = [] (Entity* entity) {
-		entity->movement->vel = glm::vec2( -1, 0 ) * entity->movement->defSpeed;
-	};
-	ent2.keyboard->onPressFunctions[(unsigned)KEY_D] = [] ( Entity* entity ) {
-		entity->movement->vel = glm::vec2( 1, 0 ) * entity->movement->defSpeed;
-	};
-	ent2.keyboard->onReleaseFunctions[(unsigned)KEY_A] = [] ( Entity* entity ) {
-		if ( glm::normalize( entity->movement->vel ) == glm::vec2( -1, 0 ) ) {
-			entity->movement->vel = glm::vec2( 0, 0 );
-		}
-	};
-	ent2.keyboard->onReleaseFunctions[(unsigned)KEY_D] = [] ( Entity* entity ) {
-		if ( glm::normalize( entity->movement->vel ) == glm::vec2( 1, 0 ) ) {
-			entity->movement->vel = glm::vec2( 0, 0 );
-		}
-	};
-	ServiceLocator::getInput().addOnKeyObserver( ent2.keyboard );
-	entities.push_back( ent2 );*/
+	EntityFactory::createPlayer();
 }
 
 STATE SpaceInvadersTD::update( const float dt ) {
@@ -137,6 +120,10 @@ STATE SpaceInvadersTD::update( const float dt ) {
 		system->adjustEntityVector( &world );
 		// reset the systems entity additiosn / removals
 	}
+
+	collisionSystem.update( &world );
+	handleCollisionEvents();
+	collisionSystem.clearCollisionEvents();
 
 	return GAME;
 }
@@ -181,24 +168,17 @@ void SpaceInvadersTD::render() {
 		}
 	}
 
-	// render health bars
-	/*renderFlags = WORLD | HEALTH;
-	for ( Entity& ent : entities ) {
-		if ( !( ( renderFlags ^ ent.componentTypes ) & renderFlags ) ) {
-			ServiceLocator::getGraphics().draw2DBox( ent.world->pos - glm::vec2( 0.0f, ent.world->size.y * 0.2f ),
-				glm::vec2( ent.world->size.x , ent.world->size.y * 0.2f ), glm::vec3( 1.0f, 0.0f, 1.0f ) );
-			float padding = 1.0f;
-			ServiceLocator::getGraphics().draw2DBox( ent.world->pos - glm::vec2( -padding, ent.world->size.y * 0.2f - padding ),
-				glm::vec2( (ent.world->size.x - (2.0f * padding)) * (ent.health->currHP / ent.health->maxHP), ent.world->size.y * 0.2f - (2.0f * padding) ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-		}
-	}*/
+	// render money
+	std::stringstream ss;
+	ss << money;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 60 ), 1.0f );
 }
 
 void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	assert( x >= 0 && x < NUM_GRID_COLS && y >= 0 && y < NUM_GRID_ROWS );
 
 	// create the tower
-	int pos = EntityFactory::createBaseTower( &world );
+	int pos = EntityFactory::createBaseTower();
 	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
 	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
 	worldComp.size = glm::vec2( gridSize );
@@ -206,4 +186,31 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 
 	// mark that position as taken
 	grid[y][x].taken = true;
+}
+
+void SpaceInvadersTD::handleCollisionEvents() {
+	for ( CollisionEvent event : collisionSystem.collisions ) {
+		switch ( event.eventType ) {
+		case DAMAGE_EVENT:
+		{
+			int reciever = ( world.entities[event.ent1].mask ) & HEALTH ? event.ent1 : event.ent2;
+			int dealer = ( event.ent1 == reciever ) ? event.ent2 : event.ent1;
+			DamageComponent& dmgComp = world.dmgComponents[world.getComponentIndex( dealer, DAMAGE )];
+			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( reciever, HEALTH )];
+			if ( healthComp.currHP > 0.0f ) {
+				healthComp.currHP -= ( dmgComp.trueDmg + ( dmgComp.voidDmg * healthComp.voidArmor ) +
+					( dmgComp.plasmaDmg * healthComp.plasmaArmor ) + ( dmgComp.iceDmg * healthComp.iceArmor ) );
+
+				// check to see if the entity died
+				if ( healthComp.currHP <= 0.0f ) {
+					if ( world.entities[reciever].mask & MONEY ) {
+						money += world.moneyComponents[world.getComponentIndex( reciever, MONEY )].value;
+					}
+				}
+			}
+			EntityFactory::removeEntity( dealer );
+		}
+		break;
+		}
+	}
 }
