@@ -29,7 +29,7 @@ int main() {
 
 	// initialize services
 	Input* input = new GLFWInput();
-	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD", 1800, 1000);
+	GLFWGraphics* gr = new GLFWGraphics("Space Invaders TD");
 	Graphics *graphics = gr;
 	Audio* audio = new irrKlangAudio();
 
@@ -46,6 +46,10 @@ int main() {
 	glfwSetMouseButtonCallback( gr->getWindow(), mouseButtonCallBack );
 	glfwSetScrollCallback( gr->getWindow(), scrollCallBack );
 	glfwSetKeyCallback( gr->getWindow(), keyCallBack );
+
+	glm::vec2 screen = ServiceLocator::getGraphics().getDimensions();
+	glm::vec2 mouseDistortion = glm::vec2( ( GAME_WIDTH / screen.x ), ( GAME_HEIGHT / screen.y ) );
+	input->setMouseDistortion( mouseDistortion );
 
 	// create game
 	STATE current = PLAY;

@@ -26,12 +26,12 @@ void Input::setKeyReleased( unsigned int type )
 	keysPressed[type] = GL_FALSE;
 	keysProcessed[type] = GL_FALSE;
 	notifyKeyRelease( type );
-	notifyRelease( glm::vec2( mouseX, mouseY ) );
+	notifyRelease( getMousePos() );
 }
 
 void Input::setMouseButtonClicked( unsigned int type ) {
 	keysPressed[type] = GL_TRUE;
-	notifyClick( glm::vec2( mouseX, mouseY ) );
+	notifyClick( getMousePos() );
 }
 
 GLboolean Input::getKeyPressed( unsigned int type ) const
@@ -47,22 +47,26 @@ GLboolean Input::keyNotProcessed( unsigned int type ) const
 void Input::setMousePos( GLfloat x, GLfloat y ) {
 	mouseX = x;
 	mouseY = y;
-	notifyMovement( glm::vec2( mouseX, mouseY ) );
+	notifyMovement( getMousePos() );
 }
 
 glm::vec2 Input::getMousePos() const {
-	return glm::vec2( mouseX, mouseY );
+	return glm::vec2( mouseX * mouseDistortion.x, mouseY * mouseDistortion.y );
 }
 
 void Input::scrollOffset( GLfloat x, GLfloat y ) {
 	if ( x != 0 ) {
-		notifyHorizontalScroll( x, glm::vec2( mouseX, mouseY ) );
+		notifyHorizontalScroll( x, getMousePos() );
 	}
 	if ( y != 0 ) {
-		notifyVerticalScroll( y, glm::vec2( mouseX, mouseY ) );
+		notifyVerticalScroll( y, getMousePos() );
 	}
 }
 
 unsigned Input::getKeyIndex( unsigned key ) const {
 	return (unsigned) inputMap.at(key);
+}
+
+void Input::setMouseDistortion( glm::vec2 dimensions ) {
+	mouseDistortion = dimensions;
 }

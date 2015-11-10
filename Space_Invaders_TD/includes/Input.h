@@ -33,12 +33,14 @@ public:
 	virtual void						scrollOffset( GLfloat x, GLfloat y );
 	virtual glm::vec2					getMousePos() const;
 	unsigned							getKeyIndex( unsigned key ) const;
+	void								setMouseDistortion( glm::vec2 dimensions );
 protected:
 										Input();
 	std::map<unsigned int, INPUT_TYPE>	inputMap;
 private:
 	GLboolean							keysPressed[NUM_INPUTS], keysProcessed[NUM_INPUTS];
 	GLuint								mouseX, mouseY;
+	glm::vec2							mouseDistortion;
 };
 
 #endif // INPUT_H

@@ -19,14 +19,9 @@ void PathSystem::update( World* world, int pos, float dt ) {
 	MovementComponent& movComp = world->movementComponents[world->getComponentIndex( pos, MOVEMENT )];
 	PathAIComponent& pathComp = world->pathComponents[world->getComponentIndex( pos, PATH )];
 
-	if ( pathComp.pathIndex == -1 || glm::distance( worldComp.pos, pathComp.target ) < worldComp.size.x * 0.2f ) {
-		//entity.path->pathIndex = (entity.path->pathIndex + 1) % path.size();
+	if ( pathComp.pathIndex == -1 || ( glm::distance( worldComp.pos, pathComp.target ) < 20.0f && pathComp.pathIndex < path.size() - 1 ) ) {
 		pathComp.pathIndex++;
-		if ( pathComp.pathIndex == path.size() ) {
-			removals.push_back( pos );
-		} else {
-			pathComp.target = path[pathComp.pathIndex] - worldComp.size / 2.0f;
-		}
+		pathComp.target = path[pathComp.pathIndex] - worldComp.size / 2.0f;
 	} else {
 		// make sure to head towards target
 		movComp.vel = glm::normalize( pathComp.target - worldComp.pos ) * glm::length( movComp.vel );

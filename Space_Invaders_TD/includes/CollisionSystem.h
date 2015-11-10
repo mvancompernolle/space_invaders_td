@@ -9,7 +9,8 @@
 #include <vector>
 
 enum EVENT_TYPE {
-	DAMAGE_EVENT
+	DAMAGE_EVENT,
+	DESPAWN_EVENT
 };
 
 struct CollisionEvent {
@@ -35,7 +36,8 @@ private:
 	unsigned flags;
 	std::vector<unsigned> registeredEntities;
 
-	void createCollisionEvents( unsigned ent1, unsigned ent2 );
+	glm::vec2 getCenter( glm::vec2 pos, glm::vec2 size ) const;
+	void createCollisionEvents( const World& world, unsigned ent1, unsigned ent2 );
 };
 
 #endif //COLLISION_SYSTEM_H

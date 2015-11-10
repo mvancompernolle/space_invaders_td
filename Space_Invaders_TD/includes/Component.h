@@ -11,11 +11,10 @@
 #include <map>
 #include "OnKeyObserver.h"
 #include "Input.h"
-
-class Entity;
+#include "SpawnInfo.h"
 
 enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1};
-enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1};
+enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1, DESPAWN = WALL << 1};
 
 enum COMPONENT_TYPE {
 	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
@@ -60,23 +59,20 @@ struct PathAIComponent {
 	PathAIComponent() : target( glm::vec2( 0.0f ) ), pathIndex( -1 ) {}
 };
 
-struct SpawnInfo {
-	unsigned num;
-	Entity* spawnType;
-};
-
 struct SpawnComponent {
-	float spawnRate, dt;
-	unsigned round, numRounds, currSpawnNum;
+	float dt;
+	int round;
+	unsigned numRounds, currSpawnNum;
 	std::vector<SpawnInfo> spawnTypes;
-	SpawnComponent() : spawnRate( 1.0f ), dt( 0.0f ), round( 0 ), numRounds( 0 ), currSpawnNum( 0 ) {}
+	SpawnComponent() : dt( 0.0f ), round( 0 ), numRounds( 0 ), currSpawnNum( 0 ) {}
 };
 
 struct CollisionComponent {
 	SHAPE shape;
 	unsigned collisionID;
 	unsigned collisionMask;
-	CollisionComponent() : shape( RECTANGLE ), collisionID(0), collisionMask(0) {}
+	float collisionScale;
+	CollisionComponent() : shape( RECTANGLE ), collisionID(0), collisionMask(0), collisionScale( 1.0f ) {}
 };
 
 struct PlayerInputComponent {

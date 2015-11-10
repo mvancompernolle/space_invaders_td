@@ -127,6 +127,7 @@
     <ClCompile Include="src\OnKeyObserver.cpp" />
     <ClCompile Include="src\OnKeySubject.cpp" />
     <ClCompile Include="src\CollisionSystem.cpp" />
+    <ClCompile Include="src\SpawnInfo.cpp" />
     <ClCompile Include="src\SpawnSystem.cpp" />
     <ClCompile Include="src\PathSystem.cpp" />
     <ClCompile Include="src\MovementSystem.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="includes\ScrollObserver.h" />
     <ClInclude Include="includes\ServiceLocator.h" />
     <ClInclude Include="includes\Shader.h" />
+    <ClInclude Include="includes\SpawnInfo.h" />
     <ClInclude Include="includes\SpriteRenderer.h" />
     <ClInclude Include="includes\TextAlignment.h" />
     <ClInclude Include="includes\TextChar.h" />

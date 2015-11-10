@@ -166,6 +166,7 @@ int EntityFactory::createSpawner() {
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "portal";
 	SpawnComponent& spawnComp = world->spawnComponents[world->getComponentIndex( index, SPAWN )];
+	spawnComp.round = -1;
 	spawnComp.numRounds = 20;
 
 	return index;

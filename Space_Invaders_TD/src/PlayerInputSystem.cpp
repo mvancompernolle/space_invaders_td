@@ -60,12 +60,10 @@ void PlayerInputSystem::update( World* world, int pos, float dt ) {
 			bWorld.pos = glm::vec2( worldComp.pos + worldComp.size / 2.0f - bWorld.size / 2.0f );
 			RenderComponent& bRender = world->renderComponents[world->getComponentIndex( index, RENDER )];
 			bRender.color = glm::vec3( 1.0f );
-			bRender.textureName = "portal";
+			bRender.textureName = "ship_true_dmg_bullet";
 			MovementComponent& bMove = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
 			bMove.defSpeed = 1200.0f;
-			glm::vec2 screen = ServiceLocator::getGraphics().getDimensions();
-			glm::vec2 mousePos = glm::vec2( ServiceLocator::getInput().getMousePos().x * (GAME_WIDTH / screen.x ), ServiceLocator::getInput().getMousePos().y * ( GAME_HEIGHT / screen.y ) );
-			bMove.vel = glm::normalize( mousePos - ( worldComp.pos + ( worldComp.size / 2.0f ) ) ) * bMove.defSpeed;
+			bMove.vel = glm::normalize( ServiceLocator::getInput().getMousePos() - ( worldComp.pos + ( worldComp.size / 2.0f ) ) ) * bMove.defSpeed + moveComp.vel;
 			CollisionComponent& bCollision = world->collisionComponents[world->getComponentIndex( index, COLLISION )];
 			bCollision.shape = CIRCLE;
 			bCollision.collisionID = BULLET;

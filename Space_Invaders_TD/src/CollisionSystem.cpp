@@ -44,22 +44,32 @@ void CollisionSystem::update( World* world ) {
 				if ( shapes == RECTANGLE ) {
 					wasCollision = areRectsIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size, worldComp2.size );
 				} else if ( shapes == CIRCLE ) {
-					wasCollision = areCirclesIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size.x / 2.0f, worldComp2.size.x / 2.0f );
+					float size1 = ( worldComp1.size.x * collComp1.collisionScale ) / 2.0f;
+					float size2 = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
+					wasCollision = areCirclesIntersecting( getCenter(worldComp1.pos, worldComp1.size) - size1,
+						getCenter( worldComp2.pos, worldComp2.size ) - size2, size1, size2);
 				} else if ( shapes == ( RECTANGLE | CIRCLE ) ) {
 					if ( collComp1.shape == RECTANGLE ) {
-						wasCollision = areRectCircleIntersecting( worldComp1.pos, worldComp2.pos, worldComp1.size, worldComp2.size.x / 2.0f, worldComp1.rotation );
+						float size = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
+						wasCollision = areRectCircleIntersecting( worldComp1.pos, getCenter( worldComp2.pos, worldComp2.size ) - size, worldComp1.size, size,
+							worldComp1.rotation );
 					} else {
-						wasCollision = areRectCircleIntersecting( worldComp2.pos, worldComp1.pos, worldComp2.size, worldComp1.size.x / 2.0f, worldComp2.rotation );
+						float size = ( worldComp1.size.x * collComp1.collisionScale ) / 2.0f;
+						wasCollision = areRectCircleIntersecting( worldComp2.pos, getCenter( worldComp1.pos, worldComp1.size ) - size, worldComp2.size, size, worldComp2.rotation );
 					}
 				}
 
 				// add collision event if there was one
 				if ( wasCollision ) {
-					createCollisionEvents( registeredEntities[i], registeredEntities[j] );
+					createCollisionEvents( *world, registeredEntities[i], registeredEntities[j] );
 				}
 			}
 		}
 	}
+}
+
+glm::vec2 CollisionSystem::getCenter( glm::vec2 pos, glm::vec2 size ) const {
+	return pos + size * 0.5f;
 }
 
 bool CollisionSystem::arePolygonsIntersecting( std::vector<glm::vec2> p1, std::vector<glm::vec2> p2 ) {
@@ -152,6 +162,13 @@ bool CollisionSystem::areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 ci
 	return glm::length( direction ) <= cirRadius ;
 }
 
-void CollisionSystem::createCollisionEvents( unsigned ent1, unsigned ent2 ) {
-	collisions.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
+void CollisionSystem::createCollisionEvents( const World& world, unsigned ent1, unsigned ent2 ) {
+	int type1 = world.collisionComponents[world.getComponentIndex(ent1, COLLISION)].collisionID, 
+		type2 = world.collisionComponents[world.getComponentIndex( ent2, COLLISION )].collisionID;
+	if ( ( ( type1 | type2 ) & BULLET ) && ( ( type1 | type2 ) & ENEMY ) ) {
+		collisions.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
+	}
+	if ( ( ( type1 | type2 ) & DESPAWN ) && ( ( type1 | type2 ) & ENEMY ) ) {
+		collisions.push_back( CollisionEvent( ent1, ent2, DESPAWN_EVENT ) );
+	}
 }

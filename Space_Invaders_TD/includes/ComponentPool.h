@@ -65,6 +65,11 @@ public:
 		return components[pos].data;
 	}
 
+	const T& operator[]( int pos ) const {
+		assert( pos < S && pos > -1 && "Component access out of bounds" );
+		return components[pos].data;
+	}
+
 private:
 	Component<T> *firstAvailable;
 	Component<T> *components;
