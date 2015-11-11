@@ -3,6 +3,7 @@
 
 World* EntityFactory::world;
 CollisionSystem* EntityFactory::collisionSystem;
+ShootSystem* EntityFactory::shootSystem;
 
 EntityFactory::EntityFactory() {
 }
@@ -17,6 +18,10 @@ void EntityFactory::setWorld( World* w ) {
 
 void EntityFactory::setCollisionSystem( CollisionSystem* cs ) {
 	collisionSystem = cs;
+}
+
+void EntityFactory::setShootSystem( ShootSystem* ss ) {
+	shootSystem = ss;
 }
 
 void EntityFactory::removeEntity( int pos ) {
@@ -43,6 +48,8 @@ void EntityFactory::removeEntity( int pos ) {
 		case COLLISION:
 			world->collisionComponents.remove( world->getComponentIndex( pos, COLLISION ) );
 			collisionSystem->unregisterEntity( pos );
+			// remove entity from shoot system if an enemy
+			shootSystem->unregisterEntity( pos );
 			break;
 		case PLAYER_INPUT:
 			world->playerInputComponents.remove( world->getComponentIndex( pos, PLAYER_INPUT ) );
@@ -52,6 +59,12 @@ void EntityFactory::removeEntity( int pos ) {
 			break;
 		case MONEY:
 			world->moneyComponents.remove( world->getComponentIndex( pos, MONEY ) );
+			break;
+		case SHOOT:
+			world->shootComponents.remove( world->getComponentIndex( pos, SHOOT ) );
+			break;
+		case FOLLOW:
+			world->followComponents.remove( world->getComponentIndex( pos, FOLLOW ) );
 			break;
 		}
 	}
@@ -75,6 +88,8 @@ int EntityFactory::createEntity( unsigned mask ) {
 	}
 	if ( mask & DAMAGE ) { world->entities[index].componentIndices[DAMAGE] = world->dmgComponents.create(); }
 	if ( mask & MONEY ) { world->entities[index].componentIndices[MONEY] = world->moneyComponents.create(); }
+	if ( mask & SHOOT ) { world->entities[index].componentIndices[SHOOT] = world->shootComponents.create(); }
+	if ( mask & FOLLOW ) { world->entities[index].componentIndices[FOLLOW] = world->followComponents.create(); }
 	return index;
 }
 
@@ -113,9 +128,10 @@ int EntityFactory::createEnemy() {
 
 int EntityFactory::createBaseTower() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD );
+	world->entities[index].mask = ( RENDER | WORLD | SHOOT );
 	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
 	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
+	world->entities[index].componentIndices[SHOOT] = world->shootComponents.create();
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->entities[index].componentIndices[WORLD]];
@@ -130,11 +146,12 @@ int EntityFactory::createBaseTower() {
 
 int EntityFactory::createPlayer() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD | MOVEMENT | PLAYER_INPUT );
+	world->entities[index].mask = ( RENDER | WORLD | MOVEMENT | PLAYER_INPUT | SHOOT );
 	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
 	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
 	world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create();
 	world->entities[index].componentIndices[PLAYER_INPUT] = world->playerInputComponents.create();
+	world->entities[index].componentIndices[SHOOT] = world->shootComponents.create();
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
@@ -170,4 +187,51 @@ int EntityFactory::createSpawner() {
 	spawnComp.numRounds = 20;
 
 	return index;
+}
+
+void EntityFactory::addEntity( Entity ent ) {
+	int entPos = EntityFactory::createEntity( ent.componentTypes );
+	for ( int j = 1; j < COMPONENT_SIZE; j <<= 1 ) {
+		switch ( j & ent.componentTypes ) {
+		case HEALTH:
+			world->healthComponents[world->getComponentIndex( entPos, HEALTH )] = ent.health;
+			break;
+		case WORLD:
+			world->worldComponents[world->getComponentIndex( entPos, WORLD )] = ent.world;
+			break;
+		case RENDER:
+			world->renderComponents[world->getComponentIndex( entPos, RENDER )] = ent.render;
+			break;
+		case MOVEMENT:
+			world->movementComponents[world->getComponentIndex( entPos, MOVEMENT )] = ent.movement;
+			break;
+		case PATH:
+			world->pathComponents[world->getComponentIndex( entPos, PATH )] = ent.path;
+			break;
+		case SPAWN:
+			world->spawnComponents[world->getComponentIndex( entPos, SPAWN )] = ent.spawn;
+			break;
+		case COLLISION:
+			world->collisionComponents[world->getComponentIndex( entPos, COLLISION )] = ent.collision;
+			if ( ent.collision.collisionID == ENEMY ) {
+				shootSystem->registerEntity( entPos );
+			}
+			break;
+		case PLAYER_INPUT:
+			world->playerInputComponents[world->getComponentIndex( entPos, PLAYER_INPUT )] = ent.playerInput;
+			break;
+		case DAMAGE:
+			world->dmgComponents[world->getComponentIndex( entPos, DAMAGE )] = ent.damage;
+			break;
+		case MONEY:
+			world->moneyComponents[world->getComponentIndex( entPos, MONEY )] = ent.money;
+			break;
+		case SHOOT:
+			world->shootComponents[world->getComponentIndex( entPos, SHOOT )] = ent.shoot;
+			break;
+		case FOLLOW:
+			world->followComponents[world->getComponentIndex( entPos, FOLLOW )] = ent.follow;
+			break;
+		}
+	}
 }

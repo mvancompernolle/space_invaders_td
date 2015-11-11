@@ -6,6 +6,7 @@
 #include "SpawnSystem.h"
 #include "PlayerInputSystem.h"
 #include "HealthSystem.h"
+#include "FollowSystem.h"
 #include <cstring>
 #include <ctime>
 #include <cassert>
@@ -18,27 +19,62 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
 	ResourceManager::loadTexture( "enemy.png", GL_TRUE, "enemy" );
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
+	ResourceManager::loadTexture( "place_tower_indicator.png", GL_TRUE, "place_tower_indicator" );
 	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
 	ResourceManager::loadTexture( "despawn_portal.png", GL_TRUE, "despawn_portal" );
 	ResourceManager::loadTexture( "ship_true_dmg_bullet.png", GL_TRUE, "ship_true_dmg_bullet" );
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
 
+	// create systems
+	systems.push_back( new PlayerInputSystem );
+	systems.push_back( new HealthSystem );
+	systems.push_back( new FollowSystem );
+	systems.push_back( new MovementSystem );
+	shootSystem = new ShootSystem;
+	systems.push_back( shootSystem );
+	path = new PathSystem;
+	systems.push_back( path );
+	systems.push_back( new SpawnSystem );
+
 	// initialize entity factor
 	EntityFactory::setWorld( &world );
 	EntityFactory::setCollisionSystem( &collisionSystem );
+	EntityFactory::setShootSystem( shootSystem );
 
 	// init buttons
+	// start round button
 	bStartRound.setSize( glm::vec2( 256, 96 ) );
 	bStartRound.setPos( glm::vec2( (GAME_WIDTH * 0.5f) - ( bStartRound.getSize().x * 0.5f ),
 		( GAME_HEIGHT * 0.8f ) - ( bStartRound.getSize().y * 0.5f ) ) );
 	bStartRound.setText( "Start Round" );
 	bStartRound.setOnClickFunction( [&]() {
-		SpawnComponent& spawn = world.spawnComponents[ world.getComponentIndex( spawners[0], SPAWN ) ];
-		spawn.round++;
-		numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
-		tdState = TD_PLAYING;
+		SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+		if ( spawn.round < (int)spawn.numRounds ) {
+			float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
+			WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
+			WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
+			SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+			spawn.round++;
+			spawn.currSpawnNum = 0;
+			numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
+			tdState = TD_PLAYING;
+			placeTowerMode = false;
+			path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
+				spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
+		}
 	} );
 	ServiceLocator::getInput().addOnClickObserver( &bStartRound );
+
+	// place wall button
+	bPlaceWall.setSize( glm::vec2( 256, 96 ) );
+	bPlaceWall.setPos( glm::vec2( GAME_WIDTH - 148, GAME_HEIGHT * 0.8f ) - ( bPlaceWall.getSize() / 2.0f ) );
+	bPlaceWall.setText( "$5 : Place Wall" );
+	bPlaceWall.setOnClickFunction( [&]() {
+		if ( money >= 5 && !placeTowerMode ) {
+			placeTowerMode = true;
+		}
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bPlaceWall );
 }
 
 
@@ -49,10 +85,11 @@ SpaceInvadersTD::~SpaceInvadersTD() {
 }
 
 void SpaceInvadersTD::init() {
-	money = 0;
+	money = 100;
 	numEnemiesLeft = 0;
 	numLives = 100;
 	tdState = TD_MENU;
+	placeTowerMode = false;
 
 	// create grid
 	float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
@@ -69,25 +106,21 @@ void SpaceInvadersTD::init() {
 	srand( time( NULL ) );
 	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
 
-	for ( int i = 0; i < 50; ++i ) {
+	/*for ( int i = 0; i < 50; ++i ) {
 		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
 		if ( pos != dest )
 			placeBaseTower( pos.x, pos.y );
+	}*/
+
+	/*for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
+		placeBaseTower( 5, i );
 	}
-
-	/*glm::uvec2 dest = glm::uvec2( 7, 2 );
-	placeBaseTower( 6, 1 );
-	placeBaseTower( 5, 1 );
-	placeBaseTower( 2, 2 );
-	placeBaseTower( 1, 0 );*/
-
-	// create systems
-	systems.push_back( new PlayerInputSystem );
-	systems.push_back( new HealthSystem );
-	systems.push_back( new MovementSystem );
-	path = new PathSystem;
-	systems.push_back( path );
-	systems.push_back( new SpawnSystem );
+	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
+		placeBaseTower( 7, i );
+	}
+	for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
+		placeBaseTower( 9, i );
+	}*/
 
 	// set game values
 	currGridPulseTime = 0.0f;
@@ -127,15 +160,48 @@ STATE SpaceInvadersTD::update( const float dt ) {
 			// reset the systems entity additiosn / removals
 		}
 
+		if ( numEnemiesLeft == 0 ) {
+			tdState = TD_MENU;
+		}
+
 		collisionSystem.update( &world );
 		handleCollisionEvents();
 		collisionSystem.clearCollisionEvents();
 
-		if ( numEnemiesLeft == 0 ) {
-			tdState = TD_MENU;
-		}
 	} else if ( tdState == TD_MENU ) {
-
+		if ( placeTowerMode ) {
+			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_RIGHT ) ) {
+				placeTowerMode = false;
+			} else if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_LEFT ) ) {
+				float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
+				int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
+				int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
+				if ( ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS ) && grid[gridY][gridX].ent == -1 ) {
+					grid[gridY][gridX].taken = true;
+					// test to see if path is not blocked
+					WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
+					WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
+					SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN)];
+					if ( path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
+						spawnComp.spawnTypes[spawnComp.round + 1].getEntity()->world.size.x / 2.0f, grid ) ) {
+						money -= 5;
+						placeBaseTower( gridX, gridY );
+						if ( !ServiceLocator::getInput().getKeyPressed( KEY_LEFT_SHIFT ) || money < 5 ) {
+							placeTowerMode = false;
+						}
+					} else {
+						grid[gridY][gridX].taken = false;
+					}
+				}
+			}
+			if ( ServiceLocator::getInput().getKeyPressed( KEY_T ) && ServiceLocator::getInput().keyNotProcessed( KEY_T ) ) {
+				ServiceLocator::getInput().setKeyProcessed( KEY_T );
+				placeTowerMode = false;
+			}
+		} else if( ServiceLocator::getInput().getKeyPressed( KEY_T ) && ServiceLocator::getInput().keyNotProcessed( KEY_T ) ) {
+			ServiceLocator::getInput().setKeyProcessed( KEY_T );
+			placeTowerMode = true;
+		}
 	}
 
 	return GAME;
@@ -188,6 +254,27 @@ void SpaceInvadersTD::render() {
 	// render buttons
 	if ( tdState == TD_MENU ) {
 		bStartRound.render( ServiceLocator::getGraphics() );
+		bPlaceWall.render( ServiceLocator::getGraphics() );
+
+		// indicate that game is in place tower mode
+		if ( placeTowerMode ) {
+			
+			// get index mouse is over on the grid
+			int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
+			int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
+			glm::vec2 pos;
+			glm::vec3 color;
+			if ( ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS ) ) {
+				pos = glm::vec2( gridX, gridY ) * gridSize;
+				color = grid[gridY][gridX].ent != -1 ? glm::vec3( 1.0f, 0.0f, 0.0f ) : glm::vec3( 1.0f );
+			} else {
+				pos = ServiceLocator::getInput().getMousePos() - ( gridSize / 2.0f );
+				color = glm::vec3( 1.0f );
+			}
+			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "place_tower_indicator" ), pos,
+				glm::vec2( gridSize ), 0.0f, glm::vec4( color, 1.0f ) );
+			
+		}
 	}
 
 
@@ -215,8 +302,9 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 	worldComp.size = glm::vec2( gridSize );
 	worldComp.pos = glm::vec2( x * gridSize, y * gridSize );
 
-	// mark that position as taken
+	// mark that position as taken by a tower
 	grid[y][x].taken = true;
+	grid[y][x].ent = pos;
 }
 
 void SpaceInvadersTD::handleCollisionEvents() {
@@ -287,26 +375,30 @@ void SpaceInvadersTD::loadLevel( int level ) {
 
 		worldComp.size = glm::vec2( gridSize );
 		worldComp.pos = start * gridSize;
+		grid[worldComp.pos.y / gridSize][worldComp.pos.x / gridSize].ent = spawner;
 
 		// create a despawn portal
 		int despawner = EntityFactory::createEntity( WORLD | RENDER | COLLISION );
 		WorldComponent& despWorld = world.worldComponents[world.getComponentIndex( despawner, WORLD )];
 		RenderComponent& despRender = world.renderComponents[world.getComponentIndex( despawner, RENDER )];
 		CollisionComponent& despCollision = world.collisionComponents[world.getComponentIndex( despawner, COLLISION )];
+		despawners.push_back( despawner );
+
 		// init despawn world data
 		despWorld.size = glm::vec2( gridSize );
 		despWorld.pos = end * gridSize;
+		grid[despWorld.pos.y / gridSize][despWorld.pos.x / gridSize].ent = despawner;
 		// init despawn render data
 		despRender.textureName = "despawn_portal";
 		// init collision data
 		despCollision.shape = CIRCLE;
 		despCollision.collisionID = DESPAWN;
 		despCollision.collisionMask = ENEMY;
-		despCollision.collisionScale = 0.3f;
+		despCollision.collisionScale = 0.01f;
 
 		// loop over info for each round
 		int i = 0;
-		while ( fin.good() ) {
+		while ( fin.good() && i < numRounds ) {
 			int numSpawns;
 			float spawnRate;
 

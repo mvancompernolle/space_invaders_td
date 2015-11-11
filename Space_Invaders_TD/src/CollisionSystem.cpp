@@ -46,16 +46,16 @@ void CollisionSystem::update( World* world ) {
 				} else if ( shapes == CIRCLE ) {
 					float size1 = ( worldComp1.size.x * collComp1.collisionScale ) / 2.0f;
 					float size2 = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
-					wasCollision = areCirclesIntersecting( getCenter(worldComp1.pos, worldComp1.size) - size1,
-						getCenter( worldComp2.pos, worldComp2.size ) - size2, size1, size2);
+					wasCollision = areCirclesIntersecting( getCenter(worldComp1.pos, worldComp1.size),
+						getCenter( worldComp2.pos, worldComp2.size ), size1, size2);
 				} else if ( shapes == ( RECTANGLE | CIRCLE ) ) {
 					if ( collComp1.shape == RECTANGLE ) {
 						float size = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
-						wasCollision = areRectCircleIntersecting( worldComp1.pos, getCenter( worldComp2.pos, worldComp2.size ) - size, worldComp1.size, size,
+						wasCollision = areRectCircleIntersecting( worldComp1.pos, getCenter( worldComp2.pos, worldComp2.size ), worldComp1.size, size,
 							worldComp1.rotation );
 					} else {
 						float size = ( worldComp1.size.x * collComp1.collisionScale ) / 2.0f;
-						wasCollision = areRectCircleIntersecting( worldComp2.pos, getCenter( worldComp1.pos, worldComp1.size ) - size, worldComp2.size, size, worldComp2.rotation );
+						wasCollision = areRectCircleIntersecting( worldComp2.pos, getCenter( worldComp1.pos, worldComp1.size ), worldComp2.size, size, worldComp2.rotation );
 					}
 				}
 

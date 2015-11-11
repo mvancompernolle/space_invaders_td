@@ -6,6 +6,7 @@
 #include "consts.h"
 #include "System.h"
 #include "CollisionSystem.h"
+#include "ShootSystem.h"
 #include "PathSystem.h"
 #include "Grid.h"
 #include "World.h"
@@ -36,13 +37,15 @@ private:
 	float currGridPulseTime;
 	Grid grid;
 	TD_STATE tdState;
+	bool placeTowerMode;
 	unsigned money, numEnemiesLeft, numLives;
-	std::vector<unsigned> spawners;
+	std::vector<unsigned> spawners, despawners;
 	std::vector<System*> systems;
 	World world;
 	PathSystem* path;
 	CollisionSystem collisionSystem;
-	Button bStartRound;
+	ShootSystem* shootSystem;
+	Button bStartRound, bPlaceWall;
 
 	void placeBaseTower( unsigned x, unsigned y );
 	void handleCollisionEvents();

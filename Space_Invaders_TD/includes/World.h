@@ -26,6 +26,8 @@ struct World {
 	ComponentPool<CollisionComponent, NUM_ENTITIES / 2> collisionComponents;
 	ComponentPool<DamageComponent, NUM_ENTITIES / 4> dmgComponents;
 	ComponentPool<MoneyComponent, NUM_ENTITIES / 4> moneyComponents;
+	ComponentPool<ShootComponent, NUM_ENTITIES / 4> shootComponents;
+	ComponentPool<FollowComponent, NUM_ENTITIES / 4> followComponents;
 
 	int getComponentIndex( int pos, COMPONENT_TYPE type ) const {
 		return entities[pos].componentIndices[type];

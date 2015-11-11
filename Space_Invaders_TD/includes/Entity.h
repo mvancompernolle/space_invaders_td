@@ -20,6 +20,8 @@ public:
 	CollisionComponent			collision;
 	DamageComponent				damage;
 	MoneyComponent				money;
+	ShootComponent				shoot;
+	FollowComponent				follow;
 
 	Entity( unsigned components );
 	~Entity();

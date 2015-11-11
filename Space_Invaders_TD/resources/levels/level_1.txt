@@ -1,15 +1,14 @@
-2
+10
+4 1
+15 5
 
-0 0
-31 11
-
-20
-0.55 
+40
+0.75 
 
 HEALTH
-maxHP 225
+maxHP 300
 voidArmor 1.0
-plasmaArmor 1.0
+plasmaArmor 0.0
 iceArmor 1.0
 
 RENDER
@@ -19,7 +18,111 @@ WORLD
 size 0.75
 
 MOVEMENT
+defSpeed 3.0
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 4
+
+END 
+
+100
+0.25 
+
+HEALTH
+maxHP 100
+voidArmor 1.5
+plasmaArmor 0.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 0.60
+
+MOVEMENT
 defSpeed 4.0
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 3
+
+END
+
+20
+1.15 
+
+HEALTH
+maxHP 500
+voidArmor 0.1
+plasmaArmor 1.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 0.25
+
+MOVEMENT
+defSpeed 0.50
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 7
+
+END
+
+200
+0.05 
+
+HEALTH
+maxHP 50
+voidArmor 1.0
+plasmaArmor 1.0
+iceArmor 1.0
+
+RENDER
+textureName enemy
+
+WORLD
+size 0.30
+
+MOVEMENT
+defSpeed 0.70
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 4
+
+END
+
+20
+1.0 
+
+HEALTH
+maxHP 200
+voidArmor 0.1
+plasmaArmor 0.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 1.0
+
+MOVEMENT
+defSpeed 1.0
 
 COLLISION
 shape CIRCLE
@@ -27,14 +130,94 @@ shape CIRCLE
 MONEY
 value 2
 
+END
+
+10
+3.0 
+
+HEALTH
+maxHP 1000
+voidArmor 0.01
+plasmaArmor 0.01
+iceArmor 0.01
+
+RENDER
+textureName enemy
+
+WORLD
+size 1.0
+
+MOVEMENT
+defSpeed 0.10
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 40
+
+END
+
 20
 1.0 
 
 HEALTH
-maxHP 100
-voidArmor 0.5
-plasmaArmor 0.5
-iceArmor 0.5
+maxHP 2000
+voidArmor 0.1
+plasmaArmor 0.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 1.0
+
+MOVEMENT
+defSpeed 0.9
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 1
+
+END
+
+20
+1.0 
+
+HEALTH
+maxHP 20000
+voidArmor 0.1
+plasmaArmor 0.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 1.0
+
+MOVEMENT
+defSpeed 0.1
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 1
+
+END
+
+20
+1.0 
+
+HEALTH
+maxHP 200
+voidArmor 0.1
+plasmaArmor 0.1
+iceArmor 0.1
 
 RENDER
 textureName enemy
@@ -50,3 +233,31 @@ shape CIRCLE
 
 MONEY
 value 1
+
+END
+
+20
+1.0 
+
+HEALTH
+maxHP 200
+voidArmor 0.1
+plasmaArmor 0.1
+iceArmor 0.1
+
+RENDER
+textureName enemy
+
+WORLD
+size 1.0
+
+MOVEMENT
+defSpeed 1.0
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 1
+
+END

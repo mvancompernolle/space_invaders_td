@@ -122,6 +122,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\FollowSystem.cpp" />
+    <ClCompile Include="src\ShootSystem.cpp" />
     <ClCompile Include="src\HealthSystem.cpp" />
     <ClCompile Include="src\PlayerInputSystem.cpp" />
     <ClCompile Include="src\OnKeyObserver.cpp" />
@@ -156,6 +158,7 @@
     <ClCompile Include="src\System.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="includes\FollowSystem.h" />
     <ClInclude Include="includes\HealthSystem.h" />
     <ClInclude Include="includes\CollisionSystem.h" />
     <ClInclude Include="includes\ComponentPool.h" />
@@ -194,6 +197,7 @@
     <ClInclude Include="includes\OnKeyObserver.h" />
     <ClInclude Include="includes\World.h" />
     <ClInclude Include="includes\PlayerInputSystem.h" />
+    <ClInclude Include="includes\ShootSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

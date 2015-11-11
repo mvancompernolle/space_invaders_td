@@ -53,7 +53,7 @@ void PlayerInputSystem::update( World* world, int pos, float dt ) {
 	while ( i < inputComp.shootPrimaryInputs.size() ) {
 		if ( ServiceLocator::getInput().getKeyPressed( inputComp.shootPrimaryInputs[i] ) ) {
 			// shoot bullet
-			int index = EntityFactory::createEntity( ( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE ) );
+			int index = EntityFactory::createEntity( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE );
 			WorldComponent& bWorld = world->worldComponents[world->getComponentIndex( index, WORLD )];
 			bWorld.rotation = 0.0f;
 			bWorld.size = glm::vec2( 16 );
@@ -69,10 +69,10 @@ void PlayerInputSystem::update( World* world, int pos, float dt ) {
 			bCollision.collisionID = BULLET;
 			bCollision.collisionMask = ( ENEMY | WALL );
 			DamageComponent& bDmg = world->dmgComponents[world->getComponentIndex( index, DAMAGE )];
-			bDmg.trueDmg = 5.0f;
-			bDmg.iceDmg = 1.0f;
-			bDmg.plasmaDmg = 1.0f;
-			bDmg.voidDmg = 1.0f;
+			bDmg.trueDmg = 2.0f;
+			bDmg.iceDmg = 2.0f;
+			bDmg.plasmaDmg = 2.0f;
+			bDmg.voidDmg = 2.0f;
 			break;
 		}
 		i++;

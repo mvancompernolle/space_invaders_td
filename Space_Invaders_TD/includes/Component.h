@@ -20,8 +20,8 @@ enum COMPONENT_TYPE {
 	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
 	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
-	MONEY = DAMAGE << 1,
-	COMPONENT_SIZE = MONEY << 1,
+	MONEY = DAMAGE << 1, SHOOT = MONEY << 1, FOLLOW = SHOOT << 1,
+	COMPONENT_SIZE = FOLLOW << 1,
 };
 
 struct HealthComponent {
@@ -39,6 +39,10 @@ struct WorldComponent {
 	glm::vec2 pos, size;
 	float rotation;
 	WorldComponent() : pos( glm::vec2( 0, 0 ) ), size( glm::vec2( 10, 10 ) ) {}
+
+	glm::vec2 getCenter() const {
+		return pos + size * 0.5f;
+	}
 };
 
 struct RenderComponent {
@@ -84,6 +88,8 @@ struct PlayerInputComponent {
 	PlayerInputComponent() {
 		leftInputs.push_back( (unsigned)KEY_A );
 		rightInputs.push_back( (unsigned)KEY_D );
+		leftInputs.push_back( (unsigned)KEY_LEFT );
+		rightInputs.push_back( (unsigned)KEY_RIGHT );
 		shootPrimaryInputs.push_back( (unsigned)MOUSE_BUTTON_LEFT );
 		shootSecondaryInputs.push_back( (unsigned)MOUSE_BUTTON_RIGHT );
 	}
@@ -92,6 +98,19 @@ struct PlayerInputComponent {
 struct MoneyComponent {
 	int value;
 	MoneyComponent() : value( 0 ) {}
+};
+
+struct ShootComponent {
+	float attackSpeed, timePassed, range, bulletSpeed;
+	int entTarget;
+	DamageComponent bulletDmg;
+	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range(800.0f), bulletSpeed(500.0f), entTarget( -1 ), bulletDmg() {}
+};
+
+struct FollowComponent {
+	int entTarget;
+	float turnRate;
+	FollowComponent() : entTarget( -1 ), turnRate( 180.0f ) {}
 };
 
 #endif // COMPONENT_H
