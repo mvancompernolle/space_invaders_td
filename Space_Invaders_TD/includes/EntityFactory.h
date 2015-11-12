@@ -24,6 +24,7 @@ public:
 	static int createPlayer();
 	static int createSpawner();
 	static void addEntity( Entity ent );
+	static unsigned addComponent( unsigned pos, COMPONENT_TYPE type );
 private:
 	static World* world;
 	static CollisionSystem* collisionSystem;

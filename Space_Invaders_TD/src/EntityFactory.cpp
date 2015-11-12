@@ -75,34 +75,33 @@ void EntityFactory::removeEntity( int pos ) {
 int EntityFactory::createEntity( unsigned mask ) {
 	int index = world->entities.create();
 	world->entities[index].mask = mask;
-	if ( mask & WORLD ) { world->entities[index].componentIndices[WORLD] = world->worldComponents.create(); }
-	if ( mask & HEALTH ) { world->entities[index].componentIndices[HEALTH] = world->healthComponents.create(); }
-	if ( mask & RENDER ) { world->entities[index].componentIndices[RENDER] = world->renderComponents.create(); }
-	if ( mask & PATH ) { world->entities[index].componentIndices[PATH] = world->pathComponents.create(); }
-	if ( mask & MOVEMENT ) { world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create(); }
-	if ( mask & SPAWN ) { world->entities[index].componentIndices[SPAWN] = world->spawnComponents.create(); }
-	if ( mask & PLAYER_INPUT ) { world->entities[index].componentIndices[PLAYER_INPUT] = world->playerInputComponents.create(); }
+	if ( mask & WORLD ) { addComponent(index, WORLD); }
+	if ( mask & HEALTH ) { addComponent( index, HEALTH ); }
+	if ( mask & RENDER ) { addComponent( index, RENDER ); }
+	if ( mask & PATH ) { addComponent( index, PATH ); }
+	if ( mask & MOVEMENT ) { addComponent( index, MOVEMENT ); }
+	if ( mask & SPAWN ) { addComponent( index, SPAWN ); }
+	if ( mask & PLAYER_INPUT ) { addComponent( index, PLAYER_INPUT ); }
 	if ( mask & COLLISION ) { 
-		world->entities[index].componentIndices[COLLISION] = world->collisionComponents.create(); 
+		addComponent( index, COLLISION );
 		collisionSystem->registerEntity( index );
 	}
-	if ( mask & DAMAGE ) { world->entities[index].componentIndices[DAMAGE] = world->dmgComponents.create(); }
-	if ( mask & MONEY ) { world->entities[index].componentIndices[MONEY] = world->moneyComponents.create(); }
-	if ( mask & SHOOT ) { world->entities[index].componentIndices[SHOOT] = world->shootComponents.create(); }
-	if ( mask & FOLLOW ) { world->entities[index].componentIndices[FOLLOW] = world->followComponents.create(); }
+	if ( mask & DAMAGE ) { addComponent( index, DAMAGE ); }
+	if ( mask & MONEY ) { addComponent( index, MONEY ); }
+	if ( mask & SHOOT ) { addComponent( index, SHOOT ); }
+	if ( mask & FOLLOW ) { addComponent( index, FOLLOW ); }
 	return index;
 }
 
 int EntityFactory::createEnemy() {
 	int index = world->entities.create();
 	world->entities[index].mask = ( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION );
-	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
-	world->entities[index].componentIndices[HEALTH] = world->healthComponents.create();
-	world->entities[index].componentIndices[RENDER] = world->renderComponents.create(); 
-	world->entities[index].componentIndices[PATH] = world->pathComponents.create(); 
-	world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create(); 
-
-	world->entities[index].componentIndices[COLLISION] = world->collisionComponents.create();
+	addComponent( index, HEALTH );
+	addComponent( index, RENDER );
+	addComponent( index, WORLD );
+	addComponent( index, MOVEMENT );
+	addComponent( index, PATH );
+	addComponent( index, COLLISION );
 	collisionSystem->registerEntity( index );
 
 	// initialize values
@@ -128,10 +127,10 @@ int EntityFactory::createEnemy() {
 
 int EntityFactory::createBaseTower() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD | SHOOT );
-	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
-	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
-	world->entities[index].componentIndices[SHOOT] = world->shootComponents.create();
+	world->entities[index].mask = ( RENDER | WORLD | MONEY );
+	addComponent( index, MONEY );
+	addComponent( index, RENDER );
+	addComponent( index, WORLD );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->entities[index].componentIndices[WORLD]];
@@ -140,6 +139,8 @@ int EntityFactory::createBaseTower() {
 	RenderComponent& renderComp = world->renderComponents[world->entities[index].componentIndices[RENDER]];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "tower_base";
+	MoneyComponent& moneyComp = world->moneyComponents[world->entities[index].componentIndices[MONEY]];
+	moneyComp.value = 5;
 
 	return index;
 }
@@ -147,11 +148,11 @@ int EntityFactory::createBaseTower() {
 int EntityFactory::createPlayer() {
 	int index = world->entities.create();
 	world->entities[index].mask = ( RENDER | WORLD | MOVEMENT | PLAYER_INPUT | SHOOT );
-	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
-	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
-	world->entities[index].componentIndices[MOVEMENT] = world->movementComponents.create();
-	world->entities[index].componentIndices[PLAYER_INPUT] = world->playerInputComponents.create();
-	world->entities[index].componentIndices[SHOOT] = world->shootComponents.create();
+	addComponent( index, PLAYER_INPUT );
+	addComponent( index, RENDER );
+	addComponent( index, WORLD );
+	addComponent( index, MOVEMENT );
+	addComponent( index, SHOOT );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
@@ -171,9 +172,9 @@ int EntityFactory::createPlayer() {
 int EntityFactory::createSpawner() {
 	int index = world->entities.create();
 	world->entities[index].mask = ( RENDER | WORLD | SPAWN );
-	world->entities[index].componentIndices[WORLD] = world->worldComponents.create();
-	world->entities[index].componentIndices[RENDER] = world->renderComponents.create();
-	world->entities[index].componentIndices[SPAWN] = world->spawnComponents.create();
+	addComponent( index, SPAWN );
+	addComponent( index, RENDER );
+	addComponent( index, WORLD );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
@@ -234,4 +235,54 @@ void EntityFactory::addEntity( Entity ent ) {
 			break;
 		}
 	}
+}
+
+unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
+	int index = -1;
+	// return -1 if trying to add a component to an entity that doesn't exist
+	if ( world->entities[pos].mask == NONE ) {
+		return index;
+	}
+
+	switch ( type ) {
+	case HEALTH:
+		index = world->healthComponents.create();
+		break;
+	case WORLD:
+		index = world->worldComponents.create();
+		break;
+	case RENDER:
+		index = world->renderComponents.create();
+		break;
+	case MOVEMENT:
+		index = world->movementComponents.create();
+		break;
+	case PATH:
+		index = world->pathComponents.create();
+		break;
+	case SPAWN:
+		index = world->spawnComponents.create();
+		break;
+	case COLLISION:
+		index = world->collisionComponents.create();
+		break;
+	case PLAYER_INPUT:
+		index = world->playerInputComponents.create();
+		break;
+	case DAMAGE:
+		index = world->dmgComponents.create();
+		break;
+	case MONEY:
+		index = world->moneyComponents.create();
+		break;
+	case SHOOT:
+		index = world->shootComponents.create();
+		break;
+	case FOLLOW:
+		index = world->followComponents.create();
+		break;
+	}
+	world->entities[pos].componentIndices[type] = index;
+	world->entities[pos].mask |= type;
+	return index;
 }

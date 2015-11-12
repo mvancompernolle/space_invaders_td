@@ -44,7 +44,7 @@ private:
 	GLfloat					fontScale, rotation;
 	glm::vec3				textColor;
 	glm::vec2				pos, size;
-	GLboolean				isVisible;
+	GLboolean				isVisible, isDisabled;
 	Texture					releasedTexture, pressedTexture, hoverTexture;
 	GLboolean				isDraggable;
 

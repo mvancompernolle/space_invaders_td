@@ -5,7 +5,7 @@
 
 
 Button::Button( glm::vec2 pos, glm::vec2 size )
-	: pos( pos ), size( size ), text( "" ), fontScale( 1.0f ), textColor( glm::vec3( 0.0f ) ),
+	: pos( pos ), size( size ), text( "" ), fontScale( 0.8f ), textColor( glm::vec3( 0.0f ) ),
 	state( RELEASED ), rotation( 0.0f ), isDraggable( GL_FALSE ), isVisible( GL_TRUE )
 {
 	pressedTexture = ResourceManager::loadTexture( "button_pressed.png", GL_TRUE, "btn_pressed_default" );

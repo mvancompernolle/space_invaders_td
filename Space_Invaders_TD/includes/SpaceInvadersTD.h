@@ -34,10 +34,12 @@ public:
 private:
 	const float GRID_PULSE_TIME = 2.0f;
 	const float GRID_PULSE_AMOUNT = 0.05f;
+	float gridSize;
 	float currGridPulseTime;
 	Grid grid;
 	TD_STATE tdState;
 	bool placeTowerMode;
+	glm::ivec2 selectedGridPos;
 	unsigned money, numEnemiesLeft, numLives;
 	std::vector<unsigned> spawners, despawners;
 	std::vector<System*> systems;
@@ -45,11 +47,18 @@ private:
 	PathSystem* path;
 	CollisionSystem collisionSystem;
 	ShootSystem* shootSystem;
+
+	// menu buttons
+	std::vector<Button*> buttons;
 	Button bStartRound, bPlaceWall;
+	Button bUpgradeTrue, bUpgradeVoid, bUpgradePlasma, bUpgradeIce, bSellTower;
 
 	void placeBaseTower( unsigned x, unsigned y );
 	void handleCollisionEvents();
 	void loadLevel( int level );
+	void initMenuButtons();
+	bool towerIsSelected() const;
+	void showButtons( bool show );
 };
 
 #endif SPACE_INVADERS_TD_H

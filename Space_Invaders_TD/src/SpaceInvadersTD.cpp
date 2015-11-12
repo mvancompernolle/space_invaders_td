@@ -17,13 +17,17 @@
 
 SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
+	ResourceManager::loadTexture( "hud.png", GL_TRUE, "hud" );
 	ResourceManager::loadTexture( "enemy.png", GL_TRUE, "enemy" );
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
 	ResourceManager::loadTexture( "place_tower_indicator.png", GL_TRUE, "place_tower_indicator" );
+	ResourceManager::loadTexture( "grid_hover.png", GL_TRUE, "grid_hover" );
+	ResourceManager::loadTexture( "grid_selected.png", GL_TRUE, "grid_selected" );
 	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
 	ResourceManager::loadTexture( "despawn_portal.png", GL_TRUE, "despawn_portal" );
 	ResourceManager::loadTexture( "ship_true_dmg_bullet.png", GL_TRUE, "ship_true_dmg_bullet" );
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
+	ResourceManager::loadTexture( "tower_true.png", GL_TRUE, "tower_true" );
 
 	// create systems
 	systems.push_back( new PlayerInputSystem );
@@ -41,40 +45,7 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	EntityFactory::setCollisionSystem( &collisionSystem );
 	EntityFactory::setShootSystem( shootSystem );
 
-	// init buttons
-	// start round button
-	bStartRound.setSize( glm::vec2( 256, 96 ) );
-	bStartRound.setPos( glm::vec2( (GAME_WIDTH * 0.5f) - ( bStartRound.getSize().x * 0.5f ),
-		( GAME_HEIGHT * 0.8f ) - ( bStartRound.getSize().y * 0.5f ) ) );
-	bStartRound.setText( "Start Round" );
-	bStartRound.setOnClickFunction( [&]() {
-		SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
-		if ( spawn.round < (int)spawn.numRounds ) {
-			float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
-			WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
-			WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
-			SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
-			spawn.round++;
-			spawn.currSpawnNum = 0;
-			numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
-			tdState = TD_PLAYING;
-			placeTowerMode = false;
-			path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
-				spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
-		}
-	} );
-	ServiceLocator::getInput().addOnClickObserver( &bStartRound );
-
-	// place wall button
-	bPlaceWall.setSize( glm::vec2( 256, 96 ) );
-	bPlaceWall.setPos( glm::vec2( GAME_WIDTH - 148, GAME_HEIGHT * 0.8f ) - ( bPlaceWall.getSize() / 2.0f ) );
-	bPlaceWall.setText( "$5 : Place Wall" );
-	bPlaceWall.setOnClickFunction( [&]() {
-		if ( money >= 5 && !placeTowerMode ) {
-			placeTowerMode = true;
-		}
-	} );
-	ServiceLocator::getInput().addOnClickObserver( &bPlaceWall );
+	initMenuButtons();
 }
 
 
@@ -88,11 +59,12 @@ void SpaceInvadersTD::init() {
 	money = 100;
 	numEnemiesLeft = 0;
 	numLives = 100;
+	selectedGridPos = glm::ivec2( -1 );
 	tdState = TD_MENU;
 	placeTowerMode = false;
 
 	// create grid
-	float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
+	gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
 	grid.resize( NUM_GRID_ROWS );
 	for ( int i = 0; i < NUM_GRID_ROWS; ++i ) {
 		grid[i].resize( NUM_GRID_COLS );
@@ -162,6 +134,9 @@ STATE SpaceInvadersTD::update( const float dt ) {
 
 		if ( numEnemiesLeft == 0 ) {
 			tdState = TD_MENU;
+			selectedGridPos = glm::ivec2( -1 );
+			placeTowerMode = false;
+			showButtons( true );
 		}
 
 		collisionSystem.update( &world );
@@ -169,19 +144,21 @@ STATE SpaceInvadersTD::update( const float dt ) {
 		collisionSystem.clearCollisionEvents();
 
 	} else if ( tdState == TD_MENU ) {
+		// handle place tower mode
 		if ( placeTowerMode ) {
-			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_RIGHT ) ) {
+			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_RIGHT ) && ServiceLocator::getInput().keyNotProcessed( MOUSE_BUTTON_RIGHT ) ) {
+				ServiceLocator::getInput().setKeyProcessed( MOUSE_BUTTON_RIGHT );
 				placeTowerMode = false;
 			} else if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_LEFT ) ) {
-				float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
 				int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
 				int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
+
 				if ( ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS ) && grid[gridY][gridX].ent == -1 ) {
 					grid[gridY][gridX].taken = true;
 					// test to see if path is not blocked
 					WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
 					WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
-					SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN)];
+					SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
 					if ( path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
 						spawnComp.spawnTypes[spawnComp.round + 1].getEntity()->world.size.x / 2.0f, grid ) ) {
 						money -= 5;
@@ -198,9 +175,29 @@ STATE SpaceInvadersTD::update( const float dt ) {
 				ServiceLocator::getInput().setKeyProcessed( KEY_T );
 				placeTowerMode = false;
 			}
-		} else if( ServiceLocator::getInput().getKeyPressed( KEY_T ) && ServiceLocator::getInput().keyNotProcessed( KEY_T ) ) {
+		} else if ( ServiceLocator::getInput().getKeyPressed( KEY_T ) && ServiceLocator::getInput().keyNotProcessed( KEY_T ) && money >= 5 ) {
 			ServiceLocator::getInput().setKeyProcessed( KEY_T );
 			placeTowerMode = true;
+		}
+
+		if ( !placeTowerMode ) {
+			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_RIGHT ) && ServiceLocator::getInput().keyNotProcessed( MOUSE_BUTTON_RIGHT ) ) {
+				ServiceLocator::getInput().setKeyProcessed( MOUSE_BUTTON_RIGHT );
+				selectedGridPos = glm::ivec2( -1 );
+				showButtons( true );
+			}
+
+			// handle selection mode
+			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_LEFT ) && ServiceLocator::getInput().keyNotProcessed( MOUSE_BUTTON_LEFT ) ) {
+				ServiceLocator::getInput().setKeyProcessed( MOUSE_BUTTON_LEFT );
+				int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
+				int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
+				if ( ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS ) && grid[gridY][gridX].taken ) {
+					// select the tower where the mouse is
+					selectedGridPos = glm::ivec2( gridX, gridY );
+					showButtons( true );
+				}
+			}
 		}
 	}
 
@@ -212,8 +209,6 @@ void SpaceInvadersTD::render() {
 	ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "game_background" ), glm::vec2( 0.0f ), glm::vec2( GAME_WIDTH, GAME_HEIGHT ), 0.0f );
 
 	// render game grid lines
-	float gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
-
 	// render horizontal lines
 	for ( int i = 1; i <= NUM_GRID_ROWS; ++i ) {
 		ServiceLocator::getGraphics().draw2DBox( glm::vec2( 0.0f, gridSize * i - 1 ), glm::vec2( gridSize * NUM_GRID_COLS, 2.0f ), GRID_COLOR + std::sin( currGridPulseTime / GRID_PULSE_TIME ) * GRID_PULSE_AMOUNT );
@@ -248,20 +243,22 @@ void SpaceInvadersTD::render() {
 	}
 
 	// draw gui background
-	ServiceLocator::getGraphics().draw2DBox( glm::vec2( 0.0f, GAME_HEIGHT * 0.75f ), glm::vec2( GAME_WIDTH, GAME_HEIGHT * 0.25f ),
-		glm::vec3( 0.0f ) );
+	ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "hud" ), glm::vec2( 0.0f, GAME_HEIGHT * 0.75f ),
+		glm::vec2( GAME_WIDTH, GAME_HEIGHT * 0.25f ), 0.0f );
 
-	// render buttons
+	// render menu inbetween turns
 	if ( tdState == TD_MENU ) {
-		bStartRound.render( ServiceLocator::getGraphics() );
-		bPlaceWall.render( ServiceLocator::getGraphics() );
+		// render buttons
+		for ( Button* btn : buttons ) {
+			btn->render( ServiceLocator::getGraphics() );
+		}
+
+		// get index mouse is over on the grid
+		int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
+		int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
 
 		// indicate that game is in place tower mode
 		if ( placeTowerMode ) {
-			
-			// get index mouse is over on the grid
-			int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
-			int gridY = ServiceLocator::getInput().getMousePos().y / gridSize;
 			glm::vec2 pos;
 			glm::vec3 color;
 			if ( ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS ) ) {
@@ -273,7 +270,21 @@ void SpaceInvadersTD::render() {
 			}
 			ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "place_tower_indicator" ), pos,
 				glm::vec2( gridSize ), 0.0f, glm::vec4( color, 1.0f ) );
-			
+
+		} else {
+			// render grid hover
+			if ( selectedGridPos != glm::ivec2( gridX, gridY ) && ( gridX >= 0 && gridX < NUM_GRID_COLS ) && ( gridY >= 0 && gridY < NUM_GRID_ROWS )
+				&& grid[gridY][gridX].taken ) {
+				glm::vec2 pos = glm::vec2( gridX, gridY ) * gridSize;
+				ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "grid_hover" ), pos,
+					glm::vec2( gridSize ), 0.0f, glm::vec4( 1.0f, 1.0f, 1.0f, 0.8f ) );
+			}
+			// render grid selected
+			if ( towerIsSelected() ) {
+				glm::vec2 pos = glm::vec2( selectedGridPos.x, selectedGridPos.y ) * gridSize;
+				ServiceLocator::getGraphics().draw2DTexture( ResourceManager::getTexture( "grid_selected" ), pos,
+					glm::vec2( gridSize ), 0.0f, glm::vec4( 1.0f, 1.0f, 1.0f, 0.8f ) );
+			}
 		}
 	}
 
@@ -297,13 +308,13 @@ void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
 
 	// create the tower
 	int pos = EntityFactory::createBaseTower();
-	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
 	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
 	worldComp.size = glm::vec2( gridSize );
 	worldComp.pos = glm::vec2( x * gridSize, y * gridSize );
 
 	// mark that position as taken by a tower
 	grid[y][x].taken = true;
+	grid[y][x].towerType = TOWER_WALL;
 	grid[y][x].ent = pos;
 }
 
@@ -317,40 +328,39 @@ void SpaceInvadersTD::handleCollisionEvents() {
 
 		switch ( event.eventType ) {
 		case DAMAGE_EVENT:
-			{
-				int reciever = ( world.entities[event.ent1].mask ) & HEALTH ? event.ent1 : event.ent2;
-				int dealer = ( event.ent1 == reciever ) ? event.ent2 : event.ent1;
-				DamageComponent& dmgComp = world.dmgComponents[world.getComponentIndex( dealer, DAMAGE )];
-				HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( reciever, HEALTH )];
-				if ( healthComp.currHP > 0.0f ) {
-					healthComp.currHP -= ( dmgComp.trueDmg + ( dmgComp.voidDmg * healthComp.voidArmor ) +
-						( dmgComp.plasmaDmg * healthComp.plasmaArmor ) + ( dmgComp.iceDmg * healthComp.iceArmor ) );
+		{
+			int reciever = ( world.entities[event.ent1].mask ) & HEALTH ? event.ent1 : event.ent2;
+			int dealer = ( event.ent1 == reciever ) ? event.ent2 : event.ent1;
+			DamageComponent& dmgComp = world.dmgComponents[world.getComponentIndex( dealer, DAMAGE )];
+			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( reciever, HEALTH )];
+			if ( healthComp.currHP > 0.0f ) {
+				healthComp.currHP -= ( dmgComp.trueDmg + ( dmgComp.voidDmg * healthComp.voidArmor ) +
+					( dmgComp.plasmaDmg * healthComp.plasmaArmor ) + ( dmgComp.iceDmg * healthComp.iceArmor ) );
 
-					// check to see if the entity died
-					if ( healthComp.currHP <= 0.0f ) {
-						numEnemiesLeft--;
-						if ( world.entities[reciever].mask & MONEY ) {
-							money += world.moneyComponents[world.getComponentIndex( reciever, MONEY )].value;
-						}
+				// check to see if the entity died
+				if ( healthComp.currHP <= 0.0f ) {
+					numEnemiesLeft--;
+					if ( world.entities[reciever].mask & MONEY ) {
+						money += world.moneyComponents[world.getComponentIndex( reciever, MONEY )].value;
 					}
 				}
-				EntityFactory::removeEntity( dealer );
 			}
-			break;
+			EntityFactory::removeEntity( dealer );
+		}
+		break;
 		case DESPAWN_EVENT:
-			{
-				int ent = ( world.entities[event.ent1].mask ) & PATH ? event.ent1 : event.ent2;
-				EntityFactory::removeEntity( ent );
-				numEnemiesLeft--;
-				numLives--;
-			}
-			break;
+		{
+			int ent = ( world.entities[event.ent1].mask ) & PATH ? event.ent1 : event.ent2;
+			EntityFactory::removeEntity( ent );
+			numEnemiesLeft--;
+			numLives--;
+		}
+		break;
 		}
 	}
 }
 
 void SpaceInvadersTD::loadLevel( int level ) {
-	float gridSize = GAME_WIDTH / NUM_GRID_COLS;
 	std::stringstream ss;
 	ss << "resources/levels/" << "level_" << level << ".txt";
 	std::ifstream fin( ss.str() );
@@ -465,5 +475,144 @@ void SpaceInvadersTD::loadLevel( int level ) {
 
 	} else {
 
+	}
+}
+
+void SpaceInvadersTD::initMenuButtons() {
+	// start round button
+	bStartRound.setSize( glm::vec2( 256, 96 ) );
+	bStartRound.setPos( glm::vec2( ( GAME_WIDTH * 0.5f ) - ( bStartRound.getSize().x * 0.5f ),
+		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
+	bStartRound.setText( "Start Round" );
+	bStartRound.setOnClickFunction( [&] () {
+		SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+		if ( spawn.round < (int)spawn.numRounds ) {
+			WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
+			WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
+			SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+			spawn.round++;
+			spawn.currSpawnNum = 0;
+			numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
+			tdState = TD_PLAYING;
+			placeTowerMode = false;
+			path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
+				spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
+			showButtons( false );
+		}
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bStartRound );
+	buttons.push_back( &bStartRound );
+
+	// sell tower button
+	bSellTower.setSize( glm::vec2( 100, 100 ) );
+	bSellTower.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 + 100 + 22 ) );
+	bSellTower.setText( "Sell" );
+	bSellTower.setOnClickFunction( [&] () {
+		// sell the currently selected tower
+		if ( towerIsSelected() ) {
+			money += world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value;
+			EntityFactory::removeEntity( grid[selectedGridPos.y][selectedGridPos.x].ent );
+			grid[selectedGridPos.y][selectedGridPos.x].ent = -1;
+			grid[selectedGridPos.y][selectedGridPos.x].taken = false;
+			selectedGridPos = glm::ivec2( -1 );
+			showButtons( true );
+		}
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bSellTower );
+	buttons.push_back( &bSellTower );
+	bSellTower.setVisible( false );
+
+	// place wall button
+	bPlaceWall.setSize( glm::vec2( 100, 100 ) );
+	bPlaceWall.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bPlaceWall.setText( "Wall" );
+	bPlaceWall.setOnClickFunction( [&] () {
+		if ( money >= 5 && !placeTowerMode ) {
+			placeTowerMode = true;
+		}
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bPlaceWall );
+	buttons.push_back( &bPlaceWall );
+
+	// upgrade true button
+	bUpgradeTrue.setSize( glm::vec2( 100, 100 ) );
+	bUpgradeTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bUpgradeTrue.setText( "True" );
+	bUpgradeTrue.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT);
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 0.5f;
+			shootComp.bulletDmg.trueDmg = 10.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 1000.0f;
+			shootComp.range = 300.0f;
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_true";
+		}
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bUpgradeTrue );
+	buttons.push_back( &bUpgradeTrue );
+	bUpgradeTrue.setVisible( false );
+
+	// upgrade void button
+	bUpgradeVoid.setSize( glm::vec2( 100, 100 ) );
+	bUpgradeVoid.setPos( glm::vec2( 1920 - 480 + 24 + 100 + ( 32 / 3 ), GAME_HEIGHT * 0.75f + 24 ) );
+	bUpgradeVoid.setText( "Void" );
+	bUpgradeVoid.setOnClickFunction( [&] () {
+
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bUpgradeVoid );
+	buttons.push_back( &bUpgradeVoid );
+	bUpgradeVoid.setVisible( false );
+
+	// upgrade plasma button
+	bUpgradePlasma.setSize( glm::vec2( 100, 100 ) );
+	bUpgradePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bUpgradePlasma.setText( "Plasma" );
+	bUpgradePlasma.setOnClickFunction( [&] () {
+
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bUpgradePlasma );
+	buttons.push_back( &bUpgradePlasma );
+	bUpgradePlasma.setVisible( false );
+
+	// upgrade ice button
+	bUpgradeIce.setSize( glm::vec2( 100, 100 ) );
+	bUpgradeIce.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bUpgradeIce.setText( "Ice" );
+	bUpgradeIce.setOnClickFunction( [&] () {
+
+	} );
+	ServiceLocator::getInput().addOnClickObserver( &bUpgradeIce );
+	buttons.push_back( &bUpgradeIce );
+	bUpgradeIce.setVisible( false );
+}
+
+bool SpaceInvadersTD::towerIsSelected() const {
+	return selectedGridPos != glm::ivec2( -1 );
+}
+
+void SpaceInvadersTD::showButtons( bool show ) {
+	for ( Button*& btn : buttons ) {
+		btn->setVisible( false );
+	}
+	if ( show ) {
+		bStartRound.setVisible( true );
+		if ( !placeTowerMode && !towerIsSelected() ) {
+			// show place wall button if no tower is selected and not in place tower mode
+			bPlaceWall.setVisible( true );
+		} else if ( !placeTowerMode && towerIsSelected() ) {
+			// show button based on the type of tower that is selected
+			bUpgradeTrue.setVisible( true );
+			bUpgradeVoid.setVisible( true );
+			bUpgradePlasma.setVisible( true );
+			bUpgradeIce.setVisible( true );
+			bSellTower.setVisible( true );
+		}
 	}
 }

@@ -48,13 +48,11 @@ void FollowSystem::update( World* world, int pos, float dt ) {
 				}
 			}
 
-
 			// set velocity to move toward target
 			float rotInRadians = glm::radians( -rotation );
 			float speed = glm::length( moveComp.vel );
 			moveComp.vel.x = speed * std::cos( rotInRadians );
 			moveComp.vel.y = speed * -std::sin( rotInRadians );
-			//moveComp.vel = glm::normalize( posDiff ) * moveComp.defSpeed;
 		} else {
 			followComp.entTarget = -1;
 		}
