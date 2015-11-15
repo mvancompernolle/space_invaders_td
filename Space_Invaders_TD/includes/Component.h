@@ -21,7 +21,7 @@ enum COMPONENT_TYPE {
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
 	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
 	MONEY = DAMAGE << 1, SHOOT = MONEY << 1, FOLLOW = SHOOT << 1,
-	COMPONENT_SIZE = FOLLOW << 1,
+	COMPONENT_SIZE = FOLLOW << 1, COMPONENT_NUM = 10
 };
 
 struct HealthComponent {
@@ -104,7 +104,9 @@ struct ShootComponent {
 	float attackSpeed, timePassed, range, bulletSpeed;
 	int entTarget;
 	DamageComponent bulletDmg;
-	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range(800.0f), bulletSpeed(500.0f), entTarget( -1 ), bulletDmg() {}
+	std::string bulletTexture;
+	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range(800.0f), bulletSpeed(500.0f), entTarget( -1 ), bulletDmg(),
+	bulletTexture("") {}
 };
 
 struct FollowComponent {

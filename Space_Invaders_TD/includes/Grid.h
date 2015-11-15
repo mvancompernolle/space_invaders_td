@@ -25,5 +25,4 @@ struct GridState {
 };
 
 typedef std::vector<std::vector<GridState>> Grid;
-
 #endif //GRID_STATE_H

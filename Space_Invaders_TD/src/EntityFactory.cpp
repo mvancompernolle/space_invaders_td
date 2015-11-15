@@ -105,19 +105,19 @@ int EntityFactory::createEnemy() {
 	collisionSystem->registerEntity( index );
 
 	// initialize values
-	WorldComponent& worldComp = world->worldComponents[world->entities[index].componentIndices[WORLD]];
+	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
 	worldComp.pos = glm::vec2( 0 );
 	worldComp.size = glm::vec2( 32 );
-	MovementComponent& movComp = world->movementComponents[world->entities[index].componentIndices[MOVEMENT]];
+	MovementComponent& movComp = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
 	movComp.vel = glm::vec2( 200.0f, 0.0f );
 	movComp.defSpeed = 200.0f;
-	RenderComponent& renderComp = world->renderComponents[world->entities[index].componentIndices[RENDER]];
+	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "enemy";
-	HealthComponent& healthComp = world->healthComponents[world->entities[index].componentIndices[HEALTH]];
+	HealthComponent& healthComp = world->healthComponents[world->getComponentIndex( index, HEALTH )];
 	healthComp.currHP = 100.0f;
 	healthComp.maxHP = 100.0f;
-	CollisionComponent& collComp = world->collisionComponents[world->entities[index].componentIndices[COLLISION]];
+	CollisionComponent& collComp = world->collisionComponents[world->getComponentIndex( index, COLLISION )];
 	collComp.shape = CIRCLE;
 	collComp.collisionID = ENEMY;
 	collComp.collisionMask = BULLET;
@@ -133,13 +133,13 @@ int EntityFactory::createBaseTower() {
 	addComponent( index, WORLD );
 
 	// initialize values
-	WorldComponent& worldComp = world->worldComponents[world->entities[index].componentIndices[WORLD]];
+	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
 	worldComp.rotation = 0.0f;
 	worldComp.size = glm::vec2( 64 );
-	RenderComponent& renderComp = world->renderComponents[world->entities[index].componentIndices[RENDER]];
+	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "tower_base";
-	MoneyComponent& moneyComp = world->moneyComponents[world->entities[index].componentIndices[MONEY]];
+	MoneyComponent& moneyComp = world->moneyComponents[world->getComponentIndex( index, MONEY )];
 	moneyComp.value = 5;
 
 	return index;
@@ -147,12 +147,11 @@ int EntityFactory::createBaseTower() {
 
 int EntityFactory::createPlayer() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD | MOVEMENT | PLAYER_INPUT | SHOOT );
+	world->entities[index].mask = ( RENDER | WORLD | MOVEMENT | PLAYER_INPUT );
 	addComponent( index, PLAYER_INPUT );
 	addComponent( index, RENDER );
 	addComponent( index, WORLD );
 	addComponent( index, MOVEMENT );
-	addComponent( index, SHOOT );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
@@ -162,7 +161,7 @@ int EntityFactory::createPlayer() {
 	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "enemy";
-	MovementComponent& movComp = world->movementComponents[world->entities[index].componentIndices[MOVEMENT]];
+	MovementComponent& movComp = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
 	movComp.vel = glm::vec2( 0.0f, 0.0f );
 	movComp.defSpeed = 200.0f;
 
@@ -282,7 +281,7 @@ unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
 		index = world->followComponents.create();
 		break;
 	}
-	world->entities[pos].componentIndices[type] = index;
+	world->setComponentIndex( pos, type, index );
 	world->entities[pos].mask |= type;
 	return index;
 }

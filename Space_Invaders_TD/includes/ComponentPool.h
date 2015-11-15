@@ -5,6 +5,7 @@
 
 #include "Component.h"
 #include <iostream>
+#include <string>
 
 template<typename T>
 class Component {
@@ -20,8 +21,9 @@ private:
 template<typename T, int S>
 class ComponentPool {
 public:
-	ComponentPool() {
+	ComponentPool( std::string name ) : name(name)  {
 		// create component array
+		size = 0;
 		components = new Component<T>[S];
 
 		// set the first component to available
@@ -44,20 +46,25 @@ public:
 		// remove it from the available list
 		Component<T> *newComponent = firstAvailable;
 		firstAvailable = newComponent->getNext();
+		size++;
+		//std::cout << name << " creating - size: " << size << std::endl;
 
 		// set next to null to indicate that it is taken
-		newComponent->setNext( nullptr );
+		//newComponent->setNext( nullptr );
 
 		ptrdiff_t index = newComponent - components;
 		return index;
 	}
 
 	void remove( int i ) {
-		if ( components[i].getNext() == nullptr ) {
-			// add this particle to the front of the list
-			components[i].setNext( firstAvailable );
-			firstAvailable = &components[i];
-		}
+		//if ( components[i].getNext() == nullptr ) {
+		// add this particle to the front of the list
+		components[i].setNext( firstAvailable );
+		firstAvailable = &components[i];
+
+		size--;
+		//std::cout << name << " removing - size: " << size << std::endl;
+		//}
 	}
 
 	T& operator[]( int pos ) {
@@ -73,6 +80,8 @@ public:
 private:
 	Component<T> *firstAvailable;
 	Component<T> *components;
+	int size;
+	std::string name;
 };
 
 

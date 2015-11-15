@@ -5,14 +5,17 @@
 
 #include "ComponentPool.h"
 #include <vector>
+#include <unordered_map>
 
 #define NUM_ENTITIES 2048
 
 struct World {
 	struct EntityInfo {
 		unsigned mask;
-		unsigned componentIndices[COMPONENT_SIZE];
 		EntityInfo() : mask( 0 ) {}
+		friend class World;
+	private:
+		unsigned componentIndices[COMPONENT_NUM];
 	};
 
 	ComponentPool<EntityInfo, NUM_ENTITIES> entities;
@@ -28,9 +31,31 @@ struct World {
 	ComponentPool<MoneyComponent, NUM_ENTITIES / 4> moneyComponents;
 	ComponentPool<ShootComponent, NUM_ENTITIES / 4> shootComponents;
 	ComponentPool<FollowComponent, NUM_ENTITIES / 4> followComponents;
+	std::unordered_map<COMPONENT_TYPE, unsigned> componentIndexMap;
 
 	int getComponentIndex( int pos, COMPONENT_TYPE type ) const {
-		return entities[pos].componentIndices[type];
+		return entities[pos].componentIndices[componentIndexMap.at(type)];
+	}
+
+	void setComponentIndex( int pos, COMPONENT_TYPE type, unsigned index ) {
+		entities[pos].componentIndices[componentIndexMap[type]] = index;
+	}
+
+	World() : entities("entities"), worldComponents("world"), healthComponents("health"), movementComponents("movement"),
+		pathComponents("path"), spawnComponents("spawn"), renderComponents("render"), playerInputComponents("player"), 
+		collisionComponents("collision"), dmgComponents("dmg"), moneyComponents("money"), shootComponents("shoot"), 
+		followComponents("follow"){
+		componentIndexMap[HEALTH] = 0;
+		componentIndexMap[WORLD] = 1;
+		componentIndexMap[RENDER] = 2;
+		componentIndexMap[PATH] = 3;
+		componentIndexMap[SPAWN] = 4;
+		componentIndexMap[COLLISION] = 5;
+		componentIndexMap[PLAYER_INPUT] = 6;
+		componentIndexMap[DAMAGE] = 7;
+		componentIndexMap[MONEY] = 8;
+		componentIndexMap[SHOOT] = 9;
+		componentIndexMap[FOLLOW] = 10;
 	}
 };
 

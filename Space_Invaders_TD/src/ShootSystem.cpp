@@ -51,7 +51,7 @@ void ShootSystem::update( World* world, int pos, float dt ) {
 			ent.world.pos = worldComp.getCenter() - ( ent.world.size * 0.5f );
 			ent.world.rotation = 0.0f;
 			// init render data
-			ent.render.textureName = "ship_true_dmg_bullet";
+			ent.render.textureName = shootComp.bulletTexture;
 			// init movement data
 			WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( shootComp.entTarget, WORLD )];
 			ent.movement.defSpeed = shootComp.bulletSpeed;

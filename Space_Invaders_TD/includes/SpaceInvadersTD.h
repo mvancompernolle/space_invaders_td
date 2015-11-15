@@ -50,8 +50,14 @@ private:
 
 	// menu buttons
 	std::vector<Button*> buttons;
+	bool updateButtons;
 	Button bStartRound, bPlaceWall;
 	Button bUpgradeTrue, bUpgradeVoid, bUpgradePlasma, bUpgradeIce, bSellTower;
+	Button bTrueVoid, bTruePlasma, bTrueIce;
+	Button bVoidTrue, bVoidPlasma, bVoidIce;
+	Button bPlasmaTrue, bPlasmaVoid, bPlasmaIce;
+	Button bIceTrue, bIceVoid, bIcePlasma;
+	std::unordered_map<TOWER_TYPE, std::vector<Button*>> towerButtons;
 
 	void placeBaseTower( unsigned x, unsigned y );
 	void handleCollisionEvents();

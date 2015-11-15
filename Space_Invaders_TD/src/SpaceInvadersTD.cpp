@@ -25,9 +25,44 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "grid_selected.png", GL_TRUE, "grid_selected" );
 	ResourceManager::loadTexture( "spawn_portal.png", GL_TRUE, "portal" );
 	ResourceManager::loadTexture( "despawn_portal.png", GL_TRUE, "despawn_portal" );
-	ResourceManager::loadTexture( "ship_true_dmg_bullet.png", GL_TRUE, "ship_true_dmg_bullet" );
 	ResourceManager::loadTexture( "space.jpg", GL_TRUE, "game_background" );
+
+	// tower sprites
 	ResourceManager::loadTexture( "tower_true.png", GL_TRUE, "tower_true" );
+	ResourceManager::loadTexture( "tower_true_void.png", GL_TRUE, "tower_true_void" );
+	ResourceManager::loadTexture( "tower_true_plasma.png", GL_TRUE, "tower_true_plasma" );
+	ResourceManager::loadTexture( "tower_true_ice.png", GL_TRUE, "tower_true_ice" );
+	ResourceManager::loadTexture( "tower_void.png", GL_TRUE, "tower_void" );
+	ResourceManager::loadTexture( "tower_void_true.png", GL_TRUE, "tower_void_true" );
+	ResourceManager::loadTexture( "tower_void_plasma.png", GL_TRUE, "tower_void_plasma" );
+	ResourceManager::loadTexture( "tower_void_ice.png", GL_TRUE, "tower_void_ice" );
+	ResourceManager::loadTexture( "tower_plasma.png", GL_TRUE, "tower_plasma" );
+	ResourceManager::loadTexture( "tower_plasma_true.png", GL_TRUE, "tower_plasma_true" );
+	ResourceManager::loadTexture( "tower_plasma_void.png", GL_TRUE, "tower_plasma_void" );
+	ResourceManager::loadTexture( "tower_plasma_ice.png", GL_TRUE, "tower_plasma_ice" );
+	ResourceManager::loadTexture( "tower_ice.png", GL_TRUE, "tower_ice" );
+	ResourceManager::loadTexture( "tower_ice_true.png", GL_TRUE, "tower_ice_true" );
+	ResourceManager::loadTexture( "tower_ice_void.png", GL_TRUE, "tower_ice_void" );
+	ResourceManager::loadTexture( "tower_ice_plasma.png", GL_TRUE, "tower_ice_plasma" );
+
+	// bullet sprites
+	ResourceManager::loadTexture( "ship_true_dmg_bullet.png", GL_TRUE, "ship_true_dmg_bullet" );
+	ResourceManager::loadTexture( "bullet_true.png", GL_TRUE, "bullet_true" );
+	ResourceManager::loadTexture( "bullet_true_void.png", GL_TRUE, "bullet_true_void" );
+	ResourceManager::loadTexture( "bullet_true_plasma.png", GL_TRUE, "bullet_true_plasma" );
+	ResourceManager::loadTexture( "bullet_true_ice.png", GL_TRUE, "bullet_true_ice" );
+	ResourceManager::loadTexture( "bullet_void.png", GL_TRUE, "bullet_void" );
+	ResourceManager::loadTexture( "bullet_void_true.png", GL_TRUE, "bullet_void_true" );
+	ResourceManager::loadTexture( "bullet_void_plasma.png", GL_TRUE, "bullet_void_plasma" );
+	ResourceManager::loadTexture( "bullet_void_ice.png", GL_TRUE, "bullet_void_ice" );
+	ResourceManager::loadTexture( "bullet_ice.png", GL_TRUE, "bullet_ice" );
+	ResourceManager::loadTexture( "bullet_ice_true.png", GL_TRUE, "bullet_ice_true" );
+	ResourceManager::loadTexture( "bullet_ice_void.png", GL_TRUE, "bullet_ice_void" );
+	ResourceManager::loadTexture( "bullet_ice_plasma.png", GL_TRUE, "bullet_ice_plasma" );
+	ResourceManager::loadTexture( "bullet_plasma.png", GL_TRUE, "bullet_plasma" );
+	ResourceManager::loadTexture( "bullet_plasma_true.png", GL_TRUE, "bullet_plasma_true" );
+	ResourceManager::loadTexture( "bullet_plasma_void.png", GL_TRUE, "bullet_plasma_void" );
+	ResourceManager::loadTexture( "bullet_plasma_ice.png", GL_TRUE, "bullet_plasma_ice" );
 
 	// create systems
 	systems.push_back( new PlayerInputSystem );
@@ -62,6 +97,8 @@ void SpaceInvadersTD::init() {
 	selectedGridPos = glm::ivec2( -1 );
 	tdState = TD_MENU;
 	placeTowerMode = false;
+	updateButtons = false;
+	showButtons( true );
 
 	// create grid
 	gridSize = (float)GAME_WIDTH / NUM_GRID_COLS;
@@ -144,6 +181,10 @@ STATE SpaceInvadersTD::update( const float dt ) {
 		collisionSystem.clearCollisionEvents();
 
 	} else if ( tdState == TD_MENU ) {
+		if ( updateButtons ) {
+			showButtons( true );
+		}
+
 		// handle place tower mode
 		if ( placeTowerMode ) {
 			if ( ServiceLocator::getInput().getKeyPressed( MOUSE_BUTTON_RIGHT ) && ServiceLocator::getInput().keyNotProcessed( MOUSE_BUTTON_RIGHT ) ) {
@@ -474,7 +515,30 @@ void SpaceInvadersTD::loadLevel( int level ) {
 		path->calcOptimalPath( ( glm::uvec2 ) start, ( glm::uvec2 ) end, worldComp.size.x, grid );
 
 	} else {
+		std::cout << "failed to load level" << std::endl;
+	}
+}
 
+bool SpaceInvadersTD::towerIsSelected() const {
+	return selectedGridPos != glm::ivec2( -1 );
+}
+
+void SpaceInvadersTD::showButtons( bool show ) {
+	for ( Button*& btn : buttons ) {
+		btn->setVisible( false );
+	}
+	if ( show ) {
+		bStartRound.setVisible( true );
+		if ( !placeTowerMode && !towerIsSelected() ) {
+			// show place wall button if no tower is selected and not in place tower mode
+			bPlaceWall.setVisible( true );
+		} else if ( !placeTowerMode && towerIsSelected() ) {
+			// show button based on the type of tower that is selected
+			for ( Button* btn : towerButtons[grid[selectedGridPos.y][selectedGridPos.x].towerType] ) {
+				btn->setVisible( true );
+			}
+			bSellTower.setVisible( true );
+		}
 	}
 }
 
@@ -497,10 +561,9 @@ void SpaceInvadersTD::initMenuButtons() {
 			placeTowerMode = false;
 			path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
 				spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
-			showButtons( false );
+			updateButtons = true;
 		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bStartRound );
 	buttons.push_back( &bStartRound );
 
 	// sell tower button
@@ -515,12 +578,10 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].ent = -1;
 			grid[selectedGridPos.y][selectedGridPos.x].taken = false;
 			selectedGridPos = glm::ivec2( -1 );
-			showButtons( true );
+			updateButtons = true;
 		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bSellTower );
 	buttons.push_back( &bSellTower );
-	bSellTower.setVisible( false );
 
 	// place wall button
 	bPlaceWall.setSize( glm::vec2( 100, 100 ) );
@@ -531,7 +592,6 @@ void SpaceInvadersTD::initMenuButtons() {
 			placeTowerMode = true;
 		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bPlaceWall );
 	buttons.push_back( &bPlaceWall );
 
 	// upgrade true button
@@ -551,68 +611,445 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 1000.0f;
 			shootComp.range = 300.0f;
+			shootComp.bulletTexture = "bullet_true";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_true";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_TRUE;
+			updateButtons = true;
 		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bUpgradeTrue );
 	buttons.push_back( &bUpgradeTrue );
-	bUpgradeTrue.setVisible( false );
 
 	// upgrade void button
 	bUpgradeVoid.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeVoid.setPos( glm::vec2( 1920 - 480 + 24 + 100 + ( 32 / 3 ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeVoid.setText( "Void" );
 	bUpgradeVoid.setOnClickFunction( [&] () {
-
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 30.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_void";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_void";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID;
+			updateButtons = true;
+		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bUpgradeVoid );
 	buttons.push_back( &bUpgradeVoid );
-	bUpgradeVoid.setVisible( false );
 
 	// upgrade plasma button
 	bUpgradePlasma.setSize( glm::vec2( 100, 100 ) );
 	bUpgradePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradePlasma.setText( "Plasma" );
 	bUpgradePlasma.setOnClickFunction( [&] () {
-
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 0.25f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 10.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 800.0f;
+			shootComp.range = 300.0f;
+			shootComp.bulletTexture = "bullet_plasma";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_plasma";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA;
+			updateButtons = true;
+		}
 	} );
-	ServiceLocator::getInput().addOnClickObserver( &bUpgradePlasma );
 	buttons.push_back( &bUpgradePlasma );
-	bUpgradePlasma.setVisible( false );
 
 	// upgrade ice button
 	bUpgradeIce.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeIce.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeIce.setText( "Ice" );
 	bUpgradeIce.setOnClickFunction( [&] () {
-
-	} );
-	ServiceLocator::getInput().addOnClickObserver( &bUpgradeIce );
-	buttons.push_back( &bUpgradeIce );
-	bUpgradeIce.setVisible( false );
-}
-
-bool SpaceInvadersTD::towerIsSelected() const {
-	return selectedGridPos != glm::ivec2( -1 );
-}
-
-void SpaceInvadersTD::showButtons( bool show ) {
-	for ( Button*& btn : buttons ) {
-		btn->setVisible( false );
-	}
-	if ( show ) {
-		bStartRound.setVisible( true );
-		if ( !placeTowerMode && !towerIsSelected() ) {
-			// show place wall button if no tower is selected and not in place tower mode
-			bPlaceWall.setVisible( true );
-		} else if ( !placeTowerMode && towerIsSelected() ) {
-			// show button based on the type of tower that is selected
-			bUpgradeTrue.setVisible( true );
-			bUpgradeVoid.setVisible( true );
-			bUpgradePlasma.setVisible( true );
-			bUpgradeIce.setVisible( true );
-			bSellTower.setVisible( true );
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.5f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 30.0f;
+			shootComp.bulletSpeed = 300.0f;
+			shootComp.range = 600.0f;
+			shootComp.bulletTexture = "bullet_ice";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_ice";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE;
+			updateButtons = true;
 		}
+	} );
+	buttons.push_back( &bUpgradeIce );
+
+	// upgrade true void button
+	bTrueVoid.setSize( glm::vec2( 100, 100 ) );
+	bTrueVoid.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bTrueVoid.setText( "TV" );
+	bTrueVoid.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 40.0f;
+			shootComp.bulletDmg.voidDmg = 10.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 600.0f;
+			shootComp.bulletTexture = "bullet_true_void";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_true_void";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_TRUE_VOID;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bTrueVoid );
+
+	// upgrade true plasma button
+	bTruePlasma.setSize( glm::vec2( 100, 100 ) );
+	bTruePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bTruePlasma.setText( "TP" );
+	bTruePlasma.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 0.35f;
+			shootComp.bulletDmg.trueDmg = 20.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 5.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 800.0f;
+			shootComp.range = 400.0f;
+			shootComp.bulletTexture = "bullet_true_plasma";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_true_plasma";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_TRUE_PLASMA;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bTruePlasma );
+
+	// upgrade true ice button
+	bTrueIce.setSize( glm::vec2( 100, 100 ) );
+	bTrueIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bTrueIce.setText( "TI" );
+	bTrueIce.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 0.75f;
+			shootComp.bulletDmg.trueDmg = 30.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 10.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 750.0f;
+			shootComp.bulletTexture = "bullet_true_ice";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_true_ice";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_TRUE_PLASMA;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bTrueIce );
+
+	// upgrade void true button
+	bVoidTrue.setSize( glm::vec2( 100, 100 ) );
+	bVoidTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bVoidTrue.setText( "VT" );
+	bVoidTrue.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 10.0f;
+			shootComp.bulletDmg.voidDmg = 40.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_void_true";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_void_true";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_TRUE;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bVoidTrue );
+
+	// upgrade void true button
+	bVoidPlasma.setSize( glm::vec2( 100, 100 ) );
+	bVoidPlasma.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bVoidPlasma.setText( "VP" );
+	bVoidPlasma.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 40.0f;
+			shootComp.bulletDmg.plasmaDmg = 15.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_void_plasma";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_void_plasma";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_PLASMA;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bVoidPlasma );
+
+	// upgrade void true button
+	bVoidIce.setSize( glm::vec2( 100, 100 ) );
+	bVoidIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bVoidIce.setText( "VI" );
+	bVoidIce.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 40.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 15.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_void_plasma";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_void_plasma";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_ICE;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bVoidIce );
+
+	// upgrade void true button
+	bPlasmaTrue.setSize( glm::vec2( 100, 100 ) );
+	bPlasmaTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bPlasmaTrue.setText( "PT" );
+	bPlasmaTrue.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 10.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 40.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_plasma_true";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_plasma_true";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA_TRUE;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bPlasmaTrue );
+
+	// upgrade void true button
+	bPlasmaVoid.setSize( glm::vec2( 100, 100 ) );
+	bPlasmaVoid.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bPlasmaVoid.setText( "PV" );
+	bPlasmaVoid.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 15.0f;
+			shootComp.bulletDmg.plasmaDmg = 40.0f;
+			shootComp.bulletDmg.iceDmg = 0.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_plasma_void";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_plasma_void";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA_VOID;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bPlasmaVoid );
+
+	// upgrade void true button
+	bPlasmaIce.setSize( glm::vec2( 100, 100 ) );
+	bPlasmaIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bPlasmaIce.setText( "PI" );
+	bPlasmaIce.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 40.0f;
+			shootComp.bulletDmg.iceDmg = 15.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_plasma_ice";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_plasma_ice";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA_ICE;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bPlasmaIce );
+
+	// upgrade void true button
+	bIceTrue.setSize( glm::vec2( 100, 100 ) );
+	bIceTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
+	bIceTrue.setText( "IT" );
+	bIceTrue.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 10.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 40.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_ice_true";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_ice_true";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE_TRUE;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bIceTrue );
+
+	// upgrade void true button
+	bIceVoid.setSize( glm::vec2( 100, 100 ) );
+	bIceVoid.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bIceVoid.setText( "IV" );
+	bIceVoid.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 15.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
+			shootComp.bulletDmg.iceDmg = 40.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_ice_void";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_ice_void";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE_VOID;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bIceVoid );
+
+	// upgrade void true button
+	bIcePlasma.setSize( glm::vec2( 100, 100 ) );
+	bIcePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
+	bIcePlasma.setText( "IP" );
+	bIcePlasma.setOnClickFunction( [&] () {
+		// add shoot component to wall
+		if ( money >= 10 ) {
+			money -= 10;
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
+			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			shootComp.attackSpeed = 1.0f;
+			shootComp.bulletDmg.trueDmg = 0.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
+			shootComp.bulletDmg.plasmaDmg = 15.0f;
+			shootComp.bulletDmg.iceDmg = 40.0f;
+			shootComp.bulletSpeed = 500.0f;
+			shootComp.range = 500.0f;
+			shootComp.bulletTexture = "bullet_ice_plasma";
+			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
+			renderComp.textureName = "tower_ice_plasma";
+			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE_PLASMA;
+			updateButtons = true;
+		}
+	} );
+	buttons.push_back( &bIcePlasma );
+
+	// set which towers show which buttons
+	towerButtons[TOWER_WALL].push_back( &bUpgradeTrue );
+	towerButtons[TOWER_WALL].push_back( &bUpgradeVoid );
+	towerButtons[TOWER_WALL].push_back( &bUpgradePlasma );
+	towerButtons[TOWER_WALL].push_back( &bUpgradeIce );
+
+	towerButtons[TOWER_TRUE].push_back( &bTrueVoid );
+	towerButtons[TOWER_TRUE].push_back( &bTruePlasma );
+	towerButtons[TOWER_TRUE].push_back( &bTrueIce );
+
+	towerButtons[TOWER_VOID].push_back( &bVoidTrue );
+	towerButtons[TOWER_VOID].push_back( &bVoidPlasma );
+	towerButtons[TOWER_VOID].push_back( &bVoidIce );
+
+	towerButtons[TOWER_PLASMA].push_back( &bPlasmaTrue );
+	towerButtons[TOWER_PLASMA].push_back( &bPlasmaVoid );
+	towerButtons[TOWER_PLASMA].push_back( &bPlasmaIce );
+
+	towerButtons[TOWER_ICE].push_back( &bIceTrue );
+	towerButtons[TOWER_ICE].push_back( &bIceVoid );
+	towerButtons[TOWER_ICE].push_back( &bIcePlasma );
+
+	// register buttons
+	for ( Button*& btn : buttons ) {
+		ServiceLocator::getInput().addOnClickObserver( btn );
 	}
 }
