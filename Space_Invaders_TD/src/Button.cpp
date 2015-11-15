@@ -21,6 +21,7 @@ Button::~Button()
 void Button::onClick( glm::vec2 pos ) {
 	// check to see if button was click
 	if ( state != DISABLED && isOverButton(pos) ) {
+		std::cout << text << " mouse click - pressed" << std::endl;
 		state = PRESSED;
 
 		if ( onClickFunction ) {
@@ -34,12 +35,14 @@ void Button::onRelease( glm::vec2 pos ) {
 	// perform release function if released over the button
 	if ( state != DISABLED ) {
 		if ( isOverButton( pos ) ) {
+			std::cout << text << " mouse release - hover" << std::endl;
 			state = HOVER;
 
 			if ( onReleaseFunction ) {
 				onReleaseFunction();
 			}
 		} else {
+			std::cout << text << " mouse release - released" << std::endl;
 			state = RELEASED;
 		}
 	}
@@ -50,9 +53,11 @@ void Button::onMouseMovement( glm::vec2 pos ) {
 		if ( state != PRESSED ) {
 
 			if ( isOverButton( pos ) ) {
+				std::cout << text << " mouse movement - HOVER" << std::endl;
 				state = HOVER;
 			} else {
 				state = RELEASED;
+				std::cout << text << " mouse movement - RELEASED" << std::endl;
 			}
 		} else {
 			if ( isDraggable && onMouseMovementFunction ) {
@@ -95,7 +100,7 @@ glm::vec2 Button::getSize() const {
 void Button::setVisible( GLboolean visible ) {
 	if ( !visible ) {
 		state = DISABLED;
-	} else if ( !isVisible ) {
+	} else {
 		state = RELEASED;
 	}
 	isVisible = visible;
@@ -121,6 +126,7 @@ void Button::setDraggable( GLboolean draggable ) {
 
 void Button::render( Graphics& graphics ) {
 	if ( isVisible ) {
+		//std::cout << text << " render " << (isVisible ? "true" : "false" ) << " " << state << std::endl;
 		// render button texture
 		if ( state == PRESSED ) {
 			graphics.draw2DTexture( pressedTexture, pos, size, rotation );

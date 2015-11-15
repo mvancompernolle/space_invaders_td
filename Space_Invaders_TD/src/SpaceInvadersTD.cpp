@@ -183,6 +183,7 @@ STATE SpaceInvadersTD::update( const float dt ) {
 	} else if ( tdState == TD_MENU ) {
 		if ( updateButtons ) {
 			showButtons( true );
+			updateButtons = false;
 		}
 
 		// handle place tower mode
@@ -854,9 +855,9 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletDmg.iceDmg = 15.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
-			shootComp.bulletTexture = "bullet_void_plasma";
+			shootComp.bulletTexture = "bullet_void_ice";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
-			renderComp.textureName = "tower_void_plasma";
+			renderComp.textureName = "tower_void_ice";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_ICE;
 			updateButtons = true;
