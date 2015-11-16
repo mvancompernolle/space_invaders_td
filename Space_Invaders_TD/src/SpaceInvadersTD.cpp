@@ -2,11 +2,11 @@
 #include "ServiceLocator.h"
 #include "ResourceManager.h"
 #include "EntityFactory.h"
-#include "MovementSystem.h"
-#include "SpawnSystem.h"
-#include "PlayerInputSystem.h"
-#include "HealthSystem.h"
-#include "FollowSystem.h"
+#include "systems/MovementSystem.h"
+#include "systems/SpawnSystem.h"
+#include "systems/PlayerInputSystem.h"
+#include "systems/HealthSystem.h"
+#include "systems/FollowSystem.h"
 #include <cstring>
 #include <ctime>
 #include <cassert>
@@ -73,12 +73,15 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	systems.push_back( shootSystem );
 	path = new PathSystem;
 	systems.push_back( path );
+	dmgAuraSystem = new DamageAuraSystem;
+	systems.push_back( dmgAuraSystem );
 	systems.push_back( new SpawnSystem );
 
-	// initialize entity factor
+	// initialize entity factory
 	EntityFactory::setWorld( &world );
 	EntityFactory::setCollisionSystem( &collisionSystem );
 	EntityFactory::setShootSystem( shootSystem );
+	EntityFactory::setDmgAuraSystem( dmgAuraSystem );
 
 	initMenuButtons();
 }
@@ -376,8 +379,7 @@ void SpaceInvadersTD::handleCollisionEvents() {
 			DamageComponent& dmgComp = world.dmgComponents[world.getComponentIndex( dealer, DAMAGE )];
 			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( reciever, HEALTH )];
 			if ( healthComp.currHP > 0.0f ) {
-				healthComp.currHP -= ( dmgComp.trueDmg + ( dmgComp.voidDmg * healthComp.voidArmor ) +
-					( dmgComp.plasmaDmg * healthComp.plasmaArmor ) + ( dmgComp.iceDmg * healthComp.iceArmor ) );
+				healthComp.takeDmg( dmgComp );
 
 				// check to see if the entity died
 				if ( healthComp.currHP <= 0.0f ) {
@@ -711,8 +713,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 40.0f;
 			shootComp.bulletDmg.voidDmg = 10.0f;
@@ -738,8 +739,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 0.35f;
 			shootComp.bulletDmg.trueDmg = 20.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -765,8 +765,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 0.75f;
 			shootComp.bulletDmg.trueDmg = 30.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -792,16 +791,16 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
-			shootComp.bulletSpeed = 500.0f;
+			shootComp.bulletSpeed = 300.0f;
 			shootComp.range = 500.0f;
 			shootComp.bulletTexture = "bullet_void_true";
+			shootComp.towerType = TOWER_VOID_TRUE;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_void_true";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
@@ -819,8 +818,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
@@ -846,8 +844,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
@@ -873,8 +870,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -900,8 +896,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 15.0f;
@@ -910,9 +905,16 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
 			shootComp.bulletTexture = "bullet_plasma_void";
+			shootComp.towerType = TOWER_PLASMA_VOID;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_plasma_void";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
+			// give the tower a damage aura
+			int auraIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, DAMAGE_AURA );
+			DmgAuraComponent& auraComp = world.dmgAuraComponents[auraIndex];
+			auraComp.dmg.voidDmg = 3.0f;
+			auraComp.pulseSpeed = 0.5f;
+			auraComp.range = 150.0f;
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA_VOID;
 			updateButtons = true;
 		}
@@ -927,8 +929,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -954,8 +955,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -981,8 +981,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 15.0f;
@@ -1008,8 +1007,7 @@ void SpaceInvadersTD::initMenuButtons() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
-			ShootComponent& shootComp = world.shootComponents[shootIndex];
+			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;

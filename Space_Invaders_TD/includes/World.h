@@ -31,6 +31,7 @@ struct World {
 	ComponentPool<MoneyComponent, NUM_ENTITIES / 4> moneyComponents;
 	ComponentPool<ShootComponent, NUM_ENTITIES / 4> shootComponents;
 	ComponentPool<FollowComponent, NUM_ENTITIES / 4> followComponents;
+	ComponentPool<DmgAuraComponent, NUM_ENTITIES / 4> dmgAuraComponents;
 	std::unordered_map<COMPONENT_TYPE, unsigned> componentIndexMap;
 
 	int getComponentIndex( int pos, COMPONENT_TYPE type ) const {
@@ -44,7 +45,7 @@ struct World {
 	World() : entities("entities"), worldComponents("world"), healthComponents("health"), movementComponents("movement"),
 		pathComponents("path"), spawnComponents("spawn"), renderComponents("render"), playerInputComponents("player"), 
 		collisionComponents("collision"), dmgComponents("dmg"), moneyComponents("money"), shootComponents("shoot"), 
-		followComponents("follow"){
+		followComponents("follow"), dmgAuraComponents("dmg_aura"){
 		componentIndexMap[HEALTH] = 0;
 		componentIndexMap[WORLD] = 1;
 		componentIndexMap[RENDER] = 2;
@@ -56,6 +57,7 @@ struct World {
 		componentIndexMap[MONEY] = 8;
 		componentIndexMap[SHOOT] = 9;
 		componentIndexMap[FOLLOW] = 10;
+		componentIndexMap[DAMAGE_AURA] = 11;
 	}
 };
 

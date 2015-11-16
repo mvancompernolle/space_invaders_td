@@ -1,4 +1,4 @@
-#include "ShootSystem.h"
+#include "systems/ShootSystem.h"
 #include <algorithm>
 #include <limits>
 
@@ -44,28 +44,46 @@ void ShootSystem::update( World* world, int pos, float dt ) {
 		shootComp.timePassed += dt;
 		if ( shootComp.timePassed >= shootComp.attackSpeed ) {
 			shootComp.timePassed -= shootComp.attackSpeed;
-
-			Entity ent( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE | FOLLOW );
-			// init world data
-			ent.world.size = worldComp.size * 0.25f;
-			ent.world.pos = worldComp.getCenter() - ( ent.world.size * 0.5f );
-			ent.world.rotation = 0.0f;
-			// init render data
-			ent.render.textureName = shootComp.bulletTexture;
-			// init movement data
-			WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( shootComp.entTarget, WORLD )];
-			ent.movement.defSpeed = shootComp.bulletSpeed;
-			ent.movement.vel = glm::normalize( worldComp2.getCenter() - worldComp.getCenter() ) * ent.movement.defSpeed;
-			// init collision data
-			ent.collision.collisionID = BULLET;
-			ent.collision.shape = CIRCLE;
-			ent.collision.collisionMask = ENEMY;
-			// init damage data
-			ent.damage = shootComp.bulletDmg;
-			// init follow data
-			ent.follow.entTarget = shootComp.entTarget;
-			
-			additions.push_back( ent );
+			spawnBullets( world, pos );
 		}
 	}
+}
+
+void ShootSystem::spawnBullets( World* world,  unsigned pos ) {
+	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( pos, WORLD )];
+	ShootComponent& shootComp = world->shootComponents[world->getComponentIndex( pos, SHOOT )];
+
+	// create a base bullet
+	Entity ent( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE | FOLLOW );
+	// init world data
+	ent.world.size = worldComp.size * 0.25f;
+	ent.world.pos = worldComp.getCenter() - ( ent.world.size * 0.5f );
+	ent.world.rotation = 0.0f;
+	// init render data
+	ent.render.textureName = shootComp.bulletTexture;
+	// init movement data
+	WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( shootComp.entTarget, WORLD )];
+	ent.movement.defSpeed = shootComp.bulletSpeed;
+	ent.movement.vel = glm::normalize( worldComp2.getCenter() - worldComp.getCenter() ) * ent.movement.defSpeed;
+	// init collision data
+	ent.collision.collisionID = BULLET;
+	ent.collision.shape = CIRCLE;
+	ent.collision.collisionMask = ENEMY;
+	// init damage data
+	ent.damage = shootComp.bulletDmg;
+	// init follow data
+	ent.follow.entTarget = shootComp.entTarget;
+
+	// add other effects based on the shoot type
+	switch ( shootComp.towerType ) {
+	case TOWER_VOID_TRUE:
+		// give bullets a damage aura
+		ent.componentTypes |= DAMAGE_AURA;
+		ent.dmgAura.dmg.trueDmg = 1.0f;
+		ent.dmgAura.pulseSpeed = 0.1f;
+		ent.dmgAura.range = 200.0f;
+		break;
+	}
+
+	additions.push_back( ent );
 }

@@ -6,7 +6,7 @@
 0.75 
 
 HEALTH
-maxHP 300
+maxHP 275
 voidArmor 1.0
 plasmaArmor 0.0
 iceArmor 1.0

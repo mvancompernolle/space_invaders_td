@@ -13,6 +13,8 @@ public:
 	void unregisterEntity( unsigned entity );
 	void update( World* world, int pos, float dt );
 private:
+	void spawnBullets( World* world, unsigned pos );
+
 	std::vector<unsigned> registeredEntities;
 };
 

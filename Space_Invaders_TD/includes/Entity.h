@@ -22,6 +22,7 @@ public:
 	MoneyComponent				money;
 	ShootComponent				shoot;
 	FollowComponent				follow;
+	DmgAuraComponent			dmgAura;
 
 	Entity( unsigned components );
 	~Entity();

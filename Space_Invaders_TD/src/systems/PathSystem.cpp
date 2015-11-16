@@ -1,5 +1,5 @@
-#include "PathSystem.h"
-#include "CollisionSystem.h"
+#include "systems/PathSystem.h"
+#include "systems/CollisionSystem.h"
 #include <cassert>
 #include <queue>
 #include <algorithm>

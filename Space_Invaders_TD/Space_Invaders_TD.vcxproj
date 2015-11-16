@@ -122,17 +122,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\FollowSystem.cpp" />
-    <ClCompile Include="src\ShootSystem.cpp" />
-    <ClCompile Include="src\HealthSystem.cpp" />
-    <ClCompile Include="src\PlayerInputSystem.cpp" />
+    <ClCompile Include="src\systems\DamageAuraSystem.cpp" />
+    <ClCompile Include="src\systems\FollowSystem.cpp" />
+    <ClCompile Include="src\systems\ShootSystem.cpp" />
+    <ClCompile Include="src\systems\HealthSystem.cpp" />
+    <ClCompile Include="src\systems\PlayerInputSystem.cpp" />
     <ClCompile Include="src\OnKeyObserver.cpp" />
     <ClCompile Include="src\OnKeySubject.cpp" />
-    <ClCompile Include="src\CollisionSystem.cpp" />
+    <ClCompile Include="src\systems\CollisionSystem.cpp" />
     <ClCompile Include="src\SpawnInfo.cpp" />
-    <ClCompile Include="src\SpawnSystem.cpp" />
-    <ClCompile Include="src\PathSystem.cpp" />
-    <ClCompile Include="src\MovementSystem.cpp" />
+    <ClCompile Include="src\systems\SpawnSystem.cpp" />
+    <ClCompile Include="src\systems\PathSystem.cpp" />
+    <ClCompile Include="src\systems\MovementSystem.cpp" />
     <ClCompile Include="src\EntityFactory.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\SpaceInvadersTD.cpp" />
@@ -155,14 +156,15 @@
     <ClCompile Include="src\SpriteRenderer.cpp" />
     <ClCompile Include="src\TextRenderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\System.cpp" />
+    <ClCompile Include="src\systems\System.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="includes\FollowSystem.h" />
-    <ClInclude Include="includes\HealthSystem.h" />
-    <ClInclude Include="includes\CollisionSystem.h" />
+    <ClInclude Include="includes\systems\DamageAuraSystem.h" />
+    <ClInclude Include="includes\systems\FollowSystem.h" />
+    <ClInclude Include="includes\systems\HealthSystem.h" />
+    <ClInclude Include="includes\systems\CollisionSystem.h" />
     <ClInclude Include="includes\ComponentPool.h" />
-    <ClInclude Include="includes\PathSystem.h" />
+    <ClInclude Include="includes\systems\PathSystem.h" />
     <ClInclude Include="includes\EntityFactory.h" />
     <ClInclude Include="includes\Component.h" />
     <ClInclude Include="includes\Entity.h" />
@@ -190,14 +192,15 @@
     <ClInclude Include="includes\TextRenderer.h" />
     <ClInclude Include="includes\Texture.h" />
     <ClInclude Include="includes\SpaceInvadersTD.h" />
-    <ClInclude Include="includes\System.h" />
-    <ClInclude Include="includes\MovementSystem.h" />
-    <ClInclude Include="includes\SpawnSystem.h" />
+    <ClInclude Include="includes\systems\System.h" />
+    <ClInclude Include="includes\systems\MovementSystem.h" />
+    <ClInclude Include="includes\systems\SpawnSystem.h" />
     <ClInclude Include="includes\OnKeySubject.h" />
     <ClInclude Include="includes\OnKeyObserver.h" />
+    <ClInclude Include="includes\TowerTypes.h" />
     <ClInclude Include="includes\World.h" />
-    <ClInclude Include="includes\PlayerInputSystem.h" />
-    <ClInclude Include="includes\ShootSystem.h" />
+    <ClInclude Include="includes\systems\PlayerInputSystem.h" />
+    <ClInclude Include="includes\systems\ShootSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

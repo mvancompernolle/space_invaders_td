@@ -4,6 +4,7 @@
 World* EntityFactory::world;
 CollisionSystem* EntityFactory::collisionSystem;
 ShootSystem* EntityFactory::shootSystem;
+DamageAuraSystem* EntityFactory::dmgAuraSystem;
 
 EntityFactory::EntityFactory() {
 }
@@ -22,6 +23,10 @@ void EntityFactory::setCollisionSystem( CollisionSystem* cs ) {
 
 void EntityFactory::setShootSystem( ShootSystem* ss ) {
 	shootSystem = ss;
+}
+
+void EntityFactory::setDmgAuraSystem( DamageAuraSystem* das ) {
+	dmgAuraSystem = das;
 }
 
 void EntityFactory::removeEntity( int pos ) {
@@ -50,6 +55,7 @@ void EntityFactory::removeEntity( int pos ) {
 			collisionSystem->unregisterEntity( pos );
 			// remove entity from shoot system if an enemy
 			shootSystem->unregisterEntity( pos );
+			dmgAuraSystem->unregisterEntity( pos );
 			break;
 		case PLAYER_INPUT:
 			world->playerInputComponents.remove( world->getComponentIndex( pos, PLAYER_INPUT ) );
@@ -65,6 +71,9 @@ void EntityFactory::removeEntity( int pos ) {
 			break;
 		case FOLLOW:
 			world->followComponents.remove( world->getComponentIndex( pos, FOLLOW ) );
+			break;
+		case DAMAGE_AURA:
+			world->followComponents.remove( world->getComponentIndex( pos, DAMAGE_AURA ) );
 			break;
 		}
 	}
@@ -90,6 +99,8 @@ int EntityFactory::createEntity( unsigned mask ) {
 	if ( mask & MONEY ) { addComponent( index, MONEY ); }
 	if ( mask & SHOOT ) { addComponent( index, SHOOT ); }
 	if ( mask & FOLLOW ) { addComponent( index, FOLLOW ); }
+	if ( mask & DAMAGE_AURA ) { 
+		addComponent( index, DAMAGE_AURA ); }
 	return index;
 }
 
@@ -215,6 +226,7 @@ void EntityFactory::addEntity( Entity ent ) {
 			world->collisionComponents[world->getComponentIndex( entPos, COLLISION )] = ent.collision;
 			if ( ent.collision.collisionID == ENEMY ) {
 				shootSystem->registerEntity( entPos );
+				dmgAuraSystem->registerEntity( entPos );
 			}
 			break;
 		case PLAYER_INPUT:
@@ -231,6 +243,9 @@ void EntityFactory::addEntity( Entity ent ) {
 			break;
 		case FOLLOW:
 			world->followComponents[world->getComponentIndex( entPos, FOLLOW )] = ent.follow;
+			break;
+		case DAMAGE_AURA:
+			world->dmgAuraComponents[world->getComponentIndex( entPos, DAMAGE_AURA )] = ent.dmgAura;
 			break;
 		}
 	}
@@ -279,6 +294,9 @@ unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
 		break;
 	case FOLLOW:
 		index = world->followComponents.create();
+		break;
+	case DAMAGE_AURA:
+		index = world->dmgAuraComponents.create();
 		break;
 	}
 	world->setComponentIndex( pos, type, index );

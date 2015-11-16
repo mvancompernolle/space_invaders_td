@@ -4,10 +4,11 @@
 #define SPACE_INVADERS_TD_H
 
 #include "consts.h"
-#include "System.h"
-#include "CollisionSystem.h"
-#include "ShootSystem.h"
-#include "PathSystem.h"
+#include "systems/System.h"
+#include "systems/CollisionSystem.h"
+#include "systems/ShootSystem.h"
+#include "systems/PathSystem.h"
+#include "systems/DamageAuraSystem.h"
 #include "Grid.h"
 #include "World.h"
 #include "Button.h"
@@ -47,6 +48,7 @@ private:
 	PathSystem* path;
 	CollisionSystem collisionSystem;
 	ShootSystem* shootSystem;
+	DamageAuraSystem* dmgAuraSystem;
 
 	// menu buttons
 	std::vector<Button*> buttons;
