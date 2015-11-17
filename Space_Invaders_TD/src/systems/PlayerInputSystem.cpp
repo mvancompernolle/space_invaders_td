@@ -3,7 +3,7 @@
 #include "EntityFactory.h"
 #include "consts.h"
 
-PlayerInputSystem::PlayerInputSystem()
+PlayerInputSystem::PlayerInputSystem( unsigned* enemiesLeft ) : System( enemiesLeft )
 {
 	flags = ( PLAYER_INPUT | MOVEMENT | WORLD );
 }

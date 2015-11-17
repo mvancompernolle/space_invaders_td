@@ -2,7 +2,8 @@
 #include "EntityFactory.h"
 #include <algorithm>
 
-System::System() {
+System::System( unsigned* enemiesLeft ) {
+	this->enemiesLeft = enemiesLeft;
 }
 
 System::~System() {
@@ -17,6 +18,10 @@ void System::adjustEntityVector( World* world ) {
 	for ( int i = 0; i < removals.size(); ++i ) {
 		// delete an entity if not already deleted
 		if ( world->entities[removals[i]].mask != NONE ) {
+			if ( ( world->entities[removals[i]].mask | COLLISION ) 
+				&& world->collisionComponents[world->getComponentIndex( removals[i], COLLISION )].collisionID == ENEMY ) {
+				(*enemiesLeft)--;
+			}
 			EntityFactory::removeEntity( removals[i] );
 		}
 	}

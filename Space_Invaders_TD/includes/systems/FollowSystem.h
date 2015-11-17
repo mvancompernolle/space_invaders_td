@@ -6,7 +6,7 @@
 #include "System.h"
 class FollowSystem : public System {
 public:
-	FollowSystem();
+	FollowSystem( unsigned* enemiesLeft );
 	~FollowSystem();
 	void update( World* world, int pos, float dt );
 };

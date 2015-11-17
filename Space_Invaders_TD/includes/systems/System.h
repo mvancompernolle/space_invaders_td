@@ -10,12 +10,13 @@
 
 class System {
 public:
-	System();
+	System( unsigned* enemiesLeft );
 	~System();
 	bool condition( unsigned componentTypes );
 	virtual void update( World* world, int pos, float dt ) = 0;
 	void adjustEntityVector( World* world );
 protected:
+	unsigned* enemiesLeft;
 	unsigned int flags;
 	std::vector<int> removals;
 	std::vector<Entity> additions;

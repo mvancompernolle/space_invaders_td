@@ -6,10 +6,10 @@
 0.75 
 
 HEALTH
-maxHP 275
-voidArmor 1.0
-plasmaArmor 0.0
-iceArmor 1.0
+maxHP 250
+voidArmor 1.5
+plasmaArmor 1.0
+iceArmor 1.5
 
 RENDER
 textureName enemy

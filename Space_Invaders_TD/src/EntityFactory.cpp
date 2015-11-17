@@ -73,7 +73,10 @@ void EntityFactory::removeEntity( int pos ) {
 			world->followComponents.remove( world->getComponentIndex( pos, FOLLOW ) );
 			break;
 		case DAMAGE_AURA:
-			world->followComponents.remove( world->getComponentIndex( pos, DAMAGE_AURA ) );
+			world->dmgAuraComponents.remove( world->getComponentIndex( pos, DAMAGE_AURA ) );
+			break;
+		case SLOWED:
+			world->slowComponents.remove( world->getComponentIndex( pos, SLOWED ) );
 			break;
 		}
 	}
@@ -99,8 +102,8 @@ int EntityFactory::createEntity( unsigned mask ) {
 	if ( mask & MONEY ) { addComponent( index, MONEY ); }
 	if ( mask & SHOOT ) { addComponent( index, SHOOT ); }
 	if ( mask & FOLLOW ) { addComponent( index, FOLLOW ); }
-	if ( mask & DAMAGE_AURA ) { 
-		addComponent( index, DAMAGE_AURA ); }
+	if ( mask & DAMAGE_AURA ) { addComponent( index, DAMAGE_AURA ); }
+	if ( mask & SLOWED ) { addComponent( index, SLOWED ); }
 	return index;
 }
 
@@ -247,6 +250,9 @@ void EntityFactory::addEntity( Entity ent ) {
 		case DAMAGE_AURA:
 			world->dmgAuraComponents[world->getComponentIndex( entPos, DAMAGE_AURA )] = ent.dmgAura;
 			break;
+		case SLOWED:
+			world->slowComponents[world->getComponentIndex( entPos, SLOWED )] = ent.slowed;
+			break;
 		}
 	}
 }
@@ -297,6 +303,9 @@ unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
 		break;
 	case DAMAGE_AURA:
 		index = world->dmgAuraComponents.create();
+		break;
+	case SLOWED:
+		index = world->slowComponents.create();
 		break;
 	}
 	world->setComponentIndex( pos, type, index );

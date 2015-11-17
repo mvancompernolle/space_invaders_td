@@ -3,7 +3,7 @@
 
 
 
-SpawnSystem::SpawnSystem() {
+SpawnSystem::SpawnSystem( unsigned* enemiesLeft ) : System( enemiesLeft ){
 	flags = ( SPAWN );
 }
 

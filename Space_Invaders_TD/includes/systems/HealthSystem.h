@@ -6,7 +6,7 @@
 #include "System.h"
 class HealthSystem : public System {
 public:
-	HealthSystem();
+	HealthSystem( unsigned* enemiesLeft );
 	~HealthSystem();
 	void update( World* world, int pos, float dt );
 };

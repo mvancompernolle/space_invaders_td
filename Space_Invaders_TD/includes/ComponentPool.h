@@ -41,13 +41,13 @@ public:
 
 	int create() {
 		// make sure the pool isn't full
+		//std::cout << name << std::endl;
 		assert( firstAvailable != nullptr && "NO MORE COMPONENTS AVAILABLE" );
 
 		// remove it from the available list
 		Component<T> *newComponent = firstAvailable;
 		firstAvailable = newComponent->getNext();
 		size++;
-		//std::cout << name << " creating - size: " << size << std::endl;
 
 		// set next to null to indicate that it is taken
 		//newComponent->setNext( nullptr );

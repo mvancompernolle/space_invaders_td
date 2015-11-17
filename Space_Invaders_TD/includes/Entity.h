@@ -23,6 +23,7 @@ public:
 	ShootComponent				shoot;
 	FollowComponent				follow;
 	DmgAuraComponent			dmgAura;
+	SlowedComponent				slowed;
 
 	Entity( unsigned components );
 	~Entity();

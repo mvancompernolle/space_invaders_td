@@ -7,7 +7,7 @@
 
 class DamageAuraSystem : public System {
 public:
-	DamageAuraSystem();
+	DamageAuraSystem( unsigned* enemiesLeft );
 	~DamageAuraSystem();
 	void registerEntity( unsigned entity );
 	void unregisterEntity( unsigned entity );

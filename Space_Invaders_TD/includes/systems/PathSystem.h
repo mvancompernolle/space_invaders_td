@@ -19,7 +19,7 @@ struct GridNode {
 
 class PathSystem : public System {
 public:
-	PathSystem();
+	PathSystem( unsigned* enemiesLeft );
 	~PathSystem();
 	void update( World* world, int pos, float dt );
 	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius, const Grid& grid );

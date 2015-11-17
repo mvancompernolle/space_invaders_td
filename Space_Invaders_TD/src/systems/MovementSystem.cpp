@@ -1,7 +1,7 @@
 #include "systems/MovementSystem.h"
 #include "Consts.h"
 
-MovementSystem::MovementSystem() {
+MovementSystem::MovementSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = MOVEMENT | WORLD;
 }
 

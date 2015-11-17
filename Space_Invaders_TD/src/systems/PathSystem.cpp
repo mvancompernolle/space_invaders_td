@@ -6,7 +6,7 @@
 #include <iostream>
 #include <limits>
 
-PathSystem::PathSystem() {
+PathSystem::PathSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = PATH | WORLD;
 }
 

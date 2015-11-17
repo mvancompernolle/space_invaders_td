@@ -7,13 +7,13 @@
 
 class ShootSystem : public System {
 public:
-	ShootSystem();
+	ShootSystem( unsigned* enemiesLeft );
 	~ShootSystem();
 	void registerEntity( unsigned entity );
 	void unregisterEntity( unsigned entity );
 	void update( World* world, int pos, float dt );
 private:
-	void spawnBullets( World* world, unsigned pos );
+	void spawnBullets( World* world, unsigned pos, float dt );
 
 	std::vector<unsigned> registeredEntities;
 };

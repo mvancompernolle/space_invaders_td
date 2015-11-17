@@ -7,7 +7,7 @@
 
 class PlayerInputSystem : public System {
 public:
-	PlayerInputSystem();
+	PlayerInputSystem( unsigned* enemiesLeft );
 	~PlayerInputSystem();
 	void update( World* world, int pos, float dt );
 };

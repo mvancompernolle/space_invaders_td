@@ -7,7 +7,7 @@
 
 class SpawnSystem : public System {
 public:
-	SpawnSystem();
+	SpawnSystem( unsigned* enemiesLeft );
 	~SpawnSystem();
 	void update( World* world, int pos, float dt );
 };

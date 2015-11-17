@@ -1,9 +1,12 @@
 #include "systems/ShootSystem.h"
+#include "EntityFactory.h"
 #include <algorithm>
 #include <limits>
+#include <ctime>
 
-ShootSystem::ShootSystem() {
+ShootSystem::ShootSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = ( WORLD | SHOOT );
+	srand( time( NULL ) );
 }
 
 
@@ -44,19 +47,19 @@ void ShootSystem::update( World* world, int pos, float dt ) {
 		shootComp.timePassed += dt;
 		if ( shootComp.timePassed >= shootComp.attackSpeed ) {
 			shootComp.timePassed -= shootComp.attackSpeed;
-			spawnBullets( world, pos );
+			spawnBullets( world, pos, dt );
 		}
 	}
 }
 
-void ShootSystem::spawnBullets( World* world,  unsigned pos ) {
+void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( pos, WORLD )];
 	ShootComponent& shootComp = world->shootComponents[world->getComponentIndex( pos, SHOOT )];
 
 	// create a base bullet
 	Entity ent( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE | FOLLOW );
 	// init world data
-	ent.world.size = worldComp.size * 0.25f;
+	ent.world.size = worldComp.size * shootComp.bulletSize;
 	ent.world.pos = worldComp.getCenter() - ( ent.world.size * 0.5f );
 	ent.world.rotation = 0.0f;
 	// init render data
@@ -82,6 +85,54 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos ) {
 		ent.dmgAura.dmg.trueDmg = 1.0f;
 		ent.dmgAura.pulseSpeed = 0.1f;
 		ent.dmgAura.range = 200.0f;
+		break;
+	case TOWER_TRUE_PLASMA:
+		{
+		// have the tower shoot 1 true and 2 plasma bullets
+		// disable bullet lockon
+		ent.componentTypes = ( ent.componentTypes & ~( FOLLOW ) );
+		// calc vel so that it aims ahead
+		glm::vec2 predictedLocation;
+		MovementComponent& targetMovComp = world->movementComponents[world->getComponentIndex( shootComp.entTarget, MOVEMENT )];
+		float relativeSpeed = std::abs( glm::length( targetMovComp.vel ) - glm::length( ent.movement.vel ) );
+		float dist = glm::distance( worldComp.getCenter(), worldComp2.getCenter() );
+		float time = 0.0f;
+		if ( relativeSpeed != 0.0f ) {
+			time = dist / relativeSpeed;
+		}
+		predictedLocation = worldComp2.getCenter() + targetMovComp.vel * time;
+		// shoot bullet toward predicted location
+		ent.movement.vel = glm::normalize( predictedLocation - worldComp.getCenter() ) * ent.movement.defSpeed;
+
+		// shoot 2 more weaker plasma bullets
+		Entity plasmaBullet = ent;
+		plasmaBullet.world.size = worldComp.size * shootComp.bulletSize;
+		plasmaBullet.damage.trueDmg = 0.0f;
+		plasmaBullet.damage.plasmaDmg = ent.damage.trueDmg / 2.0f;
+		for ( int i = 0; i < 2; ++i ) {
+			plasmaBullet.movement.defSpeed = plasmaBullet.movement.defSpeed * ( 100.0f / ( 75 + rand() % 50 ) );
+			// get angle of bullet
+			float rotation = glm::degrees( std::atan2( ent.movement.vel.y, ent.movement.vel.x ) ) + ( -10 + rand() % 20 );
+			plasmaBullet.movement.vel.x = std::cos( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
+			plasmaBullet.movement.vel.y = std::sin( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
+			plasmaBullet.render.textureName = "bullet_plasma";
+			additions.push_back( plasmaBullet );
+		}
+		}
+		break;
+	case TOWER_VOID_PLASMA:
+		{
+			// make the bullet shoot bullets
+			ent.componentTypes |= SHOOT;
+			ent.shoot.attackSpeed = 0.1f;
+			ent.shoot.bulletDmg.trueDmg = ent.shoot.bulletDmg.iceDmg = ent.shoot.bulletDmg.voidDmg = 0.0f;
+			ent.shoot.bulletDmg.plasmaDmg = 2.0f;
+			ent.shoot.timePassed = ent.shoot.attackSpeed;
+			ent.shoot.range = 750.0f;
+			ent.shoot.bulletSize = 0.8f;
+			ent.shoot.bulletSpeed = 1000.0f;
+			ent.shoot.bulletTexture = "bullet_plasma";
+		}
 		break;
 	}
 

@@ -2,7 +2,7 @@
 #include <algorithm>
 
 
-DamageAuraSystem::DamageAuraSystem() {
+DamageAuraSystem::DamageAuraSystem( unsigned* enemiesLeft ) : System(enemiesLeft){
 	flags = WORLD | DAMAGE_AURA;
 }
 

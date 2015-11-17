@@ -7,7 +7,7 @@
 
 class MovementSystem : public System {
 public:
-	MovementSystem();
+	MovementSystem( unsigned* enemiesLeft );
 	~MovementSystem();
 	void update( World* world, int pos, float dt );
 };

@@ -7,6 +7,7 @@
 #include "systems/PlayerInputSystem.h"
 #include "systems/HealthSystem.h"
 #include "systems/FollowSystem.h"
+#include "systems/SlowedSystem.h"
 #include <cstring>
 #include <ctime>
 #include <cassert>
@@ -65,17 +66,18 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "bullet_plasma_ice.png", GL_TRUE, "bullet_plasma_ice" );
 
 	// create systems
-	systems.push_back( new PlayerInputSystem );
-	systems.push_back( new HealthSystem );
-	systems.push_back( new FollowSystem );
-	systems.push_back( new MovementSystem );
-	shootSystem = new ShootSystem;
+	systems.push_back( new PlayerInputSystem(&numEnemiesLeft) );
+	systems.push_back( new HealthSystem( &numEnemiesLeft ) );
+	systems.push_back( new FollowSystem( &numEnemiesLeft ) );
+	systems.push_back( new MovementSystem( &numEnemiesLeft ) );
+	shootSystem = new ShootSystem( &numEnemiesLeft );
 	systems.push_back( shootSystem );
-	path = new PathSystem;
+	path = new PathSystem( &numEnemiesLeft );
 	systems.push_back( path );
-	dmgAuraSystem = new DamageAuraSystem;
+	dmgAuraSystem = new DamageAuraSystem( &numEnemiesLeft );
 	systems.push_back( dmgAuraSystem );
-	systems.push_back( new SpawnSystem );
+	systems.push_back( new SpawnSystem( &numEnemiesLeft ) );
+	systems.push_back( new SlowedSystem( &numEnemiesLeft ) );
 
 	// initialize entity factory
 	EntityFactory::setWorld( &world );
@@ -381,9 +383,14 @@ void SpaceInvadersTD::handleCollisionEvents() {
 			if ( healthComp.currHP > 0.0f ) {
 				healthComp.takeDmg( dmgComp );
 
+				// slow entity if it can be slowed
+				if ( !( ( (SLOWED | MOVEMENT) ^ world.entities[reciever].mask ) & ( SLOWED | MOVEMENT ) ) ) {
+					SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( reciever, SLOWED )];
+					slowComp.slowedInfo.push_back( SlowInfo( dmgComp.slowInfo ) );
+				}
+
 				// check to see if the entity died
 				if ( healthComp.currHP <= 0.0f ) {
-					numEnemiesLeft--;
 					if ( world.entities[reciever].mask & MONEY ) {
 						money += world.moneyComponents[world.getComponentIndex( reciever, MONEY )].value;
 					}
@@ -395,8 +402,8 @@ void SpaceInvadersTD::handleCollisionEvents() {
 		case DESPAWN_EVENT:
 		{
 			int ent = ( world.entities[event.ent1].mask ) & PATH ? event.ent1 : event.ent2;
-			EntityFactory::removeEntity( ent );
-			numEnemiesLeft--;
+			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( ent, HEALTH )];
+			healthComp.currHP = 0.0f;
 			numLives--;
 		}
 		break;
@@ -608,11 +615,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT);
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
 			shootComp.attackSpeed = 0.5f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 1000.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 300.0f;
 			shootComp.bulletTexture = "bullet_true";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -635,11 +644,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 30.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 500.0f;
 			shootComp.bulletTexture = "bullet_void";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -662,11 +673,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
 			shootComp.attackSpeed = 0.25f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 10.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 800.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 300.0f;
 			shootComp.bulletTexture = "bullet_plasma";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -689,11 +702,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
 			shootComp.attackSpeed = 1.5f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 30.0f;
 			shootComp.bulletSpeed = 300.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 600.0f;
 			shootComp.bulletTexture = "bullet_ice";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -715,11 +730,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 40.0f;
 			shootComp.bulletDmg.voidDmg = 10.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 600.0f;
 			shootComp.bulletTexture = "bullet_true_void";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -741,13 +758,16 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 0.35f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 20.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
-			shootComp.bulletDmg.plasmaDmg = 5.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 800.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 400.0f;
 			shootComp.bulletTexture = "bullet_true_plasma";
+			shootComp.towerType = TOWER_TRUE_PLASMA;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_true_plasma";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
@@ -767,11 +787,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 0.75f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 30.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 10.0f;
 			shootComp.bulletSpeed = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 750.0f;
 			shootComp.bulletTexture = "bullet_true_ice";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -793,11 +815,13 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
-			shootComp.bulletDmg.trueDmg = 10.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
+			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 300.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 500.0f;
 			shootComp.bulletTexture = "bullet_void_true";
 			shootComp.towerType = TOWER_VOID_TRUE;
@@ -820,13 +844,16 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
-			shootComp.bulletDmg.plasmaDmg = 15.0f;
+			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_void_plasma";
+			shootComp.towerType = TOWER_VOID_PLASMA;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_void_plasma";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
@@ -846,12 +873,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 40.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 15.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_void_ice";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_void_ice";
@@ -872,12 +901,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 40.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_plasma_true";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_plasma_true";
@@ -898,12 +929,15 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 15.0f;
 			shootComp.bulletDmg.plasmaDmg = 40.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_plasma_void";
 			shootComp.towerType = TOWER_PLASMA_VOID;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
@@ -931,12 +965,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 40.0f;
 			shootComp.bulletDmg.iceDmg = 15.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_plasma_ice";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_plasma_ice";
@@ -957,12 +993,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 10.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 40.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_ice_true";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_ice_true";
@@ -983,12 +1021,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 15.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 40.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_ice_void";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_ice_void";
@@ -1009,12 +1049,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			money -= 10;
 			ShootComponent& shootComp = world.shootComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT )];
 			shootComp.attackSpeed = 1.0f;
+			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 15.0f;
 			shootComp.bulletDmg.iceDmg = 40.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
+			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_ice_plasma";
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_ice_plasma";

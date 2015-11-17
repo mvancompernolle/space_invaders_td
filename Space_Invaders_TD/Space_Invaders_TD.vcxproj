@@ -122,6 +122,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\systems\SlowedSystem.cpp" />
     <ClCompile Include="src\systems\DamageAuraSystem.cpp" />
     <ClCompile Include="src\systems\FollowSystem.cpp" />
     <ClCompile Include="src\systems\ShootSystem.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="includes\World.h" />
     <ClInclude Include="includes\systems\PlayerInputSystem.h" />
     <ClInclude Include="includes\systems\ShootSystem.h" />
+    <ClInclude Include="includes\systems\SlowedSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\FreeSans.ttf" />

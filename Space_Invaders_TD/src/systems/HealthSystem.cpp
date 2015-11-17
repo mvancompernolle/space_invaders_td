@@ -2,14 +2,12 @@
 
 
 
-HealthSystem::HealthSystem()
-{
+HealthSystem::HealthSystem( unsigned* enemiesLeft ) : System( enemiesLeft ) {
 	flags = ( HEALTH );
 }
 
 
-HealthSystem::~HealthSystem()
-{
+HealthSystem::~HealthSystem() {
 }
 
 void HealthSystem::update( World* world, int pos, float dt ) {

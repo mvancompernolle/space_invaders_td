@@ -22,13 +22,15 @@ enum COMPONENT_TYPE {
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
 	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
 	MONEY = DAMAGE << 1, SHOOT = MONEY << 1, FOLLOW = SHOOT << 1, DAMAGE_AURA = FOLLOW << 1,
-	COMPONENT_SIZE = DAMAGE_AURA << 1, COMPONENT_NUM = 11
+	SLOWED = DAMAGE_AURA << 1,
+	COMPONENT_SIZE = SLOWED << 1, COMPONENT_NUM = 12
 };
 
 struct DamageComponent {
-	float trueDmg, voidDmg, plasmaDmg, iceDmg;
+	float trueDmg, voidDmg, plasmaDmg, iceDmg, slowInfo;
 	DamageComponent() : trueDmg( 1.0f ), voidDmg( 1.0f ), plasmaDmg( 1.0f ), iceDmg( 1.0f ) {}
-	DamageComponent( float tDmg, float vDmg, float pDmg, float iDmg ) : trueDmg( tDmg ), voidDmg( vDmg ), plasmaDmg( pDmg ), iceDmg( iDmg ) {}
+	DamageComponent( float tDmg, float vDmg, float pDmg, float iDmg ) : trueDmg( tDmg ), voidDmg( vDmg ),
+		plasmaDmg( pDmg ), iceDmg( iDmg ) {}
 };
 
 struct HealthComponent {
@@ -107,13 +109,13 @@ struct MoneyComponent {
 };
 
 struct ShootComponent {
-	float attackSpeed, timePassed, range, bulletSpeed;
+	float attackSpeed, timePassed, range, bulletSpeed, bulletSize;
 	int entTarget;
 	DamageComponent bulletDmg;
 	TOWER_TYPE towerType;
 	std::string bulletTexture;
 	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range(800.0f), bulletSpeed(500.0f), entTarget( -1 ), bulletDmg(),
-	bulletTexture(""), towerType(TOWER_NONE) {}
+	bulletTexture(""), towerType(TOWER_NONE), bulletSize(0.25f) {}
 };
 
 struct FollowComponent {
@@ -126,6 +128,16 @@ struct DmgAuraComponent {
 	float timePassed, pulseSpeed, range;
 	DamageComponent dmg;
 	DmgAuraComponent() : pulseSpeed(0.1f), timePassed(0.1f), range(100.0f), dmg( 0.0f, 0.0f, 0.0f, 0.0f ){}
+};
+
+
+struct SlowInfo {
+	float percentSpeed, timeLeft;
+	SlowInfo( float percent = 0.0f, float time = 0.0f ) : percentSpeed( percent ), timeLeft( time ) {}
+};
+struct SlowedComponent {
+	std::vector<SlowInfo> slowedInfo;
+	SlowedComponent(){}
 };
 
 #endif // COMPONENT_H
