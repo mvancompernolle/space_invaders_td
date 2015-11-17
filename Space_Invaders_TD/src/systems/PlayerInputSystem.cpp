@@ -48,6 +48,11 @@ void PlayerInputSystem::update( World* world, int pos, float dt ) {
 		moveComp.vel = glm::vec2( 0.0f, 0.0f );
 	}
 
+	// keep player from going off screen
+	if ( ( worldComp.pos.x < 0 && moveComp.vel.x < 0 ) || ( worldComp.pos.x + worldComp.size.x > GAME_WIDTH && moveComp.vel.x > 0 ) ) {
+		moveComp.vel.x = 0;
+	}
+
 	// handle shoot commands
 	i = 0;
 	while ( i < inputComp.shootPrimaryInputs.size() ) {

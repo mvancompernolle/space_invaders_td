@@ -14,8 +14,9 @@
 #include "SpawnInfo.h"
 #include "TowerTypes.h"
 
-enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1};
-enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1, DESPAWN = WALL << 1};
+enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1 };
+enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1, DESPAWN = WALL << 1 };
+enum SLOW_TYPE { SLOW_NONE, BASIC_ICE };
 
 enum COMPONENT_TYPE {
 	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
@@ -26,11 +27,20 @@ enum COMPONENT_TYPE {
 	COMPONENT_SIZE = SLOWED << 1, COMPONENT_NUM = 12
 };
 
+
+struct SlowInfo {
+	float percentSpeed, timeLeft;
+	SLOW_TYPE type;
+	SlowInfo( float percent = 0.0f, float time = 0.0f, SLOW_TYPE type = SLOW_NONE ) : percentSpeed( percent ), timeLeft( time ), type( type ) {}
+};
+
 struct DamageComponent {
-	float trueDmg, voidDmg, plasmaDmg, iceDmg, slowInfo;
+	float trueDmg, voidDmg, plasmaDmg, iceDmg;
+	SlowInfo slowInfo;
 	DamageComponent() : trueDmg( 1.0f ), voidDmg( 1.0f ), plasmaDmg( 1.0f ), iceDmg( 1.0f ) {}
 	DamageComponent( float tDmg, float vDmg, float pDmg, float iDmg ) : trueDmg( tDmg ), voidDmg( vDmg ),
-		plasmaDmg( pDmg ), iceDmg( iDmg ) {}
+		plasmaDmg( pDmg ), iceDmg( iDmg ) {
+	}
 };
 
 struct HealthComponent {
@@ -63,6 +73,12 @@ struct MovementComponent {
 	glm::vec2 vel;
 	float defSpeed;
 	MovementComponent() : vel( glm::vec2( 0.0f ) ), defSpeed( 0.0f ) {}
+	void applySlow( float percent ) {
+		vel = glm::normalize( vel ) * ( glm::length( vel ) - ( defSpeed *  percent ) );
+	}
+	void removeSlow( float percent ) {
+		vel = glm::normalize( vel ) * ( glm::length( vel ) + ( defSpeed * percent ) );
+	}
 };
 
 struct PathAIComponent {
@@ -84,7 +100,7 @@ struct CollisionComponent {
 	unsigned collisionID;
 	unsigned collisionMask;
 	float collisionScale;
-	CollisionComponent() : shape( RECTANGLE ), collisionID(0), collisionMask(0), collisionScale( 1.0f ) {}
+	CollisionComponent() : shape( RECTANGLE ), collisionID( 0 ), collisionMask( 0 ), collisionScale( 1.0f ) {}
 };
 
 struct PlayerInputComponent {
@@ -114,8 +130,9 @@ struct ShootComponent {
 	DamageComponent bulletDmg;
 	TOWER_TYPE towerType;
 	std::string bulletTexture;
-	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range(800.0f), bulletSpeed(500.0f), entTarget( -1 ), bulletDmg(),
-	bulletTexture(""), towerType(TOWER_NONE), bulletSize(0.25f) {}
+	ShootComponent() : attackSpeed( 1.0f ), timePassed( 0.0f ), range( 800.0f ), bulletSpeed( 500.0f ), entTarget( -1 ), bulletDmg(),
+		bulletTexture( "" ), towerType( TOWER_NONE ), bulletSize( 0.25f ) {
+	}
 };
 
 struct FollowComponent {
@@ -127,17 +144,12 @@ struct FollowComponent {
 struct DmgAuraComponent {
 	float timePassed, pulseSpeed, range;
 	DamageComponent dmg;
-	DmgAuraComponent() : pulseSpeed(0.1f), timePassed(0.1f), range(100.0f), dmg( 0.0f, 0.0f, 0.0f, 0.0f ){}
+	DmgAuraComponent() : pulseSpeed( 0.1f ), timePassed( 0.1f ), range( 100.0f ), dmg( 0.0f, 0.0f, 0.0f, 0.0f ) {}
 };
 
-
-struct SlowInfo {
-	float percentSpeed, timeLeft;
-	SlowInfo( float percent = 0.0f, float time = 0.0f ) : percentSpeed( percent ), timeLeft( time ) {}
-};
 struct SlowedComponent {
 	std::vector<SlowInfo> slowedInfo;
-	SlowedComponent(){}
+	SlowedComponent() {}
 };
 
 #endif // COMPONENT_H

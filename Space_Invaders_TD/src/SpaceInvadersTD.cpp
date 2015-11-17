@@ -68,6 +68,7 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	// create systems
 	systems.push_back( new PlayerInputSystem(&numEnemiesLeft) );
 	systems.push_back( new HealthSystem( &numEnemiesLeft ) );
+	systems.push_back( new SlowedSystem( &numEnemiesLeft ) );
 	systems.push_back( new FollowSystem( &numEnemiesLeft ) );
 	systems.push_back( new MovementSystem( &numEnemiesLeft ) );
 	shootSystem = new ShootSystem( &numEnemiesLeft );
@@ -77,7 +78,6 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	dmgAuraSystem = new DamageAuraSystem( &numEnemiesLeft );
 	systems.push_back( dmgAuraSystem );
 	systems.push_back( new SpawnSystem( &numEnemiesLeft ) );
-	systems.push_back( new SlowedSystem( &numEnemiesLeft ) );
 
 	// initialize entity factory
 	EntityFactory::setWorld( &world );
@@ -386,7 +386,21 @@ void SpaceInvadersTD::handleCollisionEvents() {
 				// slow entity if it can be slowed
 				if ( !( ( (SLOWED | MOVEMENT) ^ world.entities[reciever].mask ) & ( SLOWED | MOVEMENT ) ) ) {
 					SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( reciever, SLOWED )];
-					slowComp.slowedInfo.push_back( SlowInfo( dmgComp.slowInfo ) );
+					MovementComponent& moveComp = world.movementComponents[world.getComponentIndex( reciever, MOVEMENT )];
+					bool alreadySlowed = false;
+					for ( SlowInfo& info : slowComp.slowedInfo ) {
+						if ( info.type == dmgComp.slowInfo.type ) {
+							alreadySlowed = true;
+							info.timeLeft = dmgComp.slowInfo.timeLeft;
+							break;
+						}
+					}
+					if ( !alreadySlowed ) {
+						// slow the reciever based on a percent of their current speed
+						float slowPercent = ( dmgComp.slowInfo.percentSpeed * glm::length( moveComp.vel ) ) / moveComp.defSpeed;
+						moveComp.applySlow( slowPercent );
+						slowComp.slowedInfo.push_back( SlowInfo( slowPercent, dmgComp.slowInfo.timeLeft, dmgComp.slowInfo.type ) );
+					} 
 				}
 
 				// check to see if the entity died
@@ -469,7 +483,7 @@ void SpaceInvadersTD::loadLevel( int level ) {
 			spawnComp.spawnTypes[i].spawnRate = spawnRate;
 
 			// create entity for the level
-			Entity enemyType( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION | MONEY );
+			Entity enemyType( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION | MONEY | SLOWED );
 
 			// load component info for entity
 			char tag[20], subTag[20];
@@ -508,7 +522,7 @@ void SpaceInvadersTD::loadLevel( int level ) {
 						enemyType.collision.shape = RECTANGLE;
 					}
 					enemyType.collision.collisionID = ENEMY;
-					enemyType.collision.collisionMask = BULLET;
+					enemyType.collision.collisionMask = BULLET | DESPAWN;
 				} else if ( strcmp( tag, "MONEY" ) == 0 ) {
 					fin >> subTag >> enemyType.money.value;
 				} else {
@@ -707,6 +721,9 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 30.0f;
+			shootComp.bulletDmg.slowInfo.percentSpeed = 0.25f;
+			shootComp.bulletDmg.slowInfo.timeLeft = 2.0f;
+			shootComp.bulletDmg.slowInfo.type = BASIC_ICE;
 			shootComp.bulletSpeed = 300.0f;
 			shootComp.bulletSize = 0.25f;
 			shootComp.range = 600.0f;

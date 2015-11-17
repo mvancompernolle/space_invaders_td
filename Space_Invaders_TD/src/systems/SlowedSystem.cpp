@@ -21,7 +21,7 @@ void SlowedSystem::update( World* world, int pos, float dt ) {
 		// remove the slow effect
 		if ( info.timeLeft <= 0.0f ) {
 			// restore speed to the object
-			moveComp.vel += info.percentSpeed * moveComp.defSpeed;
+			moveComp.removeSlow( info.percentSpeed );
 			slowToRemove.push_back( i );
 		}
 		++i;
@@ -29,6 +29,11 @@ void SlowedSystem::update( World* world, int pos, float dt ) {
 
 	// remove timed out slows
 	for ( unsigned pos : slowToRemove ) {
-		slowedComp.slowedInfo.erase( slowedComp.slowedInfo.begin() + pos );
+		if ( pos < slowedComp.slowedInfo.size() ) {
+			if ( pos != slowedComp.slowedInfo.size() - 1 ) {
+				slowedComp.slowedInfo[pos] = std::move( slowedComp.slowedInfo.back() );
+			}
+			slowedComp.slowedInfo.pop_back();
+		}
 	}
 }

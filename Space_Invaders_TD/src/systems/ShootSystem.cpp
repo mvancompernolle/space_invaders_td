@@ -124,11 +124,11 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 		{
 			// make the bullet shoot bullets
 			ent.componentTypes |= SHOOT;
-			ent.shoot.attackSpeed = 0.1f;
+			ent.shoot.attackSpeed = 0.4f;
 			ent.shoot.bulletDmg.trueDmg = ent.shoot.bulletDmg.iceDmg = ent.shoot.bulletDmg.voidDmg = 0.0f;
-			ent.shoot.bulletDmg.plasmaDmg = 2.0f;
+			ent.shoot.bulletDmg.plasmaDmg = 10.0f;
 			ent.shoot.timePassed = ent.shoot.attackSpeed;
-			ent.shoot.range = 750.0f;
+			ent.shoot.range = 500.0f;
 			ent.shoot.bulletSize = 0.8f;
 			ent.shoot.bulletSpeed = 1000.0f;
 			ent.shoot.bulletTexture = "bullet_plasma";

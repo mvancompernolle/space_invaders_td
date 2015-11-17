@@ -7,6 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <mutex>
 
 enum EVENT_TYPE {
 	DAMAGE_EVENT,
@@ -27,6 +28,8 @@ public:
 	void clearCollisionEvents();
 	void registerEntity( unsigned entity );
 	void unregisterEntity( unsigned entity );
+	void registerEnemy( unsigned entity );
+	void unregisterEnemy( unsigned entity );
 	void update( World* world );
 	static bool arePolygonsIntersecting( std::vector<glm::vec2> p1, std::vector<glm::vec2> p2 );
 	static bool areRectsIntersecting( glm::vec2 pos1, glm::vec2 pos2, glm::vec2 size1, glm::vec2 size2 );
@@ -34,7 +37,9 @@ public:
 	static bool areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 cirPos, glm::vec2 rectSize, float cirRadius, float rectRot );
 private: 
 	unsigned flags;
+	std::mutex eventMutex;
 	std::vector<unsigned> registeredEntities;
+	std::vector<unsigned> registeredEnemies;
 
 	glm::vec2 getCenter( glm::vec2 pos, glm::vec2 size ) const;
 	void createCollisionEvents( const World& world, unsigned ent1, unsigned ent2 );

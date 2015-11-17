@@ -1,6 +1,7 @@
 #include "systems/CollisionSystem.h"
 #include "Consts.h"
 #include <algorithm>
+#include <thread>
 
 CollisionSystem::CollisionSystem()
 {
@@ -24,18 +25,29 @@ void CollisionSystem::unregisterEntity( unsigned entity ) {
 	registeredEntities.erase( std::remove( registeredEntities.begin(), registeredEntities.end(), entity ), registeredEntities.end() );
 }
 
+void CollisionSystem::registerEnemy( unsigned entity ) {
+	registeredEnemies.push_back( entity );
+}
+
+void CollisionSystem::unregisterEnemy( unsigned entity ) {
+	registeredEnemies.erase( std::remove( registeredEnemies.begin(), registeredEnemies.end(), entity ), registeredEnemies.end() );
+}
+
 void CollisionSystem::update( World* world ) {
 
-	for ( int i = 0; i < (int) registeredEntities.size() - 1; ++i ) {
-		for ( int j = i + 1; j < (int) registeredEntities.size(); ++j ) {
-			CollisionComponent& collComp1 = world->collisionComponents[world->getComponentIndex( registeredEntities[i], COLLISION )];
+	// multithread to increase performance
+	std::thread threads[4];
+
+	for ( int i = 0; i < (int) registeredEnemies.size(); ++i ) {
+		for ( int j = 0; j < (int) registeredEntities.size(); ++j ) {
+ 			CollisionComponent& collComp1 = world->collisionComponents[world->getComponentIndex( registeredEnemies[i], COLLISION )];
 			CollisionComponent& collComp2 = world->collisionComponents[world->getComponentIndex( registeredEntities[j], COLLISION )];
 
 			// check to see if the two objects collide
 			// make sure both entities have correct components and are set to check for collisions with eachother
-			if ( !( ( flags ^ world->entities[registeredEntities[i]].mask ) & flags ) && !( ( flags ^ world->entities[registeredEntities[j]].mask ) & flags ) 
+			if ( !( ( flags ^ world->entities[registeredEnemies[i]].mask ) & flags ) && !( ( flags ^ world->entities[registeredEntities[j]].mask ) & flags )
 				&& (collComp1.collisionMask & collComp2.collisionID) ) {
-				WorldComponent& worldComp1 = world->worldComponents[world->getComponentIndex( registeredEntities[i], WORLD )];
+				WorldComponent& worldComp1 = world->worldComponents[world->getComponentIndex( registeredEnemies[i], WORLD )];
 				WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( registeredEntities[j], WORLD )];
 
 				// check collision based on collision type
@@ -61,7 +73,7 @@ void CollisionSystem::update( World* world ) {
 
 				// add collision event if there was one
 				if ( wasCollision ) {
-					createCollisionEvents( *world, registeredEntities[i], registeredEntities[j] );
+					createCollisionEvents( *world, registeredEnemies[i], registeredEntities[j] );
 				}
 			}
 		}
@@ -166,9 +178,11 @@ void CollisionSystem::createCollisionEvents( const World& world, unsigned ent1, 
 	int type1 = world.collisionComponents[world.getComponentIndex(ent1, COLLISION)].collisionID, 
 		type2 = world.collisionComponents[world.getComponentIndex( ent2, COLLISION )].collisionID;
 	if ( ( ( type1 | type2 ) & BULLET ) && ( ( type1 | type2 ) & ENEMY ) ) {
+		std::lock_guard<std::mutex> guard( eventMutex );
 		collisions.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
 	}
 	if ( ( ( type1 | type2 ) & DESPAWN ) && ( ( type1 | type2 ) & ENEMY ) ) {
+		std::lock_guard<std::mutex> guard( eventMutex );
 		collisions.push_back( CollisionEvent( ent1, ent2, DESPAWN_EVENT ) );
 	}
 }

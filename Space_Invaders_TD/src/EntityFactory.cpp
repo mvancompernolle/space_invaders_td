@@ -51,8 +51,13 @@ void EntityFactory::removeEntity( int pos ) {
 			world->spawnComponents.remove( world->getComponentIndex( pos, SPAWN ) );
 			break;
 		case COLLISION:
+			if ( world->collisionComponents[world->getComponentIndex( pos, COLLISION )].collisionID != ENEMY ) {
+				collisionSystem->unregisterEntity( pos );
+			} else {
+				collisionSystem->unregisterEnemy( pos );
+			}
 			world->collisionComponents.remove( world->getComponentIndex( pos, COLLISION ) );
-			collisionSystem->unregisterEntity( pos );
+
 			// remove entity from shoot system if an enemy
 			shootSystem->unregisterEntity( pos );
 			dmgAuraSystem->unregisterEntity( pos );
@@ -228,6 +233,10 @@ void EntityFactory::addEntity( Entity ent ) {
 		case COLLISION:
 			world->collisionComponents[world->getComponentIndex( entPos, COLLISION )] = ent.collision;
 			if ( ent.collision.collisionID == ENEMY ) {
+				// make sure the enemy is in its own collision list
+				collisionSystem->unregisterEntity( entPos );
+				collisionSystem->registerEnemy( entPos );
+
 				shootSystem->registerEntity( entPos );
 				dmgAuraSystem->registerEntity( entPos );
 			}
