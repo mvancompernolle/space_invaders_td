@@ -21,7 +21,7 @@ void SlowedSystem::update( World* world, int pos, float dt ) {
 		// remove the slow effect
 		if ( info.timeLeft <= 0.0f ) {
 			// restore speed to the object
-			moveComp.removeSlow( info.percentSpeed );
+			moveComp.removeSlow( info.percentSpeed * info.speedAtApplication );
 			slowToRemove.push_back( i );
 		}
 		++i;

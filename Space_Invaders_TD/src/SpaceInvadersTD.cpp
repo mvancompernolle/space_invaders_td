@@ -16,6 +16,8 @@
 #include <sstream>
 #include <fstream>
 
+#define MULTITHREADED false
+
 SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
 	ResourceManager::loadTexture( "hud.png", GL_TRUE, "hud" );
@@ -66,7 +68,7 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "bullet_plasma_ice.png", GL_TRUE, "bullet_plasma_ice" );
 
 	// create systems
-	systems.push_back( new PlayerInputSystem(&numEnemiesLeft) );
+	systems.push_back( new PlayerInputSystem( &numEnemiesLeft ) );
 	systems.push_back( new HealthSystem( &numEnemiesLeft ) );
 	systems.push_back( new SlowedSystem( &numEnemiesLeft ) );
 	systems.push_back( new FollowSystem( &numEnemiesLeft ) );
@@ -175,17 +177,21 @@ STATE SpaceInvadersTD::update( const float dt ) {
 
 	if ( tdState == TD_PLAYING ) {
 		for ( auto& system : systems ) {
+
+#if MULTITHREADED
 			for ( int i = 0; i < numThreads; ++i ) {
 				threads[i] = std::thread( &SpaceInvadersTD::updateSystem, this, system, i, numThreads, dt );
 			}
 			for ( int i = 0; i < numThreads; ++i ) { threads[i].join(); }
+#else
 
-			/*for ( int i = 0; i < NUM_ENTITIES; ++i ) {
+			for ( int i = 0; i < NUM_ENTITIES; ++i ) {
 				if ( system->condition( world.entities[i].mask ) ) {
 					// update any entities that use the system
 					system->update( &world, i, dt );
 				}
-			}*/
+			}
+#endif
 			// add any changes to entities caused by the system
 			system->adjustEntityVector( &world );
 			// reset the systems entity additiosn / removals
@@ -401,24 +407,7 @@ void SpaceInvadersTD::handleCollisionEvents() {
 				healthComp.takeDmg( dmgComp );
 
 				// slow entity if it can be slowed
-				if ( !( ( (SLOWED | MOVEMENT) ^ world.entities[reciever].mask ) & ( SLOWED | MOVEMENT ) ) ) {
-					SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( reciever, SLOWED )];
-					MovementComponent& moveComp = world.movementComponents[world.getComponentIndex( reciever, MOVEMENT )];
-					bool alreadySlowed = false;
-					for ( SlowInfo& info : slowComp.slowedInfo ) {
-						if ( info.type == dmgComp.slowInfo.type ) {
-							alreadySlowed = true;
-							info.timeLeft = dmgComp.slowInfo.timeLeft;
-							break;
-						}
-					}
-					if ( !alreadySlowed ) {
-						// slow the reciever based on a percent of their current speed
-						float slowPercent = ( dmgComp.slowInfo.percentSpeed * glm::length( moveComp.vel ) ) / moveComp.defSpeed;
-						moveComp.applySlow( slowPercent );
-						slowComp.slowedInfo.push_back( SlowInfo( slowPercent, dmgComp.slowInfo.timeLeft, dmgComp.slowInfo.type ) );
-					} 
-				}
+				attemptToSlow( reciever, dmgComp.slowInfo );
 
 				// check to see if the entity died
 				if ( healthComp.currHP <= 0.0f ) {
@@ -436,6 +425,22 @@ void SpaceInvadersTD::handleCollisionEvents() {
 			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( ent, HEALTH )];
 			healthComp.currHP = 0.0f;
 			numLives--;
+		}
+		break;
+		case AOE_SLOW_EVENT:
+		{
+			// get enemy's position
+			WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( event.ent1, WORLD )];
+			// get bullet's aoe info
+			AOEComponent& aoeComp = world.AOEComponents[world.getComponentIndex( event.ent2, AOE )];
+			// loop through nearby enemies and slow them
+			for ( unsigned& ent : collisionSystem.registeredEnemies ) {
+				WorldComponent& enemyWorld2 = world.worldComponents[world.getComponentIndex( ent, WORLD )];
+				if ( glm::distance( enemyWorld.getCenter(), enemyWorld2.getCenter() ) <= aoeComp.range ) {
+					// attempt to slow enemy
+					attemptToSlow( ent, aoeComp.dmg.slowInfo);
+				}
+			}
 		}
 		break;
 		}
@@ -589,7 +594,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bStartRound.setPos( glm::vec2( ( GAME_WIDTH * 0.5f ) - ( bStartRound.getSize().x * 0.5f ),
 		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
 	bStartRound.setText( "Start Round" );
-	bStartRound.setOnClickFunction( [&] () {
+	bStartRound.setOnClickFunction( [&]() {
 		SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
 		if ( spawn.round < (int)spawn.numRounds ) {
 			WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
@@ -611,7 +616,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bSellTower.setSize( glm::vec2( 100, 100 ) );
 	bSellTower.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 + 100 + 22 ) );
 	bSellTower.setText( "Sell" );
-	bSellTower.setOnClickFunction( [&] () {
+	bSellTower.setOnClickFunction( [&]() {
 		// sell the currently selected tower
 		if ( towerIsSelected() ) {
 			money += world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value;
@@ -628,7 +633,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bPlaceWall.setSize( glm::vec2( 100, 100 ) );
 	bPlaceWall.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bPlaceWall.setText( "Wall" );
-	bPlaceWall.setOnClickFunction( [&] () {
+	bPlaceWall.setOnClickFunction( [&]() {
 		if ( money >= 5 && !placeTowerMode ) {
 			placeTowerMode = true;
 		}
@@ -639,11 +644,11 @@ void SpaceInvadersTD::initMenuButtons() {
 	bUpgradeTrue.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeTrue.setText( "True" );
-	bUpgradeTrue.setOnClickFunction( [&] () {
+	bUpgradeTrue.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
-			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT);
+			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
 			shootComp.attackSpeed = 0.5f;
 			shootComp.timePassed = shootComp.attackSpeed;
@@ -668,7 +673,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bUpgradeVoid.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeVoid.setPos( glm::vec2( 1920 - 480 + 24 + 100 + ( 32 / 3 ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeVoid.setText( "Void" );
-	bUpgradeVoid.setOnClickFunction( [&] () {
+	bUpgradeVoid.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -697,7 +702,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bUpgradePlasma.setSize( glm::vec2( 100, 100 ) );
 	bUpgradePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradePlasma.setText( "Plasma" );
-	bUpgradePlasma.setOnClickFunction( [&] () {
+	bUpgradePlasma.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -726,13 +731,13 @@ void SpaceInvadersTD::initMenuButtons() {
 	bUpgradeIce.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeIce.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeIce.setText( "Ice" );
-	bUpgradeIce.setOnClickFunction( [&] () {
+	bUpgradeIce.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
-			shootComp.attackSpeed = 1.5f;
+			shootComp.attackSpeed = 0.5f;
 			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -740,7 +745,7 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletDmg.iceDmg = 30.0f;
 			shootComp.bulletDmg.slowInfo.percentSpeed = 0.25f;
 			shootComp.bulletDmg.slowInfo.timeLeft = 2.0f;
-			shootComp.bulletDmg.slowInfo.type = BASIC_ICE;
+			shootComp.bulletDmg.slowInfo.type = SLOW_ICE;
 			shootComp.bulletSpeed = 300.0f;
 			shootComp.bulletSize = 0.25f;
 			shootComp.range = 600.0f;
@@ -758,7 +763,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bTrueVoid.setSize( glm::vec2( 100, 100 ) );
 	bTrueVoid.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bTrueVoid.setText( "TV" );
-	bTrueVoid.setOnClickFunction( [&] () {
+	bTrueVoid.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -786,7 +791,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bTruePlasma.setSize( glm::vec2( 100, 100 ) );
 	bTruePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bTruePlasma.setText( "TP" );
-	bTruePlasma.setOnClickFunction( [&] () {
+	bTruePlasma.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -815,7 +820,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bTrueIce.setSize( glm::vec2( 100, 100 ) );
 	bTrueIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bTrueIce.setText( "TI" );
-	bTrueIce.setOnClickFunction( [&] () {
+	bTrueIce.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -843,7 +848,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bVoidTrue.setSize( glm::vec2( 100, 100 ) );
 	bVoidTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bVoidTrue.setText( "VT" );
-	bVoidTrue.setOnClickFunction( [&] () {
+	bVoidTrue.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -872,7 +877,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bVoidPlasma.setSize( glm::vec2( 100, 100 ) );
 	bVoidPlasma.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bVoidPlasma.setText( "VP" );
-	bVoidPlasma.setOnClickFunction( [&] () {
+	bVoidPlasma.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -901,7 +906,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bVoidIce.setSize( glm::vec2( 100, 100 ) );
 	bVoidIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bVoidIce.setText( "VI" );
-	bVoidIce.setOnClickFunction( [&] () {
+	bVoidIce.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -929,7 +934,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bPlasmaTrue.setSize( glm::vec2( 100, 100 ) );
 	bPlasmaTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bPlasmaTrue.setText( "PT" );
-	bPlasmaTrue.setOnClickFunction( [&] () {
+	bPlasmaTrue.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -957,7 +962,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bPlasmaVoid.setSize( glm::vec2( 100, 100 ) );
 	bPlasmaVoid.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bPlasmaVoid.setText( "PV" );
-	bPlasmaVoid.setOnClickFunction( [&] () {
+	bPlasmaVoid.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -993,7 +998,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bPlasmaIce.setSize( glm::vec2( 100, 100 ) );
 	bPlasmaIce.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bPlasmaIce.setText( "PI" );
-	bPlasmaIce.setOnClickFunction( [&] () {
+	bPlasmaIce.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -1021,7 +1026,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bIceTrue.setSize( glm::vec2( 100, 100 ) );
 	bIceTrue.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bIceTrue.setText( "IT" );
-	bIceTrue.setOnClickFunction( [&] () {
+	bIceTrue.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -1049,7 +1054,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bIceVoid.setSize( glm::vec2( 100, 100 ) );
 	bIceVoid.setPos( glm::vec2( 1920 - 480 + 24 + 1 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bIceVoid.setText( "IV" );
-	bIceVoid.setOnClickFunction( [&] () {
+	bIceVoid.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -1057,13 +1062,17 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.attackSpeed = 1.0f;
 			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
-			shootComp.bulletDmg.voidDmg = 15.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 40.0f;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.range = 500.0f;
 			shootComp.bulletSize = 0.25f;
 			shootComp.bulletTexture = "bullet_ice_void";
+			shootComp.towerType = TOWER_ICE_VOID;
+			shootComp.bulletDmg.slowInfo.percentSpeed = 0.25f;
+			shootComp.bulletDmg.slowInfo.timeLeft = 1.0f;
+			shootComp.bulletDmg.slowInfo.type = SLOW_ICE_VOID;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_ice_void";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
@@ -1077,7 +1086,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	bIcePlasma.setSize( glm::vec2( 100, 100 ) );
 	bIcePlasma.setPos( glm::vec2( 1920 - 480 + 24 + 2 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bIcePlasma.setText( "IP" );
-	bIcePlasma.setOnClickFunction( [&] () {
+	bIcePlasma.setOnClickFunction( [&]() {
 		// add shoot component to wall
 		if ( money >= 10 ) {
 			money -= 10;
@@ -1126,5 +1135,33 @@ void SpaceInvadersTD::initMenuButtons() {
 	// register buttons
 	for ( Button*& btn : buttons ) {
 		ServiceLocator::getInput().addOnClickObserver( btn );
+	}
+}
+
+void SpaceInvadersTD::attemptToSlow( unsigned entity, const SlowInfo& slowInfo ) {
+	// slow entity if it can be slowed
+	if ( !( ( ( SLOWED | MOVEMENT ) ^ world.entities[entity].mask ) & ( SLOWED | MOVEMENT ) ) ) {
+		SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( entity, SLOWED )];
+		MovementComponent& moveComp = world.movementComponents[world.getComponentIndex( entity, MOVEMENT )];
+
+		if ( slowComp.canApplySlow( slowInfo.type, slowInfo.percentSpeed ) ) {
+			bool alreadySlowed = false;
+			for ( SlowInfo& info : slowComp.slowedInfo ) {
+				if ( info.type == slowInfo.type ) {
+					alreadySlowed = true;
+					// reapply the new slow if it already existed
+					moveComp.removeSlow( info.percentSpeed * info.speedAtApplication );
+					info.timeLeft = slowInfo.timeLeft;
+					info.percentSpeed = slowInfo.percentSpeed;
+					moveComp.applySlow( slowInfo.percentSpeed * info.speedAtApplication );
+					break;
+				}
+			}
+			if ( !alreadySlowed ) {
+				// slow the reciever based on a percent of their current speed
+				slowComp.slowedInfo.push_back( SlowInfo( slowInfo.percentSpeed, slowInfo.timeLeft, moveComp.getCurrSpeed() / moveComp.defSpeed, slowInfo.type ) );
+				moveComp.applySlow( slowInfo.percentSpeed * moveComp.getCurrSpeed() / moveComp.defSpeed );
+			}
+		}
 	}
 }

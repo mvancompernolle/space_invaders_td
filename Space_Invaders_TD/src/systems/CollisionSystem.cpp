@@ -201,9 +201,17 @@ void CollisionSystem::createCollisionEvents( const World& world, unsigned ent1, 
 	int type1 = world.collisionComponents[world.getComponentIndex( ent1, COLLISION )].collisionID,
 		type2 = world.collisionComponents[world.getComponentIndex( ent2, COLLISION )].collisionID;
 	if ( ( ( type1 | type2 ) & BULLET ) && ( ( type1 | type2 ) & ENEMY ) ) {
-		results.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
+		results.push_back( CollisionEvent( ent1, ent2, type1, type2, DAMAGE_EVENT ) );
+		// see if aoe slow needs to be applied
+		if ( world.entities[ent2].mask & AOE && world.AOEComponents[world.getComponentIndex(ent2, AOE)].type | AOE_SLOW ) {
+			results.push_back( CollisionEvent( ent1, ent2, type1, type2, AOE_SLOW_EVENT ) );
+		}
+		// see if aoe damage needs to be applied
+		if ( world.entities[ent2].mask & AOE && world.AOEComponents[world.getComponentIndex( ent2, AOE )].type | AOE_DAMAGE ) {
+			results.push_back( CollisionEvent( ent1, ent2, type1, type2, AOE_DAMAGE_EVENT ) );
+		}
 	}
 	if ( ( ( type1 | type2 ) & DESPAWN ) && ( ( type1 | type2 ) & ENEMY ) ) {
-		results.push_back( CollisionEvent( ent1, ent2, DESPAWN_EVENT ) );
+		results.push_back( CollisionEvent( ent1, ent2, type1, type2, DESPAWN_EVENT ) );
 	}
 }

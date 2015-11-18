@@ -24,6 +24,7 @@ public:
 	FollowComponent				follow;
 	DmgAuraComponent			dmgAura;
 	SlowedComponent				slowed;
+	AOEComponent				aoe;
 
 	Entity( unsigned components );
 	~Entity();

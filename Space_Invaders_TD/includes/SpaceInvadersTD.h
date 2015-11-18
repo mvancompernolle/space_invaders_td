@@ -68,6 +68,7 @@ private:
 	bool towerIsSelected() const;
 	void showButtons( bool show );
 	void updateSystem( System* system, int thread, int numThreads, float dt );
+	void attemptToSlow( unsigned entity, const SlowInfo& slowInfo );
 };
 
 #endif SPACE_INVADERS_TD_H

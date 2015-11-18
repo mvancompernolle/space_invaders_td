@@ -1,0 +1,12 @@
+num_rounds
+spawn_x spawn_y
+end_x end_y
+
+//looping over num waves now
+num_enemies
+spawn_rate // in seconds
+
+attrib_label
+attrib_type attrib_value
+
+END

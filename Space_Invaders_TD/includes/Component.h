@@ -16,28 +16,31 @@
 
 enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1 };
 enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1, DESPAWN = WALL << 1 };
-enum SLOW_TYPE { SLOW_NONE, BASIC_ICE };
+enum SLOW_TYPE { SLOW_NONE, SLOW_ICE, SLOW_ICE_VOID };
+enum AOE_TYPE { AOE_SLOW = 1, AOE_DAMAGE = AOE_SLOW << 1, 
+	AOE_BUFF_DMG = AOE_DAMAGE << 1, AOE_BUFF_ATTACK_SPEED = AOE_BUFF_DMG << 1, AOE_BUFF_RANGE = AOE_BUFF_ATTACK_SPEED << 1 };
 
 enum COMPONENT_TYPE {
 	NONE = 0, HEALTH = 1, WORLD = HEALTH << 1, RENDER = WORLD << 1,
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
 	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
 	MONEY = DAMAGE << 1, SHOOT = MONEY << 1, FOLLOW = SHOOT << 1, DAMAGE_AURA = FOLLOW << 1,
-	SLOWED = DAMAGE_AURA << 1,
-	COMPONENT_SIZE = SLOWED << 1, COMPONENT_NUM = 12
+	SLOWED = DAMAGE_AURA << 1, AOE = SLOWED << 1,
+	COMPONENT_SIZE = AOE << 1, COMPONENT_NUM = 13
 };
 
 
 struct SlowInfo {
-	float percentSpeed, timeLeft;
+	float percentSpeed, timeLeft, speedAtApplication;
 	SLOW_TYPE type;
-	SlowInfo( float percent = 0.0f, float time = 0.0f, SLOW_TYPE type = SLOW_NONE ) : percentSpeed( percent ), timeLeft( time ), type( type ) {}
+	SlowInfo( float percent = 0.0f, float time = 0.0f, float speed = 1.0f, SLOW_TYPE type = SLOW_NONE )
+		: percentSpeed( percent ), timeLeft( time ), speedAtApplication(speed), type( type ) {}
 };
 
 struct DamageComponent {
 	float trueDmg, voidDmg, plasmaDmg, iceDmg;
 	SlowInfo slowInfo;
-	DamageComponent() : trueDmg( 1.0f ), voidDmg( 1.0f ), plasmaDmg( 1.0f ), iceDmg( 1.0f ) {}
+	DamageComponent() : trueDmg( 0.0f ), voidDmg( 0.0f ), plasmaDmg( 0.0f ), iceDmg( 0.0f ) {}
 	DamageComponent( float tDmg, float vDmg, float pDmg, float iDmg ) : trueDmg( tDmg ), voidDmg( vDmg ),
 		plasmaDmg( pDmg ), iceDmg( iDmg ) {
 	}
@@ -78,6 +81,10 @@ struct MovementComponent {
 	}
 	void removeSlow( float percent ) {
 		vel = glm::normalize( vel ) * ( glm::length( vel ) + ( defSpeed * percent ) );
+	}
+
+	float getCurrSpeed() const {
+		return glm::length( vel );
 	}
 };
 
@@ -150,6 +157,22 @@ struct DmgAuraComponent {
 struct SlowedComponent {
 	std::vector<SlowInfo> slowedInfo;
 	SlowedComponent() {}
+	bool canApplySlow( SLOW_TYPE slowType, float percent ) {
+		bool shouldApply = true;
+		for ( SlowInfo info : slowedInfo ) {
+			if ( info.type == slowType && info.percentSpeed >= percent ) {
+				shouldApply = false;
+				break;
+			}
+		}
+		return shouldApply;
+	}
+};
+
+struct AOEComponent {
+	float range;
+	unsigned type;
+	DamageComponent dmg;
 };
 
 #endif // COMPONENT_H

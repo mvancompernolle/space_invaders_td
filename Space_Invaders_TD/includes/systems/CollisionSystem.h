@@ -11,18 +11,25 @@
 
 enum EVENT_TYPE {
 	DAMAGE_EVENT,
-	DESPAWN_EVENT
+	DESPAWN_EVENT,
+	AOE_SLOW_EVENT,
+	AOE_DAMAGE_EVENT
 };
 
 struct CollisionEvent {
 	unsigned ent1, ent2;
+	unsigned type1, type2;
 	EVENT_TYPE eventType;
-	CollisionEvent( unsigned ent1, unsigned ent2, EVENT_TYPE type ) : ent1( ent1 ), ent2( ent2 ), eventType( type ) { }
+	CollisionEvent( unsigned ent1, unsigned ent2, unsigned type1, unsigned type2, EVENT_TYPE type )
+		: ent1( ent1 ), ent2( ent2 ), type1( type1 ), type2( type2 ), eventType( type ) {
+	}
 };
 
 class CollisionSystem {
 public:
 	std::vector<CollisionEvent> collisions;
+	std::vector<unsigned> registeredEntities;
+	std::vector<unsigned> registeredEnemies;
 	CollisionSystem();
 	~CollisionSystem();
 	void clearCollisionEvents();
@@ -35,10 +42,8 @@ public:
 	static bool areRectsIntersecting( glm::vec2 pos1, glm::vec2 pos2, glm::vec2 size1, glm::vec2 size2 );
 	static bool areCirclesIntersecting( glm::vec2 pos1, glm::vec2 pos2, float radius1, float radius2 );
 	static bool areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 cirPos, glm::vec2 rectSize, float cirRadius, float rectRot );
-private: 
+private:
 	unsigned flags;
-	std::vector<unsigned> registeredEntities;
-	std::vector<unsigned> registeredEnemies;
 
 	void calcCollisions( World* world, int start, int end, std::list<CollisionEvent>& results ) const;
 	glm::vec2 getCenter( glm::vec2 pos, glm::vec2 size ) const;

@@ -83,6 +83,9 @@ void EntityFactory::removeEntity( int pos ) {
 		case SLOWED:
 			world->slowComponents.remove( world->getComponentIndex( pos, SLOWED ) );
 			break;
+		case AOE:
+			world->AOEComponents.remove( world->getComponentIndex( pos, AOE ) );
+			break;
 		}
 	}
 	world->entities[pos].mask = NONE;
@@ -109,6 +112,7 @@ int EntityFactory::createEntity( unsigned mask ) {
 	if ( mask & FOLLOW ) { addComponent( index, FOLLOW ); }
 	if ( mask & DAMAGE_AURA ) { addComponent( index, DAMAGE_AURA ); }
 	if ( mask & SLOWED ) { addComponent( index, SLOWED ); }
+	if ( mask & AOE ) { addComponent( index, AOE ); }
 	return index;
 }
 
@@ -262,6 +266,9 @@ void EntityFactory::addEntity( Entity ent ) {
 		case SLOWED:
 			world->slowComponents[world->getComponentIndex( entPos, SLOWED )] = ent.slowed;
 			break;
+		case AOE:
+			world->AOEComponents[world->getComponentIndex( entPos, AOE )] = ent.aoe;
+			break;
 		}
 	}
 }
@@ -315,6 +322,9 @@ unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
 		break;
 	case SLOWED:
 		index = world->slowComponents.create();
+		break;
+	case AOE:
+		index = world->AOEComponents.create();
 		break;
 	}
 	world->setComponentIndex( pos, type, index );

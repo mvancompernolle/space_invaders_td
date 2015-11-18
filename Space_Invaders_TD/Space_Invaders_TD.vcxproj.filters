@@ -268,4 +268,8 @@
     <None Include="resources\shaders\text.fs" />
     <None Include="resources\shaders\text.vs" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="resources\levels\level_2.txt" />
+    <Text Include="resources\levels\instructions.txt" />
+  </ItemGroup>
 </Project>

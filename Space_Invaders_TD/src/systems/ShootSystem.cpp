@@ -87,7 +87,7 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 		ent.dmgAura.range = 200.0f;
 		break;
 	case TOWER_TRUE_PLASMA:
-		{
+	{
 		// have the tower shoot 1 true and 2 plasma bullets
 		// disable bullet lockon
 		ent.componentTypes = ( ent.componentTypes & ~( FOLLOW ) );
@@ -120,22 +120,34 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 			additions.push_back( plasmaBullet );
 			additionsMutex.unlock();
 		}
-		}
-		break;
+	}
+	break;
 	case TOWER_VOID_PLASMA:
-		{
-			// make the bullet shoot bullets
-			ent.componentTypes |= SHOOT;
-			ent.shoot.attackSpeed = 0.4f;
-			ent.shoot.bulletDmg.trueDmg = ent.shoot.bulletDmg.iceDmg = ent.shoot.bulletDmg.voidDmg = 0.0f;
-			ent.shoot.bulletDmg.plasmaDmg = 10.0f;
-			ent.shoot.timePassed = ent.shoot.attackSpeed;
-			ent.shoot.range = 500.0f;
-			ent.shoot.bulletSize = 0.8f;
-			ent.shoot.bulletSpeed = 1000.0f;
-			ent.shoot.bulletTexture = "bullet_plasma";
-		}
-		break;
+	{
+		// make the bullet shoot bullets
+		ent.componentTypes |= SHOOT;
+		ent.shoot.attackSpeed = 0.4f;
+		ent.shoot.bulletDmg.trueDmg = ent.shoot.bulletDmg.iceDmg = ent.shoot.bulletDmg.voidDmg = 0.0f;
+		ent.shoot.bulletDmg.plasmaDmg = 10.0f;
+		ent.shoot.timePassed = ent.shoot.attackSpeed;
+		ent.shoot.range = 500.0f;
+		ent.shoot.bulletSize = 0.8f;
+		ent.shoot.bulletSpeed = 1000.0f;
+		ent.shoot.bulletTexture = "bullet_plasma";
+	}
+	break;
+	case TOWER_ICE_VOID:
+	{
+		// make the bullets have a slow aoe
+		ent.componentTypes |= AOE;
+		ent.aoe.dmg.voidDmg = shootComp.bulletDmg.iceDmg * 0.25f;
+		ent.aoe.dmg.slowInfo.percentSpeed = shootComp.bulletDmg.slowInfo.percentSpeed * 0.75;
+		ent.aoe.dmg.slowInfo.timeLeft = shootComp.bulletDmg.slowInfo.timeLeft;
+		ent.aoe.dmg.slowInfo.type = shootComp.bulletDmg.slowInfo.type;
+		ent.aoe.range = shootComp.range * 0.25f;
+		ent.aoe.type = ( AOE_SLOW | AOE_DAMAGE );
+	}
+	break;
 	}
 	additionsMutex.lock();
 	additions.push_back( ent );
