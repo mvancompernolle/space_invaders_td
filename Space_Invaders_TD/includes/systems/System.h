@@ -7,6 +7,7 @@
 #include "Component.h"
 #include "Entity.h"
 #include <vector>
+#include <mutex>
 
 class System {
 public:
@@ -20,6 +21,7 @@ protected:
 	unsigned int flags;
 	std::vector<int> removals;
 	std::vector<Entity> additions;
+	std::mutex removalMutex, additionsMutex;
 };
 
 #endif // SYSTEM_H

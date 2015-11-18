@@ -10,6 +10,7 @@
 #include "irrKlangAudio.h"
 #include "consts.h"
 #include "SpaceInvadersTD.h"
+#include <thread>
 
 // input callbacks
 void keyCallBack( GLFWwindow* window, GLint key, GLint scanCode, GLint action, GLint mode );
@@ -19,7 +20,11 @@ void scrollCallBack( GLFWwindow* window, GLdouble xOffset, GLdouble yOffset );
 
 bool paused = false;
 
+void func() {
+}
+
 int main() {
+
 	// set resource paths
 	ResourceManager::setShaderPath( "resources/shaders/" );
 	ResourceManager::setTexturePath( "resources/textures/" );

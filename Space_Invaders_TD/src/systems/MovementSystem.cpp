@@ -17,6 +17,8 @@ void MovementSystem::update( World* world, int pos, float dt ) {
 	// remove entity if it goes off screen
 	if ( worldComp.pos.x < -worldComp.size.x || worldComp.pos.x > GAME_WIDTH || worldComp.pos.y < -worldComp.size.y ||
 		worldComp.pos.y > GAME_HEIGHT ) {
+		removalMutex.lock();
 		removals.push_back( pos );
+		removalMutex.unlock();
 	}
 }

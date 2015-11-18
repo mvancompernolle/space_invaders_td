@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
-#include <mutex>
+#include <list>
 
 enum EVENT_TYPE {
 	DAMAGE_EVENT,
@@ -37,12 +37,12 @@ public:
 	static bool areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 cirPos, glm::vec2 rectSize, float cirRadius, float rectRot );
 private: 
 	unsigned flags;
-	std::mutex eventMutex;
 	std::vector<unsigned> registeredEntities;
 	std::vector<unsigned> registeredEnemies;
 
+	void calcCollisions( World* world, int start, int end, std::list<CollisionEvent>& results ) const;
 	glm::vec2 getCenter( glm::vec2 pos, glm::vec2 size ) const;
-	void createCollisionEvents( const World& world, unsigned ent1, unsigned ent2 );
+	void createCollisionEvents( const World& world, unsigned ent1, unsigned ent2, std::list<CollisionEvent>& results ) const;
 };
 
 #endif //COLLISION_SYSTEM_H

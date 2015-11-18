@@ -116,7 +116,9 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 			plasmaBullet.movement.vel.x = std::cos( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
 			plasmaBullet.movement.vel.y = std::sin( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
 			plasmaBullet.render.textureName = "bullet_plasma";
+			additionsMutex.lock();
 			additions.push_back( plasmaBullet );
+			additionsMutex.unlock();
 		}
 		}
 		break;
@@ -135,6 +137,7 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 		}
 		break;
 	}
-
+	additionsMutex.lock();
 	additions.push_back( ent );
+	additionsMutex.unlock();
 }

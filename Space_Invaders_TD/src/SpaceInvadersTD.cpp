@@ -157,18 +157,35 @@ void SpaceInvadersTD::init() {
 	EntityFactory::createPlayer();
 }
 
+void SpaceInvadersTD::updateSystem( System* system, int thread, int numThreads, float dt ) {
+	for ( int i = thread; i < NUM_ENTITIES; i += numThreads ) {
+		if ( system->condition( world.entities[i].mask ) ) {
+			// update any entities that use the system
+			system->update( &world, i, dt );
+		}
+	}
+}
+
 STATE SpaceInvadersTD::update( const float dt ) {
 
 	currGridPulseTime += dt * 3.14;
+	const int numThreads = 4;
+	std::thread threads[numThreads];
+	int entsPerThread = NUM_ENTITIES / numThreads;
 
 	if ( tdState == TD_PLAYING ) {
 		for ( auto& system : systems ) {
-			for ( int i = 0; i < NUM_ENTITIES; ++i ) {
+			for ( int i = 0; i < numThreads; ++i ) {
+				threads[i] = std::thread( &SpaceInvadersTD::updateSystem, this, system, i, numThreads, dt );
+			}
+			for ( int i = 0; i < numThreads; ++i ) { threads[i].join(); }
+
+			/*for ( int i = 0; i < NUM_ENTITIES; ++i ) {
 				if ( system->condition( world.entities[i].mask ) ) {
 					// update any entities that use the system
 					system->update( &world, i, dt );
 				}
-			}
+			}*/
 			// add any changes to entities caused by the system
 			system->adjustEntityVector( &world );
 			// reset the systems entity additiosn / removals

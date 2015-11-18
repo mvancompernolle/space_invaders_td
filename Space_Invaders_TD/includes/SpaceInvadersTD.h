@@ -67,6 +67,7 @@ private:
 	void initMenuButtons();
 	bool towerIsSelected() const;
 	void showButtons( bool show );
+	void updateSystem( System* system, int thread, int numThreads, float dt );
 };
 
 #endif SPACE_INVADERS_TD_H

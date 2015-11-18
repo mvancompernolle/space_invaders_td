@@ -3,14 +3,12 @@
 #include <algorithm>
 #include <thread>
 
-CollisionSystem::CollisionSystem()
-{
+CollisionSystem::CollisionSystem() {
 	flags = ( COLLISION | WORLD );
 }
 
 
-CollisionSystem::~CollisionSystem()
-{
+CollisionSystem::~CollisionSystem() {
 }
 
 void CollisionSystem::clearCollisionEvents() {
@@ -34,19 +32,44 @@ void CollisionSystem::unregisterEnemy( unsigned entity ) {
 }
 
 void CollisionSystem::update( World* world ) {
+	if ( registeredEnemies.size() >= 4 ) {
+		const int numThreads = 4;
+		std::thread threads[numThreads];
+		std::list<CollisionEvent> eventLists[numThreads];
+		int enemiesPerThread = registeredEnemies.size() / numThreads;
+		for ( int i = 0; i < numThreads; i++ ) {
+			int remainder = ( i < numThreads - 1 ) ? 0 : registeredEnemies.size() % numThreads;
+			threads[i] = std::thread( &CollisionSystem::calcCollisions, this, world, i * (enemiesPerThread), (i+1) * enemiesPerThread + remainder, std::ref(eventLists[i]) );
+		}
+		for ( int i = 0; i < numThreads; ++i ) { threads[i].join(); }
+		for ( int i = 0; i < numThreads; ++i ) {
+			int size = eventLists[i].size();
+			for ( int j = 0; j < size; j++ ) {
+				collisions.push_back( eventLists[i].back() );
+				eventLists[i].pop_back();
+			}
+		}
+	} else {
+		std::list<CollisionEvent> results;
+		calcCollisions( world, 0, registeredEnemies.size(), results );
+		int size = results.size();
+		for ( int i = 0; i < size; i++ ) {
+			collisions.push_back( results.back() );
+			results.pop_back();
+		}
+	}
+}
 
-	// multithread to increase performance
-	std::thread threads[4];
-
-	for ( int i = 0; i < (int) registeredEnemies.size(); ++i ) {
-		for ( int j = 0; j < (int) registeredEntities.size(); ++j ) {
- 			CollisionComponent& collComp1 = world->collisionComponents[world->getComponentIndex( registeredEnemies[i], COLLISION )];
+void CollisionSystem::calcCollisions( World* world, int start, int end, std::list<CollisionEvent>& results ) const {
+	for ( int i = start; i < end; ++i ) {
+		for ( int j = 0; j < (int)registeredEntities.size(); ++j ) {
+			CollisionComponent& collComp1 = world->collisionComponents[world->getComponentIndex( registeredEnemies[i], COLLISION )];
 			CollisionComponent& collComp2 = world->collisionComponents[world->getComponentIndex( registeredEntities[j], COLLISION )];
 
 			// check to see if the two objects collide
 			// make sure both entities have correct components and are set to check for collisions with eachother
 			if ( !( ( flags ^ world->entities[registeredEnemies[i]].mask ) & flags ) && !( ( flags ^ world->entities[registeredEntities[j]].mask ) & flags )
-				&& (collComp1.collisionMask & collComp2.collisionID) ) {
+				&& ( collComp1.collisionMask & collComp2.collisionID ) ) {
 				WorldComponent& worldComp1 = world->worldComponents[world->getComponentIndex( registeredEnemies[i], WORLD )];
 				WorldComponent& worldComp2 = world->worldComponents[world->getComponentIndex( registeredEntities[j], WORLD )];
 
@@ -58,8 +81,8 @@ void CollisionSystem::update( World* world ) {
 				} else if ( shapes == CIRCLE ) {
 					float size1 = ( worldComp1.size.x * collComp1.collisionScale ) / 2.0f;
 					float size2 = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
-					wasCollision = areCirclesIntersecting( getCenter(worldComp1.pos, worldComp1.size),
-						getCenter( worldComp2.pos, worldComp2.size ), size1, size2);
+					wasCollision = areCirclesIntersecting( getCenter( worldComp1.pos, worldComp1.size ),
+						getCenter( worldComp2.pos, worldComp2.size ), size1, size2 );
 				} else if ( shapes == ( RECTANGLE | CIRCLE ) ) {
 					if ( collComp1.shape == RECTANGLE ) {
 						float size = ( worldComp2.size.x * collComp2.collisionScale ) / 2.0f;
@@ -73,7 +96,7 @@ void CollisionSystem::update( World* world ) {
 
 				// add collision event if there was one
 				if ( wasCollision ) {
-					createCollisionEvents( *world, registeredEnemies[i], registeredEntities[j] );
+					createCollisionEvents( *world, registeredEnemies[i], registeredEntities[j], results );
 				}
 			}
 		}
@@ -171,18 +194,16 @@ bool CollisionSystem::areRectCircleIntersecting( glm::vec2 rectPos, glm::vec2 ci
 	glm::vec2 closest = centerRect + clamped;
 	direction = closest - centerBall;
 
-	return glm::length( direction ) <= cirRadius ;
+	return glm::length( direction ) <= cirRadius;
 }
 
-void CollisionSystem::createCollisionEvents( const World& world, unsigned ent1, unsigned ent2 ) {
-	int type1 = world.collisionComponents[world.getComponentIndex(ent1, COLLISION)].collisionID, 
+void CollisionSystem::createCollisionEvents( const World& world, unsigned ent1, unsigned ent2, std::list<CollisionEvent>& results ) const {
+	int type1 = world.collisionComponents[world.getComponentIndex( ent1, COLLISION )].collisionID,
 		type2 = world.collisionComponents[world.getComponentIndex( ent2, COLLISION )].collisionID;
 	if ( ( ( type1 | type2 ) & BULLET ) && ( ( type1 | type2 ) & ENEMY ) ) {
-		std::lock_guard<std::mutex> guard( eventMutex );
-		collisions.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
+		results.push_back( CollisionEvent( ent1, ent2, DAMAGE_EVENT ) );
 	}
 	if ( ( ( type1 | type2 ) & DESPAWN ) && ( ( type1 | type2 ) & ENEMY ) ) {
-		std::lock_guard<std::mutex> guard( eventMutex );
-		collisions.push_back( CollisionEvent( ent1, ent2, DESPAWN_EVENT ) );
+		results.push_back( CollisionEvent( ent1, ent2, DESPAWN_EVENT ) );
 	}
 }

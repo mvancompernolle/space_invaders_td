@@ -50,7 +50,7 @@ COLLISION
 shape CIRCLE
 
 MONEY
-value 3
+value 4
 
 END
 
@@ -102,7 +102,7 @@ COLLISION
 shape CIRCLE
 
 MONEY
-value 4
+value 5
 
 END
 
@@ -128,7 +128,7 @@ COLLISION
 shape CIRCLE
 
 MONEY
-value 2
+value 3
 
 END
 
@@ -154,7 +154,7 @@ COLLISION
 shape CIRCLE
 
 MONEY
-value 40
+value 90
 
 END
 
@@ -180,7 +180,7 @@ COLLISION
 shape CIRCLE
 
 MONEY
-value 1
+value 150
 
 END
 
