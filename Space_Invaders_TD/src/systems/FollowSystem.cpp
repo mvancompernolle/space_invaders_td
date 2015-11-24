@@ -4,6 +4,7 @@
 
 FollowSystem::FollowSystem( unsigned* enemiesLeft ) : System( enemiesLeft ){
 	flags = ( MOVEMENT | WORLD | FOLLOW );
+	systemName = "followSystem";
 }
 
 

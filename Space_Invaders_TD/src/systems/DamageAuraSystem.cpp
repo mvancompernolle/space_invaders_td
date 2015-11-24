@@ -4,10 +4,16 @@
 
 DamageAuraSystem::DamageAuraSystem( unsigned* enemiesLeft ) : System(enemiesLeft){
 	flags = WORLD | DAMAGE_AURA;
+	systemName = "dmgAuraSystem";
 }
 
 
 DamageAuraSystem::~DamageAuraSystem() {
+}
+
+void DamageAuraSystem::clear() {
+	System::clear();
+	registeredEntities.clear();
 }
 
 void DamageAuraSystem::registerEntity( unsigned entity ) {

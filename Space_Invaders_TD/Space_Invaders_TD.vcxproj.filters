@@ -123,6 +123,21 @@
     <ClCompile Include="src\systems\SlowedSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\MainMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Splash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rules.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Textbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\RotationSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\Audio.h">
@@ -254,6 +269,21 @@
     <ClInclude Include="includes\systems\SlowedSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="includes\MainMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\Splash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\Rules.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\Textbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\systems\RotationSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Font Include="resources\fonts\times_new_roman.ttf" />
@@ -271,5 +301,6 @@
   <ItemGroup>
     <Text Include="resources\levels\level_2.txt" />
     <Text Include="resources\levels\instructions.txt" />
+    <Text Include="resources\levels\level_3.txt" />
   </ItemGroup>
 </Project>

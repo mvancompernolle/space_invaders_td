@@ -30,6 +30,10 @@ void EntityFactory::setDmgAuraSystem( DamageAuraSystem* das ) {
 }
 
 void EntityFactory::removeEntity( int pos ) {
+	if ( world->entities[pos].mask == NONE ) {
+		return;
+	}
+
 	for ( int i = 1; i < COMPONENT_SIZE; i <<= 1 ) {
 		switch ( i & world->entities[pos].mask ) {
 		case HEALTH:
@@ -86,6 +90,12 @@ void EntityFactory::removeEntity( int pos ) {
 		case AOE:
 			world->AOEComponents.remove( world->getComponentIndex( pos, AOE ) );
 			break;
+		case PARENT:
+			world->parentComponents.remove( world->getComponentIndex( pos, PARENT ) );
+			break;
+		case ROTATION:
+			world->parentComponents.remove( world->getComponentIndex( pos, PARENT ) );
+			break;
 		}
 	}
 	world->entities[pos].mask = NONE;
@@ -113,6 +123,8 @@ int EntityFactory::createEntity( unsigned mask ) {
 	if ( mask & DAMAGE_AURA ) { addComponent( index, DAMAGE_AURA ); }
 	if ( mask & SLOWED ) { addComponent( index, SLOWED ); }
 	if ( mask & AOE ) { addComponent( index, AOE ); }
+	if ( mask & PARENT ) { addComponent( index, PARENT ); }
+	if ( mask & ROTATION ) { addComponent( index, ROTATION ); }
 	return index;
 }
 
@@ -193,10 +205,11 @@ int EntityFactory::createPlayer() {
 
 int EntityFactory::createSpawner() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD | SPAWN );
+	world->entities[index].mask = ( RENDER | WORLD | SPAWN | ROTATION );
 	addComponent( index, SPAWN );
 	addComponent( index, RENDER );
 	addComponent( index, WORLD );
+	addComponent( index, ROTATION );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
@@ -208,11 +221,12 @@ int EntityFactory::createSpawner() {
 	SpawnComponent& spawnComp = world->spawnComponents[world->getComponentIndex( index, SPAWN )];
 	spawnComp.round = -1;
 	spawnComp.numRounds = 20;
+	world->rotationComponents[world->getComponentIndex( index, ROTATION )].rotSpeed = 90.0f;
 
 	return index;
 }
 
-void EntityFactory::addEntity( Entity ent ) {
+unsigned EntityFactory::addEntity( Entity ent ) {
 	int entPos = EntityFactory::createEntity( ent.componentTypes );
 	for ( int j = 1; j < COMPONENT_SIZE; j <<= 1 ) {
 		switch ( j & ent.componentTypes ) {
@@ -269,8 +283,15 @@ void EntityFactory::addEntity( Entity ent ) {
 		case AOE:
 			world->AOEComponents[world->getComponentIndex( entPos, AOE )] = ent.aoe;
 			break;
+		case PARENT:
+			world->parentComponents[world->getComponentIndex( entPos, PARENT )] = ent.parent;
+			break;
+		case ROTATION:
+			world->rotationComponents[world->getComponentIndex( entPos, ROTATION )] = ent.rotation;
+			break;
 		}
 	}
+	return entPos;
 }
 
 unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
@@ -326,8 +347,75 @@ unsigned EntityFactory::addComponent( unsigned pos, COMPONENT_TYPE type ) {
 	case AOE:
 		index = world->AOEComponents.create();
 		break;
+	case PARENT:
+		index = world->parentComponents.create();
+		break;
+	case ROTATION:
+		index = world->rotationComponents.create();
+		break;
 	}
 	world->setComponentIndex( pos, type, index );
 	world->entities[pos].mask |= type;
+	//resetComponent( pos, type );
 	return index;
+}
+
+void EntityFactory::resetComponent( unsigned pos, COMPONENT_TYPE type ) {
+	if ( !(world->entities[pos].mask & type) ) {
+		return;
+	}
+	//std::cout << "resetting" << std::endl;
+	switch ( type ) {
+	case HEALTH:
+		world->healthComponents[world->getComponentIndex( pos, HEALTH )] = HealthComponent();
+		break;
+	case WORLD:
+		world->worldComponents[world->getComponentIndex( pos, WORLD )] = WorldComponent();
+		break;
+	case RENDER:
+		world->renderComponents[world->getComponentIndex( pos, RENDER )] = RenderComponent();
+		break;
+	case MOVEMENT:
+		world->movementComponents[world->getComponentIndex( pos, MOVEMENT )] = MovementComponent();
+		break;
+	case PATH:
+		world->pathComponents[world->getComponentIndex( pos, PATH )] = PathAIComponent();
+		break;
+	case SPAWN:
+		world->spawnComponents[world->getComponentIndex( pos, SPAWN )] = SpawnComponent();
+		break;
+	case COLLISION:
+		world->collisionComponents[world->getComponentIndex( pos, COLLISION )] = CollisionComponent();
+		break;
+	case PLAYER_INPUT:
+		world->playerInputComponents[world->getComponentIndex( pos, PLAYER_INPUT )] = PlayerInputComponent();
+		break;
+	case DAMAGE:
+		world->dmgComponents[world->getComponentIndex( pos, DAMAGE )] = DamageComponent();
+		break;
+	case MONEY:
+		world->moneyComponents[world->getComponentIndex( pos, MONEY )] = MoneyComponent();
+		break;
+	case SHOOT:
+		world->shootComponents[world->getComponentIndex( pos, SHOOT )] = ShootComponent();
+		break;
+	case FOLLOW:
+		world->followComponents[world->getComponentIndex( pos, FOLLOW )] = FollowComponent();
+		break;
+	case DAMAGE_AURA:
+		world->dmgAuraComponents[world->getComponentIndex( pos, DAMAGE_AURA )] = DmgAuraComponent();
+		break;
+	case SLOWED:
+		world->slowComponents[world->getComponentIndex( pos, SLOWED )] = SlowedComponent();
+		break;
+	case AOE:
+		world->AOEComponents[world->getComponentIndex( pos, AOE )] = AOEComponent();
+		break;
+	case PARENT:
+		world->parentComponents[world->getComponentIndex( pos, PARENT )] = ParentComponent();
+		break;
+	case ROTATION:
+		world->rotationComponents[world->getComponentIndex( pos, ROTATION )] = RotationComponent();
+		break;
+	}
 }

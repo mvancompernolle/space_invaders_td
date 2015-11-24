@@ -34,9 +34,11 @@ struct World {
 	ComponentPool<DmgAuraComponent, NUM_ENTITIES / 4> dmgAuraComponents;
 	ComponentPool<SlowedComponent, NUM_ENTITIES / 4> slowComponents;
 	ComponentPool<AOEComponent, NUM_ENTITIES / 4> AOEComponents;
+	ComponentPool<ParentComponent, NUM_ENTITIES / 4> parentComponents;
+	ComponentPool<RotationComponent, NUM_ENTITIES / 4> rotationComponents;
 	std::unordered_map<COMPONENT_TYPE, unsigned> componentIndexMap;
 
-	int getComponentIndex( int pos, COMPONENT_TYPE type ) const {
+	unsigned getComponentIndex( int pos, COMPONENT_TYPE type ) const {
 		return entities[pos].componentIndices[componentIndexMap.at(type)];
 	}
 
@@ -44,24 +46,56 @@ struct World {
 		entities[pos].componentIndices[componentIndexMap[type]] = index;
 	}
 
+	void printComponentIndices( int pos ) {
+		for ( int i = 0; i < componentIndexMap.size(); ++i ) {
+			std::cout << "index: " << entities[pos].componentIndices[i] << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
 	World() : entities("entities"), worldComponents("world"), healthComponents("health"), movementComponents("movement"),
 		pathComponents("path"), spawnComponents("spawn"), renderComponents("render"), playerInputComponents("player"), 
 		collisionComponents("collision"), dmgComponents("dmg"), moneyComponents("money"), shootComponents("shoot"), 
-		followComponents("follow"), dmgAuraComponents("dmg_aura"), slowComponents("slowed"), AOEComponents("aoe"){
+		followComponents("follow"), dmgAuraComponents("dmg_aura"), slowComponents("slowed"), AOEComponents("aoe"), 
+		parentComponents("parent"), rotationComponents("rotation"){
 		componentIndexMap[HEALTH] = 0;
 		componentIndexMap[WORLD] = 1;
 		componentIndexMap[RENDER] = 2;
-		componentIndexMap[PATH] = 3;
-		componentIndexMap[SPAWN] = 4;
-		componentIndexMap[COLLISION] = 5;
-		componentIndexMap[PLAYER_INPUT] = 6;
-		componentIndexMap[DAMAGE] = 7;
-		componentIndexMap[MONEY] = 8;
-		componentIndexMap[SHOOT] = 9;
-		componentIndexMap[FOLLOW] = 10;
-		componentIndexMap[DAMAGE_AURA] = 11;
-		componentIndexMap[SLOWED] = 12;
-		componentIndexMap[AOE] = 13;
+		componentIndexMap[MOVEMENT] = 3;
+		componentIndexMap[PATH] = 4;
+		componentIndexMap[SPAWN] = 5;
+		componentIndexMap[COLLISION] = 6;
+		componentIndexMap[PLAYER_INPUT] = 7;
+		componentIndexMap[DAMAGE] = 8;
+		componentIndexMap[MONEY] = 9;
+		componentIndexMap[SHOOT] = 10;
+		componentIndexMap[FOLLOW] = 11;
+		componentIndexMap[DAMAGE_AURA] = 12;
+		componentIndexMap[SLOWED] = 13;
+		componentIndexMap[AOE] = 14;
+		componentIndexMap[PARENT] = 15;
+		componentIndexMap[ROTATION] = 16;
+	}
+
+	void clear() {
+		entities.clear();
+		worldComponents.clear();
+		healthComponents.clear();
+		movementComponents.clear();
+		pathComponents.clear();
+		spawnComponents.clear();
+		renderComponents.clear();
+		playerInputComponents.clear();
+		collisionComponents.clear();
+		dmgComponents.clear();
+		moneyComponents.clear();
+		shootComponents.clear();
+		followComponents.clear();
+		dmgAuraComponents.clear();
+		slowComponents.clear();
+		AOEComponents.clear();
+		parentComponents.clear();
+		rotationComponents.clear();
 	}
 };
 

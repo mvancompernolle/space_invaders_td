@@ -2,7 +2,7 @@
 #include "EntityFactory.h"
 #include <algorithm>
 
-System::System( unsigned* enemiesLeft ) {
+System::System( unsigned* enemiesLeft ) : systemName("not named") {
 	this->enemiesLeft = enemiesLeft;
 }
 
@@ -11,6 +11,23 @@ System::~System() {
 
 bool System::condition( unsigned componentTypes ) {
 	return !( ( flags ^ componentTypes ) & flags );
+}
+
+void System::clear() {
+	removals.clear();
+	additions.clear();
+}
+
+void System::addRemoval( unsigned ent ) {
+	removalMutex.lock();
+	removals.push_back( ent );
+	removalMutex.unlock();
+}
+
+void System::addAddition( const Entity& ent ) {
+	additionsMutex.lock();
+	additions.push_back( ent );
+	additionsMutex.unlock();
 }
 
 void System::adjustEntityVector( World* world ) {

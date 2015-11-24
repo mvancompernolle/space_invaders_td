@@ -1,0 +1,6 @@
+Rules for Space Invaders TD
+-------------------------------------------------------
+
+Objective:
+-------------------------------------------------------
+During your deep space contruction mission, you have detected dangerous extraterrestrial life forms warping towards earth. In an attempt slow down and weaken the invading forces so that earth may have enough timeto prepare sufficient defenses, you have casted several interdiction fields accross the solar system. Enemies warping through these fields get pulled out of warp, delaying their arrival and making them vulnerable to all of the weapons at your disposal, but only until they can reach a stress point in the field and enter warp again. It is your duty to intercept the aliens at interdiction field locations to destroy them before they can reach earth. Destroy enemies as they come in waves with weapons on your ship and utilize what you have learned in space construction to build space towers to assist you and prolong the amount of time it takes for the enemies to enter warp again, hopefully indefinitely.

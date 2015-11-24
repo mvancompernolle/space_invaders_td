@@ -25,6 +25,8 @@ public:
 	DmgAuraComponent			dmgAura;
 	SlowedComponent				slowed;
 	AOEComponent				aoe;
+	ParentComponent				parent;
+	RotationComponent			rotation;
 
 	Entity( unsigned components );
 	~Entity();

@@ -26,8 +26,9 @@ public:
 	static int createBaseTower();
 	static int createPlayer();
 	static int createSpawner();
-	static void addEntity( Entity ent );
+	static unsigned addEntity( Entity ent );
 	static unsigned addComponent( unsigned pos, COMPONENT_TYPE type );
+	static void resetComponent( unsigned pos, COMPONENT_TYPE type );
 private:
 	static World* world;
 	static CollisionSystem* collisionSystem;

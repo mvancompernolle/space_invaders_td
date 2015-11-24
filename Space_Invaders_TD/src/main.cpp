@@ -10,6 +10,9 @@
 #include "irrKlangAudio.h"
 #include "consts.h"
 #include "SpaceInvadersTD.h"
+#include "Splash.h"
+#include "MainMenu.h"
+#include "Rules.h"
 #include <thread>
 
 // input callbacks
@@ -57,8 +60,11 @@ int main() {
 	input->setMouseDistortion( mouseDistortion );
 
 	// create game
-	STATE current = PLAY;
+	STATE current = SPLASH;
 	SpaceInvadersTD game;
+	Splash splash;
+	MainMenu menu;
+	Rules rules;
 
 	// start the game loop
 	GLfloat dt = 0.0f, lastTime = 0.0f;
@@ -80,14 +86,22 @@ int main() {
 
 		switch ( current ) {
 		case SPLASH:
+			current = splash.update( dt );
+			splash.render();
 			break;
 
 		case MAIN_INIT:
+			menu.init();
 		case MAIN:
+			current = menu.getMenuState();
+			menu.render( dt );
 			break;
 
 		case RULES_INIT:
+			rules.init();
 		case RULES:
+			current = rules.update();
+			rules.render();
 			break;
 
 		case PLAY:
@@ -111,7 +125,6 @@ int main() {
 		graphics->swapBuffers();
 	}
 
-	//delete graphics;
 	delete input;
 	delete graphics;
 	delete audio;

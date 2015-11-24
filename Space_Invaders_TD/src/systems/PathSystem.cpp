@@ -8,10 +8,16 @@
 
 PathSystem::PathSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = PATH | WORLD;
+	systemName = "pathSystem";
 }
 
 
 PathSystem::~PathSystem() {
+}
+
+void PathSystem::clear() {
+	System::clear();
+	path.clear();
 }
 
 void PathSystem::update( World* world, int pos, float dt ) {

@@ -22,7 +22,7 @@ const glm::vec3 GRID_COLOR( 0.0f, 0.2f, 0.5f );
 const glm::vec3 GRID_COLOR2( 0.0f );
 
 enum TD_STATE {
-	TD_PLAYING, TD_MENU
+	TD_PLAYING, TD_MENU, TD_LOSE, TD_WIN, TD_EXIT
 };
 
 class SpaceInvadersTD {
@@ -41,7 +41,8 @@ private:
 	TD_STATE tdState;
 	bool placeTowerMode;
 	glm::ivec2 selectedGridPos;
-	unsigned money, numEnemiesLeft, numLives;
+	unsigned money, numEnemiesLeft, numLives, numRounds;
+	int currRound;
 	std::vector<unsigned> spawners, despawners;
 	std::vector<System*> systems;
 	World world;
@@ -53,7 +54,7 @@ private:
 	// menu buttons
 	std::vector<Button*> buttons;
 	bool updateButtons;
-	Button bStartRound, bPlaceWall;
+	Button bStartRound, bMainMenu, bPlaceWall;
 	Button bUpgradeTrue, bUpgradeVoid, bUpgradePlasma, bUpgradeIce, bSellTower;
 	Button bTrueVoid, bTruePlasma, bTrueIce;
 	Button bVoidTrue, bVoidPlasma, bVoidIce;
@@ -68,7 +69,8 @@ private:
 	bool towerIsSelected() const;
 	void showButtons( bool show );
 	void updateSystem( System* system, int thread, int numThreads, float dt );
-	void attemptToSlow( unsigned entity, const SlowInfo& slowInfo );
+	void attemptToSlow( unsigned reciever, unsigned dealer, const SlowInfo& slowInfo );
+	void startRound();
 };
 
 #endif SPACE_INVADERS_TD_H

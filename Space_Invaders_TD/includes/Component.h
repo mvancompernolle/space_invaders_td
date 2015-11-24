@@ -16,7 +16,7 @@
 
 enum SHAPE { RECTANGLE = 1, CIRCLE = RECTANGLE << 1, POLYGON = CIRCLE << 1 };
 enum COLLISION_TYPES { ENEMY = 1, BULLET = ENEMY << 1, TOWER = BULLET << 1, WALL = TOWER << 1, DESPAWN = WALL << 1 };
-enum SLOW_TYPE { SLOW_NONE, SLOW_ICE, SLOW_ICE_VOID };
+enum SLOW_TYPE { SLOW_NONE, SLOW_ICE, SLOW_ICE_VOID, SLOW_TRUE_ICE };
 enum AOE_TYPE { AOE_SLOW = 1, AOE_DAMAGE = AOE_SLOW << 1, 
 	AOE_BUFF_DMG = AOE_DAMAGE << 1, AOE_BUFF_ATTACK_SPEED = AOE_BUFF_DMG << 1, AOE_BUFF_RANGE = AOE_BUFF_ATTACK_SPEED << 1 };
 
@@ -25,8 +25,8 @@ enum COMPONENT_TYPE {
 	MOVEMENT = RENDER << 1, PATH = MOVEMENT << 1, SPAWN = PATH << 1,
 	COLLISION = SPAWN << 1, PLAYER_INPUT = COLLISION << 1, DAMAGE = PLAYER_INPUT << 1,
 	MONEY = DAMAGE << 1, SHOOT = MONEY << 1, FOLLOW = SHOOT << 1, DAMAGE_AURA = FOLLOW << 1,
-	SLOWED = DAMAGE_AURA << 1, AOE = SLOWED << 1,
-	COMPONENT_SIZE = AOE << 1, COMPONENT_NUM = 13
+	SLOWED = DAMAGE_AURA << 1, AOE = SLOWED << 1, PARENT = AOE << 1, ROTATION = PARENT << 1,
+	COMPONENT_SIZE = ROTATION << 1, COMPONENT_NUM = 17
 };
 
 
@@ -59,7 +59,7 @@ struct HealthComponent {
 struct WorldComponent {
 	glm::vec2 pos, size;
 	float rotation;
-	WorldComponent() : pos( glm::vec2( 0, 0 ) ), size( glm::vec2( 10, 10 ) ) {}
+	WorldComponent() : pos( glm::vec2( 0, 0 ) ), size( glm::vec2( 10, 10 ) ), rotation(0.0f) {}
 
 	glm::vec2 getCenter() const {
 		return pos + size * 0.5f;
@@ -173,6 +173,16 @@ struct AOEComponent {
 	float range;
 	unsigned type;
 	DamageComponent dmg;
+};
+
+struct ParentComponent {
+	unsigned parentEnt;
+	ParentComponent() : parentEnt( 0 ) {}
+};
+
+struct RotationComponent {
+	float rotSpeed;
+	RotationComponent() : rotSpeed( 0.0f ) {}
 };
 
 #endif // COMPONENT_H

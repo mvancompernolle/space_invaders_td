@@ -9,6 +9,7 @@ class DamageAuraSystem : public System {
 public:
 	DamageAuraSystem( unsigned* enemiesLeft );
 	~DamageAuraSystem();
+	void clear();
 	void registerEntity( unsigned entity );
 	void unregisterEntity( unsigned entity );
 	void update( World* world, int pos, float dt );

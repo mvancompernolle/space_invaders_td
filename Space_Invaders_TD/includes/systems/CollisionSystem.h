@@ -38,6 +38,7 @@ public:
 	void registerEnemy( unsigned entity );
 	void unregisterEnemy( unsigned entity );
 	void update( World* world );
+	void clear();
 	static bool arePolygonsIntersecting( std::vector<glm::vec2> p1, std::vector<glm::vec2> p2 );
 	static bool areRectsIntersecting( glm::vec2 pos1, glm::vec2 pos2, glm::vec2 size1, glm::vec2 size2 );
 	static bool areCirclesIntersecting( glm::vec2 pos1, glm::vec2 pos2, float radius1, float radius2 );

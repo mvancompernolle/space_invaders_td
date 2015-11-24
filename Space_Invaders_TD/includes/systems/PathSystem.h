@@ -21,6 +21,7 @@ class PathSystem : public System {
 public:
 	PathSystem( unsigned* enemiesLeft );
 	~PathSystem();
+	void clear();
 	void update( World* world, int pos, float dt );
 	bool calcOptimalPath( glm::uvec2 start, glm::uvec2 end, float radius, const Grid& grid );
 private:

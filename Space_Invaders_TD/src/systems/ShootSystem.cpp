@@ -7,10 +7,16 @@
 ShootSystem::ShootSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = ( WORLD | SHOOT );
 	srand( time( NULL ) );
+	systemName = "shootSystem";
 }
 
 
 ShootSystem::~ShootSystem() {
+}
+
+void ShootSystem::clear() {
+	System::clear();
+	registeredEntities.clear();
 }
 
 void ShootSystem::registerEntity( unsigned entity ) {
@@ -57,7 +63,7 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 	ShootComponent& shootComp = world->shootComponents[world->getComponentIndex( pos, SHOOT )];
 
 	// create a base bullet
-	Entity ent( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE | FOLLOW );
+	Entity ent( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE | FOLLOW | PARENT );
 	// init world data
 	ent.world.size = worldComp.size * shootComp.bulletSize;
 	ent.world.pos = worldComp.getCenter() - ( ent.world.size * 0.5f );
@@ -76,6 +82,8 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 	ent.damage = shootComp.bulletDmg;
 	// init follow data
 	ent.follow.entTarget = shootComp.entTarget;
+	// init parent data
+	ent.parent.parentEnt = pos;
 
 	// add other effects based on the shoot type
 	switch ( shootComp.towerType ) {
@@ -86,8 +94,7 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 		ent.dmgAura.pulseSpeed = 0.1f;
 		ent.dmgAura.range = 200.0f;
 		break;
-	case TOWER_TRUE_PLASMA:
-	{
+	case TOWER_TRUE_PLASMA: {
 		// have the tower shoot 1 true and 2 plasma bullets
 		// disable bullet lockon
 		ent.componentTypes = ( ent.componentTypes & ~( FOLLOW ) );
@@ -116,14 +123,11 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 			plasmaBullet.movement.vel.x = std::cos( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
 			plasmaBullet.movement.vel.y = std::sin( glm::radians( rotation ) ) * plasmaBullet.movement.defSpeed;
 			plasmaBullet.render.textureName = "bullet_plasma";
-			additionsMutex.lock();
-			additions.push_back( plasmaBullet );
-			additionsMutex.unlock();
+			addAddition( plasmaBullet );
 		}
 	}
 	break;
-	case TOWER_VOID_PLASMA:
-	{
+	case TOWER_VOID_PLASMA: {
 		// make the bullet shoot bullets
 		ent.componentTypes |= SHOOT;
 		ent.shoot.attackSpeed = 0.4f;
@@ -136,8 +140,7 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 		ent.shoot.bulletTexture = "bullet_plasma";
 	}
 	break;
-	case TOWER_ICE_VOID:
-	{
+	case TOWER_ICE_VOID: {
 		// make the bullets have a slow aoe
 		ent.componentTypes |= AOE;
 		ent.aoe.dmg.voidDmg = shootComp.bulletDmg.iceDmg * 0.25f;
@@ -149,7 +152,5 @@ void ShootSystem::spawnBullets( World* world,  unsigned pos, float dt ) {
 	}
 	break;
 	}
-	additionsMutex.lock();
-	additions.push_back( ent );
-	additionsMutex.unlock();
+	addAddition( ent );
 }

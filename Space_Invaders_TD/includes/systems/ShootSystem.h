@@ -9,6 +9,7 @@ class ShootSystem : public System {
 public:
 	ShootSystem( unsigned* enemiesLeft );
 	~ShootSystem();
+	void clear();
 	void registerEntity( unsigned entity );
 	void unregisterEntity( unsigned entity );
 	void update( World* world, int pos, float dt );

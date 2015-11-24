@@ -1,0 +1,29 @@
+1
+4 1
+15 5
+
+40
+0.75
+
+HEALTH
+maxHP 250
+voidArmor 1.5
+plasmaArmor 1.0
+iceArmor 1.5
+
+RENDER
+textureName enemy
+
+WORLD
+size 0.75
+
+MOVEMENT
+defSpeed 3.0
+
+COLLISION
+shape CIRCLE
+
+MONEY
+value 4
+
+END 

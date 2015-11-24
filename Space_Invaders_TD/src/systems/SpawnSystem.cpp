@@ -5,6 +5,7 @@
 
 SpawnSystem::SpawnSystem( unsigned* enemiesLeft ) : System( enemiesLeft ){
 	flags = ( SPAWN );
+	systemName = "spawnSystem";
 }
 
 
@@ -22,9 +23,7 @@ void SpawnSystem::update( World* world, int pos, float dt ) {
 
 			// increment number of entities spawned
 			spawnComp.currSpawnNum++;
-			additionsMutex.lock();
-			additions.push_back( *spawnComp.spawnTypes[spawnComp.round].getEntity() );
-			additionsMutex.unlock();
+			addAddition( *spawnComp.spawnTypes[spawnComp.round].getEntity() );
 		}
 	}
 }

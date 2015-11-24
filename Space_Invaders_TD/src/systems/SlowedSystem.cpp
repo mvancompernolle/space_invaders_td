@@ -3,6 +3,7 @@
 
 SlowedSystem::SlowedSystem( unsigned* enemiesLeft ) : System(enemiesLeft) {
 	flags = MOVEMENT | SLOWED;
+	systemName = "slowedSystem";
 }
 
 

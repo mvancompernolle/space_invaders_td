@@ -6,6 +6,7 @@
 PlayerInputSystem::PlayerInputSystem( unsigned* enemiesLeft ) : System( enemiesLeft )
 {
 	flags = ( PLAYER_INPUT | MOVEMENT | WORLD );
+	systemName = "playerInputSystem";
 }
 
 

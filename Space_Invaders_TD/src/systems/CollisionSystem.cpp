@@ -11,6 +11,12 @@ CollisionSystem::CollisionSystem() {
 CollisionSystem::~CollisionSystem() {
 }
 
+void CollisionSystem::clear() {
+	collisions.clear();
+	registeredEnemies.clear();
+	registeredEntities.clear();
+}
+
 void CollisionSystem::clearCollisionEvents() {
 	collisions.clear();
 }
@@ -32,7 +38,7 @@ void CollisionSystem::unregisterEnemy( unsigned entity ) {
 }
 
 void CollisionSystem::update( World* world ) {
-	if ( registeredEnemies.size() >= 4 ) {
+	if ( false /*registeredEnemies.size() >= 4*/ ) {
 		const int numThreads = 4;
 		std::thread threads[numThreads];
 		std::list<CollisionEvent> eventLists[numThreads];

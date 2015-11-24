@@ -41,6 +41,7 @@ public:
 
 	int create() {
 		// make sure the pool isn't full
+		//std::cout << name << " " << size << std::endl;
 		/*if ( name == "dmg" ) {
 			std::cout << name << " " << size <<  std::endl;
 		}*/
@@ -48,26 +49,40 @@ public:
 
 		// remove it from the available list
 		Component<T> *newComponent = firstAvailable;
-		//newComponent->data = T();
+		newComponent->data = T();
 		firstAvailable = newComponent->getNext();
 		size++;
 
 		// set next to null to indicate that it is taken
-		//newComponent->setNext( nullptr );
+		newComponent->setNext( nullptr );
 
 		ptrdiff_t index = newComponent - components;
 		return index;
 	}
 
 	void remove( int i ) {
-		//if ( components[i].getNext() == nullptr ) {
-		// add this particle to the front of the list
-		components[i].setNext( firstAvailable );
-		firstAvailable = &components[i];
+		if ( components[i].getNext() == nullptr ) {
+			// add this particle to the front of the list
+			components[i].setNext( firstAvailable );
+			firstAvailable = &components[i];
 
-		size--;
-		//std::cout << name << " removing - size: " << size << std::endl;
-		//}
+			size--;
+			//std::cout << name << " removing - size: " << size << std::endl;
+		}
+	}
+
+	void clear() {
+		// set the first component to available
+		firstAvailable = components;
+
+		// each component points to the next
+		for ( int i = 0; i < S - 1; i++ ) {
+			components[i].setNext( &components[i + 1] );
+			components[i].data = T();
+		}
+
+		components[S - 1].setNext( nullptr );
+		components[S - 1].data = T();
 	}
 
 	T& operator[]( int pos ) {

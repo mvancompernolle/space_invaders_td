@@ -8,6 +8,7 @@
 #include "systems/HealthSystem.h"
 #include "systems/FollowSystem.h"
 #include "systems/SlowedSystem.h"
+#include "systems/RotationSystem.h"
 #include <cstring>
 #include <ctime>
 #include <cassert>
@@ -67,9 +68,12 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	ResourceManager::loadTexture( "bullet_plasma_void.png", GL_TRUE, "bullet_plasma_void" );
 	ResourceManager::loadTexture( "bullet_plasma_ice.png", GL_TRUE, "bullet_plasma_ice" );
 
+	initMenuButtons();
+
 	// create systems
-	systems.push_back( new PlayerInputSystem( &numEnemiesLeft ) );
 	systems.push_back( new HealthSystem( &numEnemiesLeft ) );
+	systems.push_back( new RotationSystem( &numEnemiesLeft ) );
+	systems.push_back( new PlayerInputSystem( &numEnemiesLeft ) );
 	systems.push_back( new SlowedSystem( &numEnemiesLeft ) );
 	systems.push_back( new FollowSystem( &numEnemiesLeft ) );
 	systems.push_back( new MovementSystem( &numEnemiesLeft ) );
@@ -86,8 +90,6 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	EntityFactory::setCollisionSystem( &collisionSystem );
 	EntityFactory::setShootSystem( shootSystem );
 	EntityFactory::setDmgAuraSystem( dmgAuraSystem );
-
-	initMenuButtons();
 }
 
 
@@ -98,6 +100,14 @@ SpaceInvadersTD::~SpaceInvadersTD() {
 }
 
 void SpaceInvadersTD::init() {
+	// reset all systems
+	for ( System*& system : systems ) {
+		system->clear();
+	}
+	collisionSystem.clear();
+	world.clear();
+
+	// reset game attributes
 	money = 100;
 	numEnemiesLeft = 0;
 	numLives = 100;
@@ -114,46 +124,15 @@ void SpaceInvadersTD::init() {
 		grid[i].resize( NUM_GRID_COLS );
 		for ( int j = 0; j < NUM_GRID_COLS; ++j ) {
 			grid[i][j].taken = false;
+			grid[i][j].towerType = TOWER_NONE;
+			grid[i][j].ent = -1;
 			grid[i][j].pos = glm::vec2( gridSize * j, gridSize * i );
 		}
 	}
 
-	// spawn towers
-	srand( time( NULL ) );
-	glm::uvec2 dest = glm::uvec2( rand() % ( NUM_GRID_COLS / 4 ) + NUM_GRID_COLS / 4 * 3, rand() % ( NUM_GRID_ROWS ) );
-
-	/*for ( int i = 0; i < 50; ++i ) {
-		glm::uvec2 pos = glm::uvec2( rand() % NUM_GRID_COLS, rand() % NUM_GRID_ROWS );
-		if ( pos != dest )
-			placeBaseTower( pos.x, pos.y );
-	}*/
-
-	/*for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
-		placeBaseTower( 5, i );
-	}
-	for ( int i = 1; i < NUM_GRID_ROWS; ++i ) {
-		placeBaseTower( 7, i );
-	}
-	for ( int i = 0; i < NUM_GRID_ROWS - 1; ++i ) {
-		placeBaseTower( 9, i );
-	}*/
-
 	// set game values
 	currGridPulseTime = 0.0f;
-
-
-	// create portal
-	/*int pos = EntityFactory::createSpawner();
-	WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( pos, WORLD )];
-	SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( pos, SPAWN )];
-	worldComp.pos = glm::vec2( 0, ( NUM_GRID_ROWS * gridSize ) / 2.0f );
-	for ( int i = 0; i < 20; i++ ) {
-		SpawnInfo info;
-		info.num = 100000;
-		info.spawnRate = 0.25f;
-		spawnComp.spawnTypes.push_back( info );
-	}*/
-	loadLevel( 1 );
+	loadLevel( 3 );
 
 	// create player
 	EntityFactory::createPlayer();
@@ -169,6 +148,10 @@ void SpaceInvadersTD::updateSystem( System* system, int thread, int numThreads, 
 }
 
 STATE SpaceInvadersTD::update( const float dt ) {
+
+	if ( tdState == TD_EXIT ) {
+		return MAIN_INIT;
+	}
 
 	currGridPulseTime += dt * 3.14;
 	const int numThreads = 4;
@@ -197,16 +180,24 @@ STATE SpaceInvadersTD::update( const float dt ) {
 			// reset the systems entity additiosn / removals
 		}
 
-		if ( numEnemiesLeft == 0 ) {
-			tdState = TD_MENU;
-			selectedGridPos = glm::ivec2( -1 );
-			placeTowerMode = false;
-			showButtons( true );
-		}
-
 		collisionSystem.update( &world );
 		handleCollisionEvents();
 		collisionSystem.clearCollisionEvents();
+
+		// check to see if the game is over
+		if ( numLives <= 0 ) {
+			tdState = TD_LOSE;
+			showButtons( true );
+		} else if ( numEnemiesLeft <= 0 ) {
+			if ( currRound == numRounds - 1) {
+				tdState = TD_WIN;
+			} else {
+				tdState = TD_MENU;
+				selectedGridPos = glm::ivec2( -1 );
+				placeTowerMode = false;
+			}
+			showButtons( true );
+		}
 
 	} else if ( tdState == TD_MENU ) {
 		if ( updateButtons ) {
@@ -268,6 +259,11 @@ STATE SpaceInvadersTD::update( const float dt ) {
 					showButtons( true );
 				}
 			}
+		}
+
+		// start game is space pressed
+		if ( ServiceLocator::getInput().getKeyPressed( KEY_SPACE ) ) {
+			startRound();
 		}
 	}
 
@@ -356,11 +352,25 @@ void SpaceInvadersTD::render() {
 					glm::vec2( gridSize ), 0.0f, glm::vec4( 1.0f, 1.0f, 1.0f, 0.8f ) );
 			}
 		}
+	} else if ( tdState == TD_LOSE || tdState == TD_WIN ) {
+		std::string gameMessage = tdState == TD_LOSE ? "Game Over: You Lose!" : "Victory!";
+		glm::vec3 msgColor = tdState == TD_LOSE ? glm::vec3( 1.0f, 0.0f, 0.0f ) : glm::vec3( 0.0f, 1.0f, 0.0f );
+
+		ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), gameMessage, glm::vec2( GAME_WIDTH, GAME_HEIGHT ) * 0.5f, 2.0f,
+			msgColor, HOR_CENTERED, VERT_CENTERED);
+
+		// render buttons
+		for ( Button* btn : buttons ) {
+			btn->render( ServiceLocator::getGraphics() );
+		}
 	}
 
 
 	// render money
 	std::stringstream ss;
+	ss << "Round:    " << currRound + 1 << "/" << numRounds;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 180 ), 1.0f );
+	ss.str( std::string() );
 	ss << "Money:    " << money;
 	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 140 ), 1.0f );
 	// render enemies left
@@ -397,38 +407,35 @@ void SpaceInvadersTD::handleCollisionEvents() {
 		}
 
 		switch ( event.eventType ) {
-		case DAMAGE_EVENT:
-		{
-			int reciever = ( world.entities[event.ent1].mask ) & HEALTH ? event.ent1 : event.ent2;
-			int dealer = ( event.ent1 == reciever ) ? event.ent2 : event.ent1;
+		case DAMAGE_EVENT: {
+			int receiver = ( world.entities[event.ent1].mask ) & HEALTH ? event.ent1 : event.ent2;
+			int dealer = ( event.ent1 == receiver ) ? event.ent2 : event.ent1;
 			DamageComponent& dmgComp = world.dmgComponents[world.getComponentIndex( dealer, DAMAGE )];
-			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( reciever, HEALTH )];
+			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( receiver, HEALTH )];
 			if ( healthComp.currHP > 0.0f ) {
 				healthComp.takeDmg( dmgComp );
 
-				// slow entity if it can be slowed
-				attemptToSlow( reciever, dmgComp.slowInfo );
-
 				// check to see if the entity died
 				if ( healthComp.currHP <= 0.0f ) {
-					if ( world.entities[reciever].mask & MONEY ) {
-						money += world.moneyComponents[world.getComponentIndex( reciever, MONEY )].value;
+					if ( world.entities[receiver].mask & MONEY ) {
+						money += world.moneyComponents[world.getComponentIndex( receiver, MONEY )].value;
 					}
+				} else {
+					// slow entity if it can be slowed
+					attemptToSlow( receiver, dealer, dmgComp.slowInfo );
 				}
 			}
 			EntityFactory::removeEntity( dealer );
 		}
 		break;
-		case DESPAWN_EVENT:
-		{
+		case DESPAWN_EVENT: {
 			int ent = ( world.entities[event.ent1].mask ) & PATH ? event.ent1 : event.ent2;
 			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( ent, HEALTH )];
 			healthComp.currHP = 0.0f;
 			numLives--;
 		}
 		break;
-		case AOE_SLOW_EVENT:
-		{
+		case AOE_SLOW_EVENT: {
 			// get enemy's position
 			WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( event.ent1, WORLD )];
 			// get bullet's aoe info
@@ -438,7 +445,31 @@ void SpaceInvadersTD::handleCollisionEvents() {
 				WorldComponent& enemyWorld2 = world.worldComponents[world.getComponentIndex( ent, WORLD )];
 				if ( glm::distance( enemyWorld.getCenter(), enemyWorld2.getCenter() ) <= aoeComp.range ) {
 					// attempt to slow enemy
-					attemptToSlow( ent, aoeComp.dmg.slowInfo);
+					attemptToSlow( ent, event.ent2, aoeComp.dmg.slowInfo);
+				}
+			}
+		}
+		case AOE_DAMAGE_EVENT: {
+			// get enemy's position
+			WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( event.ent1, WORLD )];
+			// get bullet's aoe info
+			AOEComponent& aoeComp = world.AOEComponents[world.getComponentIndex( event.ent2, AOE )];
+			// loop through nearby enemies and slow them
+			for ( unsigned& ent : collisionSystem.registeredEnemies ) {
+				WorldComponent& enemyWorld2 = world.worldComponents[world.getComponentIndex( ent, WORLD )];
+				if ( glm::distance( enemyWorld.getCenter(), enemyWorld2.getCenter() ) <= aoeComp.range ) {
+					// get enemy health
+					HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( ent, HEALTH )];
+					if ( healthComp.currHP > 0.0f ) {
+						healthComp.takeDmg( aoeComp.dmg );
+
+						// check to see if the entity died
+						if ( healthComp.currHP <= 0.0f ) {
+							if ( world.entities[ent].mask & MONEY ) {
+								money += world.moneyComponents[world.getComponentIndex( ent, MONEY )].value;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -447,121 +478,52 @@ void SpaceInvadersTD::handleCollisionEvents() {
 	}
 }
 
-void SpaceInvadersTD::loadLevel( int level ) {
-	std::stringstream ss;
-	ss << "resources/levels/" << "level_" << level << ".txt";
-	std::ifstream fin( ss.str() );
+void SpaceInvadersTD::attemptToSlow( unsigned receiver, unsigned dealer, const SlowInfo& slowInfo ) {
+	// slow entity if it can be slowed
+	if ( slowInfo.type != SLOW_NONE && !( ( ( SLOWED | MOVEMENT ) ^ world.entities[receiver].mask ) & ( SLOWED | MOVEMENT ) ) ) {
+		SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( receiver, SLOWED )];
+		MovementComponent& moveComp = world.movementComponents[world.getComponentIndex( receiver, MOVEMENT )];
 
-	// load spawn info for the level
-	if ( fin.good() ) {
-		// create spawner
-		int spawner = EntityFactory::createSpawner();
-		spawners.push_back( spawner );
-		WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( spawner, WORLD )];
-		SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawner, SPAWN )];
+		if ( slowComp.canApplySlow( slowInfo.type, slowInfo.percentSpeed ) ) {
 
-		// get number of rounds for the level
-		int numRounds;
-		fin >> numRounds;
-		spawnComp.numRounds = numRounds;
-		spawnComp.spawnTypes.resize( numRounds );
-
-		// load start and end pos for portal
-		glm::vec2 start, end;
-		fin >> start.x >> start.y >> end.x >> end.y;
-
-		worldComp.size = glm::vec2( gridSize );
-		worldComp.pos = start * gridSize;
-		grid[worldComp.pos.y / gridSize][worldComp.pos.x / gridSize].ent = spawner;
-
-		// create a despawn portal
-		int despawner = EntityFactory::createEntity( WORLD | RENDER | COLLISION );
-		WorldComponent& despWorld = world.worldComponents[world.getComponentIndex( despawner, WORLD )];
-		RenderComponent& despRender = world.renderComponents[world.getComponentIndex( despawner, RENDER )];
-		CollisionComponent& despCollision = world.collisionComponents[world.getComponentIndex( despawner, COLLISION )];
-		despawners.push_back( despawner );
-
-		// init despawn world data
-		despWorld.size = glm::vec2( gridSize );
-		despWorld.pos = end * gridSize;
-		grid[despWorld.pos.y / gridSize][despWorld.pos.x / gridSize].ent = despawner;
-		// init despawn render data
-		despRender.textureName = "despawn_portal";
-		// init collision data
-		despCollision.shape = CIRCLE;
-		despCollision.collisionID = DESPAWN;
-		despCollision.collisionMask = ENEMY;
-		despCollision.collisionScale = 0.01f;
-
-		// loop over info for each round
-		int i = 0;
-		while ( fin.good() && i < numRounds ) {
-			int numSpawns;
-			float spawnRate;
-
-			// load number of spawns and spawn rate
-			fin >> numSpawns >> spawnRate;
-			spawnComp.spawnTypes[i].num = numSpawns;
-			spawnComp.spawnTypes[i].spawnRate = spawnRate;
-
-			// create entity for the level
-			Entity enemyType( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION | MONEY | SLOWED );
-
-			// load component info for entity
-			char tag[20], subTag[20];
-			bool loading = true;
-			while ( loading ) {
-				fin >> tag;
-				if ( strcmp( tag, "HEALTH" ) == 0 ) {
-					fin >> subTag >> enemyType.health.maxHP;
-					fin >> subTag >> enemyType.health.voidArmor;
-					fin >> subTag >> enemyType.health.plasmaArmor;
-					fin >> subTag >> enemyType.health.iceArmor;
-					enemyType.health.currHP = enemyType.health.maxHP;
-				} else if ( strcmp( tag, "RENDER" ) == 0 ) {
-					fin >> subTag >> enemyType.render.textureName;
-					enemyType.render.color = glm::vec3( 1.0f );
-				} else if ( strcmp( tag, "WORLD" ) == 0 ) {
-					fin >> subTag;
-					float size = 0.0f;
-					assert( size <= 1.0f && "Size must be 1.0f or less " );
-					fin >> size;
-					enemyType.world.size = glm::vec2( size * gridSize );
-					enemyType.world.pos = glm::vec2( worldComp.pos + ( worldComp.size / 2.0f ) - ( enemyType.world.size / 2.0f ) );
-					enemyType.world.rotation = 0.0f;
-				} else if ( strcmp( tag, "MOVEMENT" ) == 0 ) {
-					fin >> subTag;
-					float speed = 1.0f;
-					fin >> speed;
-					enemyType.movement.defSpeed = speed * gridSize;
-					enemyType.movement.vel = glm::vec2( enemyType.movement.defSpeed, 0.0f );
-				} else if ( strcmp( tag, "COLLISION" ) == 0 ) {
-					char shape[20];
-					fin >> subTag >> shape;
-					if ( strcmp( shape, "CIRCLE" ) == 0 ) {
-						enemyType.collision.shape = CIRCLE;
-					} else {
-						enemyType.collision.shape = RECTANGLE;
+			// check to see if a special condition must be met
+			bool applyingSlow = true;
+			if ( world.entities[dealer].mask & PARENT ) {
+				ParentComponent& parent = world.parentComponents[world.getComponentIndex( dealer, PARENT )];
+				// if true ice tower make sure slow it hitting from behind
+				if ( world.entities[parent.parentEnt].mask | SHOOT 
+					&& world.shootComponents[world.getComponentIndex( parent.parentEnt, SHOOT )].towerType == TOWER_TRUE_ICE ) {
+					// get bullet and enemy position
+					WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( receiver, WORLD )];
+					WorldComponent& bulletWorld = world.worldComponents[world.getComponentIndex( dealer, WORLD )];
+					glm::vec2 dirToBullet = bulletWorld.getCenter() - enemyWorld.getCenter();
+					// only slow if behind the enemy
+					if ( glm::dot( dirToBullet, moveComp.vel ) > 0 ) {
+						applyingSlow = false;
 					}
-					enemyType.collision.collisionID = ENEMY;
-					enemyType.collision.collisionMask = BULLET | DESPAWN;
-				} else if ( strcmp( tag, "MONEY" ) == 0 ) {
-					fin >> subTag >> enemyType.money.value;
-				} else {
-					loading = false;
 				}
 			}
 
-			// set the entity to spawn for the round
-			spawnComp.spawnTypes[i].setEntity( &enemyType );
-			++i;
+			if ( applyingSlow ) {
+				bool alreadySlowed = false;
+				for ( SlowInfo& info : slowComp.slowedInfo ) {
+					if ( info.type == slowInfo.type ) {
+						alreadySlowed = true;
+						// reapply the new slow if it already existed
+						moveComp.removeSlow( info.percentSpeed * info.speedAtApplication );
+						info.timeLeft = slowInfo.timeLeft;
+						info.percentSpeed = slowInfo.percentSpeed;
+						moveComp.applySlow( slowInfo.percentSpeed * info.speedAtApplication );
+						break;
+					}
+				}
+				if ( !alreadySlowed ) {
+					// slow the receiver based on a percent of their current speed
+					slowComp.slowedInfo.push_back( SlowInfo( slowInfo.percentSpeed, slowInfo.timeLeft, moveComp.getCurrSpeed() / moveComp.defSpeed, slowInfo.type ) );
+					moveComp.applySlow( slowInfo.percentSpeed * moveComp.getCurrSpeed() / moveComp.defSpeed );
+				}
+			}
 		}
-
-		// calcuate path for spawned enemies
-		path->calcOptimalPath( ( glm::uvec2 ) start, ( glm::uvec2 ) end, worldComp.size.x, grid );
-
-	} else {
-		std::cout << "failed to load level" << std::endl;
 	}
 }
 
@@ -574,17 +536,39 @@ void SpaceInvadersTD::showButtons( bool show ) {
 		btn->setVisible( false );
 	}
 	if ( show ) {
-		bStartRound.setVisible( true );
-		if ( !placeTowerMode && !towerIsSelected() ) {
-			// show place wall button if no tower is selected and not in place tower mode
-			bPlaceWall.setVisible( true );
-		} else if ( !placeTowerMode && towerIsSelected() ) {
-			// show button based on the type of tower that is selected
-			for ( Button* btn : towerButtons[grid[selectedGridPos.y][selectedGridPos.x].towerType] ) {
-				btn->setVisible( true );
+		if ( tdState == TD_WIN || tdState == TD_LOSE ) {
+			bMainMenu.setVisible( true );
+		} else {
+			bStartRound.setVisible( true );
+			if ( !placeTowerMode && !towerIsSelected() ) {
+				// show place wall button if no tower is selected and not in place tower mode
+				bPlaceWall.setVisible( true );
+			} else if ( !placeTowerMode && towerIsSelected() ) {
+				// show button based on the type of tower that is selected
+				for ( Button* btn : towerButtons[grid[selectedGridPos.y][selectedGridPos.x].towerType] ) {
+					btn->setVisible( true );
+				}
+				bSellTower.setVisible( true );
 			}
-			bSellTower.setVisible( true );
 		}
+	}
+}
+
+void SpaceInvadersTD::startRound() {
+	SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+	if ( spawn.round < (int)spawn.numRounds ) {
+		WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
+		WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
+		SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
+		currRound++;
+		spawn.round = currRound;
+		spawn.currSpawnNum = 0;
+		numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
+		tdState = TD_PLAYING;
+		placeTowerMode = false;
+		path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
+			spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
+		updateButtons = true;
 	}
 }
 
@@ -595,22 +579,19 @@ void SpaceInvadersTD::initMenuButtons() {
 		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
 	bStartRound.setText( "Start Round" );
 	bStartRound.setOnClickFunction( [&]() {
-		SpawnComponent& spawn = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
-		if ( spawn.round < (int)spawn.numRounds ) {
-			WorldComponent& spawnWorld = world.worldComponents[world.getComponentIndex( spawners[0], WORLD )];
-			WorldComponent& despawnWorld = world.worldComponents[world.getComponentIndex( despawners[0], WORLD )];
-			SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawners[0], SPAWN )];
-			spawn.round++;
-			spawn.currSpawnNum = 0;
-			numEnemiesLeft = spawn.spawnTypes[spawn.round].num;
-			tdState = TD_PLAYING;
-			placeTowerMode = false;
-			path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
-				spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
-			updateButtons = true;
-		}
+		startRound();
 	} );
 	buttons.push_back( &bStartRound );
+
+	// start round button
+	bMainMenu.setSize( glm::vec2( 256, 96 ) );
+	bMainMenu.setPos( glm::vec2( ( GAME_WIDTH * 0.5f ) - ( bStartRound.getSize().x * 0.5f ),
+		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
+	bMainMenu.setText( "Main Menu" );
+	bMainMenu.setOnClickFunction( [&] () {
+		tdState = TD_EXIT;
+	} );
+	buttons.push_back( &bMainMenu );
 
 	// sell tower button
 	bSellTower.setSize( glm::vec2( 100, 100 ) );
@@ -831,10 +812,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 0.0f;
 			shootComp.bulletDmg.iceDmg = 10.0f;
+			shootComp.bulletDmg.slowInfo.percentSpeed = 0.4f;
+			shootComp.bulletDmg.slowInfo.timeLeft = 1.0f;
+			shootComp.bulletDmg.slowInfo.type = SLOW_TRUE_ICE;
 			shootComp.bulletSpeed = 500.0f;
 			shootComp.bulletSize = 0.25f;
 			shootComp.range = 750.0f;
 			shootComp.bulletTexture = "bullet_true_ice";
+			shootComp.towerType = TOWER_TRUE_ICE;
 			RenderComponent& renderComp = world.renderComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, RENDER )];
 			renderComp.textureName = "tower_true_ice";
 			world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value += 5;
@@ -1138,30 +1123,121 @@ void SpaceInvadersTD::initMenuButtons() {
 	}
 }
 
-void SpaceInvadersTD::attemptToSlow( unsigned entity, const SlowInfo& slowInfo ) {
-	// slow entity if it can be slowed
-	if ( !( ( ( SLOWED | MOVEMENT ) ^ world.entities[entity].mask ) & ( SLOWED | MOVEMENT ) ) ) {
-		SlowedComponent& slowComp = world.slowComponents[world.getComponentIndex( entity, SLOWED )];
-		MovementComponent& moveComp = world.movementComponents[world.getComponentIndex( entity, MOVEMENT )];
+void SpaceInvadersTD::loadLevel( int level ) {
+	std::stringstream ss;
+	ss << "resources/levels/" << "level_" << level << ".txt";
+	std::ifstream fin( ss.str() );
 
-		if ( slowComp.canApplySlow( slowInfo.type, slowInfo.percentSpeed ) ) {
-			bool alreadySlowed = false;
-			for ( SlowInfo& info : slowComp.slowedInfo ) {
-				if ( info.type == slowInfo.type ) {
-					alreadySlowed = true;
-					// reapply the new slow if it already existed
-					moveComp.removeSlow( info.percentSpeed * info.speedAtApplication );
-					info.timeLeft = slowInfo.timeLeft;
-					info.percentSpeed = slowInfo.percentSpeed;
-					moveComp.applySlow( slowInfo.percentSpeed * info.speedAtApplication );
-					break;
+	// load spawn info for the level
+	if ( fin.good() ) {
+		// create spawner
+		int spawner = EntityFactory::createSpawner();
+		spawners.push_back( spawner );
+		WorldComponent& worldComp = world.worldComponents[world.getComponentIndex( spawner, WORLD )];
+		SpawnComponent& spawnComp = world.spawnComponents[world.getComponentIndex( spawner, SPAWN )];
+
+		// get number of rounds for the level
+		fin >> numRounds;
+		currRound = -1;
+		spawnComp.numRounds = numRounds;
+		spawnComp.spawnTypes.resize( numRounds );
+
+		// load start and end pos for portal
+		glm::vec2 start, end;
+		fin >> start.x >> start.y >> end.x >> end.y;
+
+		worldComp.size = glm::vec2( gridSize );
+		worldComp.pos = start * gridSize;
+		grid[worldComp.pos.y / gridSize][worldComp.pos.x / gridSize].ent = spawner;
+
+		// create a despawn portal
+		int despawner = EntityFactory::createEntity( WORLD | RENDER | COLLISION | ROTATION );
+		WorldComponent& despWorld = world.worldComponents[world.getComponentIndex( despawner, WORLD )];
+		RenderComponent& despRender = world.renderComponents[world.getComponentIndex( despawner, RENDER )];
+		CollisionComponent& despCollision = world.collisionComponents[world.getComponentIndex( despawner, COLLISION )];
+		world.rotationComponents[world.getComponentIndex( despawner, ROTATION )].rotSpeed = 90.0f;
+		despawners.push_back( despawner );
+
+		// init despawn world data
+		despWorld.size = glm::vec2( gridSize );
+		despWorld.pos = end * gridSize;
+		grid[despWorld.pos.y / gridSize][despWorld.pos.x / gridSize].ent = despawner;
+		// init despawn render data
+		despRender.textureName = "despawn_portal";
+		// init collision data
+		despCollision.shape = CIRCLE;
+		despCollision.collisionID = DESPAWN;
+		despCollision.collisionMask = ENEMY;
+		despCollision.collisionScale = 0.01f;
+
+		// loop over info for each round
+		int i = 0;
+		while ( fin.good() && i < numRounds ) {
+			int numSpawns;
+			float spawnRate;
+
+			// load number of spawns and spawn rate
+			fin >> numSpawns >> spawnRate;
+			spawnComp.spawnTypes[i].num = numSpawns;
+			spawnComp.spawnTypes[i].spawnRate = spawnRate;
+
+			// create entity for the level
+			Entity enemyType( HEALTH | RENDER | WORLD | MOVEMENT | PATH | COLLISION | MONEY | SLOWED );
+
+			// load component info for entity
+			char tag[20], subTag[20];
+			bool loading = true;
+			while ( loading ) {
+				fin >> tag;
+				if ( strcmp( tag, "HEALTH" ) == 0 ) {
+					fin >> subTag >> enemyType.health.maxHP;
+					fin >> subTag >> enemyType.health.voidArmor;
+					fin >> subTag >> enemyType.health.plasmaArmor;
+					fin >> subTag >> enemyType.health.iceArmor;
+					enemyType.health.currHP = enemyType.health.maxHP;
+				} else if ( strcmp( tag, "RENDER" ) == 0 ) {
+					fin >> subTag >> enemyType.render.textureName;
+					enemyType.render.color = glm::vec3( 1.0f );
+				} else if ( strcmp( tag, "WORLD" ) == 0 ) {
+					fin >> subTag;
+					float size = 0.0f;
+					assert( size <= 1.0f && "Size must be 1.0f or less " );
+					fin >> size;
+					enemyType.world.size = glm::vec2( size * gridSize );
+					enemyType.world.pos = glm::vec2( worldComp.pos + ( worldComp.size / 2.0f ) - ( enemyType.world.size / 2.0f ) );
+					enemyType.world.rotation = 0.0f;
+				} else if ( strcmp( tag, "MOVEMENT" ) == 0 ) {
+					fin >> subTag;
+					float speed = 1.0f;
+					fin >> speed;
+					enemyType.movement.defSpeed = speed * gridSize;
+					enemyType.movement.vel = glm::vec2( enemyType.movement.defSpeed, 0.0f );
+				} else if ( strcmp( tag, "COLLISION" ) == 0 ) {
+					char shape[20];
+					fin >> subTag >> shape;
+					if ( strcmp( shape, "CIRCLE" ) == 0 ) {
+						enemyType.collision.shape = CIRCLE;
+					} else {
+						enemyType.collision.shape = RECTANGLE;
+					}
+					enemyType.collision.collisionID = ENEMY;
+					enemyType.collision.collisionMask = BULLET | DESPAWN;
+				} else if ( strcmp( tag, "MONEY" ) == 0 ) {
+					fin >> subTag >> enemyType.money.value;
+				} else {
+					loading = false;
 				}
 			}
-			if ( !alreadySlowed ) {
-				// slow the reciever based on a percent of their current speed
-				slowComp.slowedInfo.push_back( SlowInfo( slowInfo.percentSpeed, slowInfo.timeLeft, moveComp.getCurrSpeed() / moveComp.defSpeed, slowInfo.type ) );
-				moveComp.applySlow( slowInfo.percentSpeed * moveComp.getCurrSpeed() / moveComp.defSpeed );
-			}
+
+			// set the entity to spawn for the round
+			spawnComp.spawnTypes[i].setEntity( &enemyType );
+			++i;
 		}
+
+		// calcuate path for spawned enemies
+		path->calcOptimalPath( ( glm::uvec2 ) start, ( glm::uvec2 ) end, worldComp.size.x, grid );
+
+	} else {
+		std::cout << "failed to load level" << std::endl;
 	}
 }
