@@ -3,4 +3,53 @@ Rules for Space Invaders TD
 
 Objective:
 -------------------------------------------------------
-During your deep space contruction mission, you have detected dangerous extraterrestrial life forms warping towards earth. In an attempt slow down and weaken the invading forces so that earth may have enough timeto prepare sufficient defenses, you have casted several interdiction fields accross the solar system. Enemies warping through these fields get pulled out of warp, delaying their arrival and making them vulnerable to all of the weapons at your disposal, but only until they can reach a stress point in the field and enter warp again. It is your duty to intercept the aliens at interdiction field locations to destroy them before they can reach earth. Destroy enemies as they come in waves with weapons on your ship and utilize what you have learned in space construction to build space towers to assist you and prolong the amount of time it takes for the enemies to enter warp again, hopefully indefinitely.
+During your deep space contruction mission, you have detected dangerous extraterrestrial life forms warping towards earth. In an attempt slow down and weaken the invading forces so that earth may have enough time to prepare sufficient defenses, you have casted several interdiction fields accross the solar system. Enemies warping through these fields get pulled out of warp, delaying their arrival and making them vulnerable to all of the weapons at your disposal, but only until they can reach a stress point in the field and enter warp again. It is your duty to intercept the aliens at interdiction field locations to destroy them before they can reach earth. Destroy enemies as they come in waves with weapons on your ship and utilize what you have learned in space construction to build space towers to assist you and prolong the amount of time it takes for the enemies to enter warp again, hopefully indefinitely.
+
+Enemies:
+-------------------------------------------------------
+Enemies spawn in waves and move from the purple interdiction portal to the orange warp portal. Each wave of enemies spawns a descrete number of the same type of unit at a steady interval. Spawned enemies move toward the warp portal and move around any walls or towers placed on the space grid. If any enemy reaches the warp portal, you lose a life. If you lose all of your lives, you lose the game. If you have lives remaining after the final wave, you win the game.
+
+Enemies have a finite number of health and are killed when their health is depleted. When an enemy is killed, you are rewarded with as much money as killing the enemy is worth. 
+
+Enemies also have various amounts of plasma, void, and ice armor. How much damage an enemy takes from a plama, void, or ice attack depends on the value of the enemy's armor.
+
+Towers:
+-------------------------------------------------------
+Towers serve two purposes in the game. All towers act at physical walls that enemies may not pass through. This means that by placing towers, you can prolong the amount of time it takes for an enemy to reach the warp portal by forcing them to take a longer path. You cannot block the path to the warp portal completely, however.
+
+- Upgrading Towers -----------------------
+
+Towers also act as offensive weapons that can be used to attack and kill enemies. You can create a tower by placing a wall on the game grid and then upgrading in the bottom right menu between waves. A wall can be upgraded into four different types of towers, each representing one of the four different damage types. The damage types are as follows:
+
+True (T) : True damage does the same amount of damage regardless of an enemy's armor type. It also does slighly less damage per second (dps) that other types of towers. True is represented by the color yellow.
+
+Void (V) : Void damage has the quality of favoring AOE (Area of Effect) damage, or hurting multiple targets at once. Void generally does a medium amount of damage to a single target but can do the most dps out of all types if hitting multiple targets at once. Void is represented by the color purple.
+
+Plasma (P) : Plasma damage is designed to deal high damage to a single target at a time. It generally has the highest dps of any type against a single target but also tends to have shorter range. Plasma is represented by the color green. 
+
+Ice (I) : Ice damage is used to slow down enemies in order to make them more vulnerable to attacks for a longer period. Each type of ice damage applies a unique slow that can be stacked with other slow types. Ice generally does low damage and it is represented by the color light blue. 
+
+When a tower is upgraded, it becomes the color of the type it is upgraded to and will only deal the damage type that is was upgraded to.
+
+- Special Towers -------------------------
+A tower can be upgraded one more time after its initial upgrade to become a specialized tower. Each type can be upgraded into a specialized type of any type that is not the initial upgrade type. For example, a true tower can upgrade a second time into plasma, void, or ice. A specialized tower takes on the characteristics on the secondary type. Specialized towers tend to increase in primary damage, deal minory damage of the secondary type, and gain a special effect. At the moment only a handful of specialized towers are implemented. They are the following: 
+
+True -> Plasma : Bullets no longer lock onto enemies, but the tower now shoots a primary true damage bullet along with 2 weaker plasma bullets with reduced accuracy at a fast firing rate.
+
+True -> Ice : If the true damage bullet hits an enemy from behind, a significant slow is not applied to the enemy.
+
+Void -> True : Void damage bullets shot from the tower now apply a true damage drain to enemies nearby.
+
+Void -> Plasma : The void bullet now acts as a flying tower that targets and shoots plasma bullets at nearby enemies during its lifetime.
+
+Plasma -> Void : The tower now applies Void AOE damage in an area around the tower.
+
+Ice -> Void : The Ice bullet show now applies a lesser slow to enemies near the enemy that was hit.
+
+The ring around a tower becomes the color of the secondary upgrade type to indicate that it has been upgraded.
+
+Towers can also be sold freeing up their current space. If a wall is sold 100% of the cost is refunded. If an upgraded tower is sold, 50% of the total cost it took to create it is refunded. A wall costs 5 money and each upgrade after that takes 10. 
+
+Player:
+-------------------------------------------------------
+The player is a ship near the bottom of the screen outside of the interdiction field placed where enemies and towers inhabit. The player can move to the left using the A key, move the right using the D key, and fire their weapon at enemies using left click on the mouse. Weapons fire toward the mouse's location from the player's ship. The player serves the purpose of providing additional damage against enemies in a more dynamic way than towers can. 

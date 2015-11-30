@@ -115,8 +115,11 @@ struct PlayerInputComponent {
 	std::vector<unsigned> rightInputs;
 	std::vector<unsigned> shootPrimaryInputs;
 	std::vector<unsigned> shootSecondaryInputs;
+	float leftClickDT, leftClickCooldown;
 
 	PlayerInputComponent() {
+		leftClickCooldown = 0.15f;
+		leftClickDT = leftClickCooldown;
 		leftInputs.push_back( (unsigned)KEY_A );
 		rightInputs.push_back( (unsigned)KEY_D );
 		leftInputs.push_back( (unsigned)KEY_LEFT );

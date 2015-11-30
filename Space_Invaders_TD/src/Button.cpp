@@ -120,7 +120,7 @@ void Button::setDraggable( GLboolean draggable ) {
 }
 
 void Button::render( Graphics& graphics ) {
-	if ( isVisible ) {
+	if ( state != DISABLED ) {
 		// render button texture
 		if ( state == PRESSED ) {
 			graphics.draw2DTexture( pressedTexture, pos, size, rotation );

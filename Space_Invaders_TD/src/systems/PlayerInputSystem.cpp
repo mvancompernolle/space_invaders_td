@@ -55,32 +55,51 @@ void PlayerInputSystem::update( World* world, int pos, float dt ) {
 	}
 
 	// handle shoot commands
-	i = 0;
-	while ( i < inputComp.shootPrimaryInputs.size() ) {
-		if ( ServiceLocator::getInput().getKeyPressed( inputComp.shootPrimaryInputs[i] ) ) {
-			// shoot bullet
-			int index = EntityFactory::createEntity( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE );
-			WorldComponent& bWorld = world->worldComponents[world->getComponentIndex( index, WORLD )];
-			bWorld.rotation = 0.0f;
-			bWorld.size = glm::vec2( 16 );
-			bWorld.pos = glm::vec2( worldComp.pos + worldComp.size / 2.0f - bWorld.size / 2.0f );
-			RenderComponent& bRender = world->renderComponents[world->getComponentIndex( index, RENDER )];
-			bRender.color = glm::vec3( 1.0f );
-			bRender.textureName = "ship_true_dmg_bullet";
-			MovementComponent& bMove = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
-			bMove.defSpeed = 1200.0f;
-			bMove.vel = glm::normalize( ServiceLocator::getInput().getMousePos() - ( worldComp.pos + ( worldComp.size / 2.0f ) ) ) * bMove.defSpeed + moveComp.vel;
-			CollisionComponent& bCollision = world->collisionComponents[world->getComponentIndex( index, COLLISION )];
-			bCollision.shape = CIRCLE;
-			bCollision.collisionID = BULLET;
-			bCollision.collisionMask = ( ENEMY | WALL );
-			DamageComponent& bDmg = world->dmgComponents[world->getComponentIndex( index, DAMAGE )];
-			bDmg.trueDmg = 2.0f;
-			bDmg.iceDmg = 2.0f;
-			bDmg.plasmaDmg = 2.0f;
-			bDmg.voidDmg = 2.0f;
-			break;
+	inputComp.leftClickDT += dt;
+	if ( inputComp.leftClickDT >= inputComp.leftClickCooldown ) {
+		inputComp.leftClickDT -= inputComp.leftClickCooldown;
+
+		i = 0;
+		while ( i < inputComp.shootPrimaryInputs.size() ) {
+			if ( ServiceLocator::getInput().getKeyPressed( inputComp.shootPrimaryInputs[i] ) ) {
+				// shoot bullet
+				int index = EntityFactory::createEntity( WORLD | RENDER | MOVEMENT | COLLISION | DAMAGE );
+				WorldComponent& bWorld = world->worldComponents[world->getComponentIndex( index, WORLD )];
+				bWorld.rotation = 0.0f;
+				bWorld.size = glm::vec2( 16 );
+				bWorld.pos = glm::vec2( worldComp.pos + worldComp.size / 2.0f - bWorld.size / 2.0f );
+				RenderComponent& bRender = world->renderComponents[world->getComponentIndex( index, RENDER )];
+				bRender.color = glm::vec3( 1.0f );
+				bRender.textureName = "bullet_true";
+				MovementComponent& bMove = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
+				bMove.defSpeed = 1200.0f;
+				bMove.vel = glm::normalize( ServiceLocator::getInput().getMousePos() - ( worldComp.pos + ( worldComp.size / 2.0f ) ) ) * bMove.defSpeed + moveComp.vel;
+				CollisionComponent& bCollision = world->collisionComponents[world->getComponentIndex( index, COLLISION )];
+				bCollision.shape = CIRCLE;
+				bCollision.collisionID = BULLET;
+				bCollision.collisionMask = ( ENEMY | WALL );
+				DamageComponent& bDmg = world->dmgComponents[world->getComponentIndex( index, DAMAGE )];
+				bDmg.trueDmg = 25.0f;
+				if ( EntityFactory::collisionSystem->registeredEnemies.size() > 0 ) {
+					unsigned followIndex = EntityFactory::addComponent( index, FOLLOW );
+					FollowComponent& bFollow = world->followComponents[followIndex];
+					bFollow.turnRate = 180.0f;
+					int targetIndex = 0;
+					glm::vec2 mousePos = ServiceLocator::getInput().getMousePos();
+					std::vector<unsigned>& enemies = EntityFactory::collisionSystem->registeredEnemies;
+					float dist = glm::distance( mousePos, world->worldComponents[world->getComponentIndex(enemies[0], WORLD)].pos);
+					for ( int i = 1; i < enemies.size(); ++i ) {
+						float newDist = glm::distance( mousePos, world->worldComponents[world->getComponentIndex( enemies[i], WORLD )].pos );
+						if ( newDist < dist ) {
+							dist = newDist;
+							targetIndex = i;
+						}
+					}
+					bFollow.entTarget = enemies[targetIndex];
+				} 
+				break;
+			}
+			i++;
 		}
-		i++;
 	}
 }

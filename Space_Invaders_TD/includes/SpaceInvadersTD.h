@@ -54,7 +54,7 @@ private:
 	// menu buttons
 	std::vector<Button*> buttons;
 	bool updateButtons;
-	Button bStartRound, bMainMenu, bPlaceWall;
+	Button bStartRound, bMainMenu, bQuit, bPlaceWall;
 	Button bUpgradeTrue, bUpgradeVoid, bUpgradePlasma, bUpgradeIce, bSellTower;
 	Button bTrueVoid, bTruePlasma, bTrueIce;
 	Button bVoidTrue, bVoidPlasma, bVoidIce;

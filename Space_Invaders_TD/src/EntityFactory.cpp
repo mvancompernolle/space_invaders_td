@@ -94,7 +94,7 @@ void EntityFactory::removeEntity( int pos ) {
 			world->parentComponents.remove( world->getComponentIndex( pos, PARENT ) );
 			break;
 		case ROTATION:
-			world->parentComponents.remove( world->getComponentIndex( pos, PARENT ) );
+			world->rotationComponents.remove( world->getComponentIndex( pos, ROTATION ) );
 			break;
 		}
 	}
@@ -162,20 +162,23 @@ int EntityFactory::createEnemy() {
 
 int EntityFactory::createBaseTower() {
 	int index = world->entities.create();
-	world->entities[index].mask = ( RENDER | WORLD | MONEY );
+	world->entities[index].mask = ( RENDER | WORLD | MONEY | ROTATION );
 	addComponent( index, MONEY );
 	addComponent( index, RENDER );
 	addComponent( index, WORLD );
+	addComponent( index, ROTATION );
 
 	// initialize values
 	WorldComponent& worldComp = world->worldComponents[world->getComponentIndex( index, WORLD )];
-	worldComp.rotation = 0.0f;
+	worldComp.rotation = rand() % 360;
 	worldComp.size = glm::vec2( 64 );
 	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
 	renderComp.textureName = "tower_base";
 	MoneyComponent& moneyComp = world->moneyComponents[world->getComponentIndex( index, MONEY )];
 	moneyComp.value = 5;
+	RotationComponent& rotComp = world->rotationComponents[world->getComponentIndex( index, ROTATION )];
+	rotComp.rotSpeed = (15 + rand() % 30) * (rand() % 2 == 0 ? 1 : -1);
 
 	return index;
 }
@@ -195,7 +198,7 @@ int EntityFactory::createPlayer() {
 	worldComp.pos = glm::vec2( GAME_WIDTH * 0.5f - worldComp.size.x / 2.0f, GAME_HEIGHT * 0.7f );
 	RenderComponent& renderComp = world->renderComponents[world->getComponentIndex( index, RENDER )];
 	renderComp.color = glm::vec3( 1.0f );
-	renderComp.textureName = "enemy";
+	renderComp.textureName = "player";
 	MovementComponent& movComp = world->movementComponents[world->getComponentIndex( index, MOVEMENT )];
 	movComp.vel = glm::vec2( 0.0f, 0.0f );
 	movComp.defSpeed = 200.0f;

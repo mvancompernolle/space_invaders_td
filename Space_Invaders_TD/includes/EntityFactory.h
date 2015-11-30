@@ -13,6 +13,8 @@
 class EntityFactory {
 
 public:
+	static CollisionSystem* collisionSystem;
+
 	EntityFactory();
 	~EntityFactory();
 	static void setWorld( World* world );
@@ -31,7 +33,6 @@ public:
 	static void resetComponent( unsigned pos, COMPONENT_TYPE type );
 private:
 	static World* world;
-	static CollisionSystem* collisionSystem;
 	static ShootSystem* shootSystem;
 	static DamageAuraSystem* dmgAuraSystem;
 };

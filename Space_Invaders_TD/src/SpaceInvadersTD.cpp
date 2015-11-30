@@ -22,6 +22,7 @@
 SpaceInvadersTD::SpaceInvadersTD() {
 	// load assets
 	ResourceManager::loadTexture( "hud.png", GL_TRUE, "hud" );
+	ResourceManager::loadTexture( "player.png", GL_TRUE, "player" );
 	ResourceManager::loadTexture( "enemy.png", GL_TRUE, "enemy" );
 	ResourceManager::loadTexture( "tower_base.png", GL_TRUE, "tower_base" );
 	ResourceManager::loadTexture( "place_tower_indicator.png", GL_TRUE, "place_tower_indicator" );
@@ -90,6 +91,8 @@ SpaceInvadersTD::SpaceInvadersTD() {
 	EntityFactory::setCollisionSystem( &collisionSystem );
 	EntityFactory::setShootSystem( shootSystem );
 	EntityFactory::setDmgAuraSystem( dmgAuraSystem );
+
+	init();
 }
 
 
@@ -132,7 +135,7 @@ void SpaceInvadersTD::init() {
 
 	// set game values
 	currGridPulseTime = 0.0f;
-	loadLevel( 3 );
+	loadLevel( 1 );
 
 	// create player
 	EntityFactory::createPlayer();
@@ -314,10 +317,6 @@ void SpaceInvadersTD::render() {
 
 	// render menu inbetween turns
 	if ( tdState == TD_MENU ) {
-		// render buttons
-		for ( Button* btn : buttons ) {
-			btn->render( ServiceLocator::getGraphics() );
-		}
 
 		// get index mouse is over on the grid
 		int gridX = ServiceLocator::getInput().getMousePos().x / gridSize;
@@ -358,13 +357,12 @@ void SpaceInvadersTD::render() {
 
 		ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), gameMessage, glm::vec2( GAME_WIDTH, GAME_HEIGHT ) * 0.5f, 2.0f,
 			msgColor, HOR_CENTERED, VERT_CENTERED);
-
-		// render buttons
-		for ( Button* btn : buttons ) {
-			btn->render( ServiceLocator::getGraphics() );
-		}
 	}
 
+	// render buttons
+	for ( Button* btn : buttons ) {
+		btn->render( ServiceLocator::getGraphics() );
+	}
 
 	// render money
 	std::stringstream ss;
@@ -535,23 +533,20 @@ void SpaceInvadersTD::showButtons( bool show ) {
 	for ( Button*& btn : buttons ) {
 		btn->setVisible( false );
 	}
-	if ( show ) {
-		if ( tdState == TD_WIN || tdState == TD_LOSE ) {
-			bMainMenu.setVisible( true );
-		} else {
-			bStartRound.setVisible( true );
-			if ( !placeTowerMode && !towerIsSelected() ) {
-				// show place wall button if no tower is selected and not in place tower mode
-				bPlaceWall.setVisible( true );
-			} else if ( !placeTowerMode && towerIsSelected() ) {
-				// show button based on the type of tower that is selected
-				for ( Button* btn : towerButtons[grid[selectedGridPos.y][selectedGridPos.x].towerType] ) {
-					btn->setVisible( true );
-				}
-				bSellTower.setVisible( true );
+	if ( show && tdState != TD_LOSE && tdState != TD_WIN && show ) {
+		bStartRound.setVisible( true );
+		if ( !placeTowerMode && !towerIsSelected() ) {
+			// show place wall button if no tower is selected and not in place tower mode
+			bPlaceWall.setVisible( true );
+		} else if ( !placeTowerMode && towerIsSelected() ) {
+			// show button based on the type of tower that is selected
+			for ( Button* btn : towerButtons[grid[selectedGridPos.y][selectedGridPos.x].towerType] ) {
+				btn->setVisible( true );
 			}
+			bSellTower.setVisible( true );
 		}
 	}
+	bMainMenu.setVisible( true );
 }
 
 void SpaceInvadersTD::startRound() {
@@ -569,6 +564,7 @@ void SpaceInvadersTD::startRound() {
 		path->calcOptimalPath( ( glm::uvec2 ) ( spawnWorld.pos / gridSize ), ( glm::uvec2 ) ( despawnWorld.pos / gridSize ),
 			spawnComp.spawnTypes[spawnComp.round].getEntity()->world.size.x / 2.0f, grid );
 		updateButtons = true;
+		showButtons( false );
 	}
 }
 
@@ -583,10 +579,9 @@ void SpaceInvadersTD::initMenuButtons() {
 	} );
 	buttons.push_back( &bStartRound );
 
-	// start round button
-	bMainMenu.setSize( glm::vec2( 256, 96 ) );
-	bMainMenu.setPos( glm::vec2( ( GAME_WIDTH * 0.5f ) - ( bStartRound.getSize().x * 0.5f ),
-		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
+	// main menu button
+	bMainMenu.setSize( glm::vec2( 192, 64 ) );
+	bMainMenu.setPos( glm::vec2( 20, GAME_HEIGHT - 256) );
 	bMainMenu.setText( "Main Menu" );
 	bMainMenu.setOnClickFunction( [&] () {
 		tdState = TD_EXIT;
