@@ -12,6 +12,7 @@
 #include "Grid.h"
 #include "World.h"
 #include "Button.h"
+#include "Textbox.h"
 #include <vector>
 #include <memory>
 
@@ -60,6 +61,7 @@ private:
 	Button bVoidTrue, bVoidPlasma, bVoidIce;
 	Button bPlasmaTrue, bPlasmaVoid, bPlasmaIce;
 	Button bIceTrue, bIceVoid, bIcePlasma;
+	Textbox* tbTowerInfo;
 	std::unordered_map<TOWER_TYPE, std::vector<Button*>> towerButtons;
 
 	void placeBaseTower( unsigned x, unsigned y );

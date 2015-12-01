@@ -37,6 +37,7 @@ public:
 	void					setOnClickFunction( std::function<void()> fcn );
 	void					setOnReleaseFunction( std::function<void()> fcn );
 	void					setOnMouseMovementFunction( std::function<void()> fcn );
+	void					setOnMouseExitFunction( std::function<void()> fcn );
 private:
 	ButtonState				state;
 	std::string				text;
@@ -51,6 +52,7 @@ private:
 	std::function<void()>	onClickFunction;
 	std::function<void()>	onReleaseFunction;
 	std::function<void()>	onMouseMovementFunction;
+	std::function<void()>	onMouseExitFunction;
 
 	GLboolean				isOverButton( glm::vec2 pos ) const;
 };

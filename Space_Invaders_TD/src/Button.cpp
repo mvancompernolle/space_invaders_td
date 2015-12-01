@@ -46,12 +46,18 @@ void Button::onRelease( glm::vec2 pos ) {
 }
 
 void Button::onMouseMovement( glm::vec2 pos ) {
-	if ( state != DISABLED ) {
+ 	if ( state != DISABLED ) {
 		if ( state != PRESSED ) {
 
 			if ( isOverButton( pos ) ) {
 				state = HOVER;
+				if ( !isDraggable && onMouseMovementFunction ) {
+					onMouseMovementFunction();
+				}
 			} else {
+				if ( state == HOVER && onMouseExitFunction ) {
+					onMouseExitFunction();
+				}
 				state = RELEASED;
 			}
 		} else {
@@ -145,6 +151,10 @@ void Button::setOnReleaseFunction( std::function<void()> fcn ) {
 
 void Button::setOnMouseMovementFunction( std::function<void()> fcn ) {
 	onMouseMovementFunction = fcn;
+}
+
+void Button::setOnMouseExitFunction( std::function<void()> fcn ) {
+	onMouseExitFunction = fcn;
 }
 
 GLboolean Button::isOverButton( glm::vec2 pos ) const {

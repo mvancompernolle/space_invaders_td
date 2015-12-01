@@ -30,7 +30,7 @@ struct StringToken{
 
 class Textbox : public OnClickObserver, public ScrollObserver {
 public:
-								Textbox( glm::vec2 pos, glm::vec2 size, GLuint borderSize, const font& fontType, GLfloat fontScale = 1.0f );
+								Textbox( glm::vec2 pos, glm::vec2 size, GLuint borderSize, const font& fontType, GLfloat fontScale = 1.0f, bool scrollable = true );
 								~Textbox();
 	void						addText( std::string newText, GLboolean newLine = GL_FALSE );
 	void						addText( std::string newText, glm::vec3 color, GLboolean newLine = GL_FALSE );
@@ -64,6 +64,7 @@ private:
 	Button						bScrollUp, bScrollDown, bScrollBar;
 	glm::vec2					currentMousePos;
 	GLfloat						mouseClickOffset;
+	bool						scrollable;
 
 	GLfloat						getStringWidth( const std::string& str ) const;
 	GLint						getNumLinesThatFit() const;

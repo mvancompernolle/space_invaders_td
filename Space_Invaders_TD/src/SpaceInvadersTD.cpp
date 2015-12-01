@@ -71,6 +71,12 @@ SpaceInvadersTD::SpaceInvadersTD() {
 
 	initMenuButtons();
 
+	// init text box
+	tbTowerInfo = new Textbox( glm::vec2( 484, 868 ), glm::vec2( 952, 208 ), 8, ResourceManager::getFont( "default" ), 0.6f, false );
+	tbTowerInfo->setBackgroundColor( glm::vec3( 0.2f ) );
+	tbTowerInfo->setTextColor( glm::vec3( 0.8f ) );
+	tbTowerInfo->setLineSpacing( 1.5f );
+
 	// create systems
 	systems.push_back( new HealthSystem( &numEnemiesLeft ) );
 	systems.push_back( new RotationSystem( &numEnemiesLeft ) );
@@ -100,6 +106,7 @@ SpaceInvadersTD::~SpaceInvadersTD() {
 	for ( int i = 0; i < systems.size(); ++i ) {
 		delete systems[i];
 	}
+	delete tbTowerInfo;
 }
 
 void SpaceInvadersTD::init() {
@@ -192,7 +199,7 @@ STATE SpaceInvadersTD::update( const float dt ) {
 			tdState = TD_LOSE;
 			showButtons( true );
 		} else if ( numEnemiesLeft <= 0 ) {
-			if ( currRound == numRounds - 1) {
+			if ( currRound == numRounds - 1 ) {
 				tdState = TD_WIN;
 			} else {
 				tdState = TD_MENU;
@@ -356,7 +363,7 @@ void SpaceInvadersTD::render() {
 		glm::vec3 msgColor = tdState == TD_LOSE ? glm::vec3( 1.0f, 0.0f, 0.0f ) : glm::vec3( 0.0f, 1.0f, 0.0f );
 
 		ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), gameMessage, glm::vec2( GAME_WIDTH, GAME_HEIGHT ) * 0.5f, 2.0f,
-			msgColor, HOR_CENTERED, VERT_CENTERED);
+			msgColor, HOR_CENTERED, VERT_CENTERED );
 	}
 
 	// render buttons
@@ -364,21 +371,48 @@ void SpaceInvadersTD::render() {
 		btn->render( ServiceLocator::getGraphics() );
 	}
 
-	// render money
+	// calculate text position
+	float padding = 4.0f;
+	glm::vec2 textPos = glm::vec2( 544, 838 );
+	float textScale = 0.8f;
 	std::stringstream ss;
-	ss << "Round:    " << currRound + 1 << "/" << numRounds;
-	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 180 ), 1.0f );
+	// render round
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), "Money", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	textPos.x = 604.0f;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ":", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	ss << money;
+	textPos.x = 664.0f;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	// render money
+	textPos.x = 784;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), "Wave", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
 	ss.str( std::string() );
-	ss << "Money:    " << money;
-	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 140 ), 1.0f );
-	// render enemies left
+	ss << currRound + 1 << "/" << numRounds;
+	textPos.x = 844;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ":", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	textPos.x = 904;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	// render enemies
+	textPos.x = 1024;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), "Enemies", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
 	ss.str( std::string() );
-	ss << "Enemies : " << numEnemiesLeft;
-	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 100 ), 1.0f );
-	// render enemies left
+	ss << numEnemiesLeft;
+	textPos.x = 1084;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ":", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	textPos.x = 1144;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	// render lives
+	textPos.x = 1264;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), "Lives", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
 	ss.str( std::string() );
-	ss << "Lives:    " << numLives;
-	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), glm::vec2( 20, GAME_HEIGHT - 60 ), 1.0f );
+	ss << numLives;
+	textPos.x = 1324;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ":", textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+	textPos.x = 1384;
+	ServiceLocator::getGraphics().renderText( ResourceManager::getFont( "default" ), ss.str(), textPos, textScale, glm::vec3( 0.0f ), HOR_CENTERED, VERT_CENTERED );
+
+	// render textbox info
+	tbTowerInfo->render( ServiceLocator::getGraphics() );
 }
 
 void SpaceInvadersTD::placeBaseTower( unsigned x, unsigned y ) {
@@ -425,14 +459,14 @@ void SpaceInvadersTD::handleCollisionEvents() {
 			}
 			EntityFactory::removeEntity( dealer );
 		}
-		break;
+						   break;
 		case DESPAWN_EVENT: {
 			int ent = ( world.entities[event.ent1].mask ) & PATH ? event.ent1 : event.ent2;
 			HealthComponent& healthComp = world.healthComponents[world.getComponentIndex( ent, HEALTH )];
 			healthComp.currHP = 0.0f;
 			numLives--;
 		}
-		break;
+							break;
 		case AOE_SLOW_EVENT: {
 			// get enemy's position
 			WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( event.ent1, WORLD )];
@@ -443,7 +477,7 @@ void SpaceInvadersTD::handleCollisionEvents() {
 				WorldComponent& enemyWorld2 = world.worldComponents[world.getComponentIndex( ent, WORLD )];
 				if ( glm::distance( enemyWorld.getCenter(), enemyWorld2.getCenter() ) <= aoeComp.range ) {
 					// attempt to slow enemy
-					attemptToSlow( ent, event.ent2, aoeComp.dmg.slowInfo);
+					attemptToSlow( ent, event.ent2, aoeComp.dmg.slowInfo );
 				}
 			}
 		}
@@ -471,7 +505,7 @@ void SpaceInvadersTD::handleCollisionEvents() {
 				}
 			}
 		}
-		break;
+							   break;
 		}
 	}
 }
@@ -489,7 +523,7 @@ void SpaceInvadersTD::attemptToSlow( unsigned receiver, unsigned dealer, const S
 			if ( world.entities[dealer].mask & PARENT ) {
 				ParentComponent& parent = world.parentComponents[world.getComponentIndex( dealer, PARENT )];
 				// if true ice tower make sure slow it hitting from behind
-				if ( world.entities[parent.parentEnt].mask | SHOOT 
+				if ( world.entities[parent.parentEnt].mask | SHOOT
 					&& world.shootComponents[world.getComponentIndex( parent.parentEnt, SHOOT )].towerType == TOWER_TRUE_ICE ) {
 					// get bullet and enemy position
 					WorldComponent& enemyWorld = world.worldComponents[world.getComponentIndex( receiver, WORLD )];
@@ -569,10 +603,15 @@ void SpaceInvadersTD::startRound() {
 }
 
 void SpaceInvadersTD::initMenuButtons() {
+	std::function<void()> clearInfoFcn = [&]() {
+		tbTowerInfo->clear();
+	};
+	unsigned cost = 5;
+
 	// start round button
 	bStartRound.setSize( glm::vec2( 256, 96 ) );
 	bStartRound.setPos( glm::vec2( ( GAME_WIDTH * 0.5f ) - ( bStartRound.getSize().x * 0.5f ),
-		( GAME_HEIGHT * 0.9f ) - ( bStartRound.getSize().y * 0.5f ) ) );
+		( GAME_HEIGHT * 0.71f ) - ( bStartRound.getSize().y * 0.5f ) ) );
 	bStartRound.setText( "Start Round" );
 	bStartRound.setOnClickFunction( [&]() {
 		startRound();
@@ -581,9 +620,9 @@ void SpaceInvadersTD::initMenuButtons() {
 
 	// main menu button
 	bMainMenu.setSize( glm::vec2( 192, 64 ) );
-	bMainMenu.setPos( glm::vec2( 20, GAME_HEIGHT - 256) );
+	bMainMenu.setPos( glm::vec2( 20, GAME_HEIGHT - 256 ) );
 	bMainMenu.setText( "Main Menu" );
-	bMainMenu.setOnClickFunction( [&] () {
+	bMainMenu.setOnClickFunction( [&]() {
 		tdState = TD_EXIT;
 	} );
 	buttons.push_back( &bMainMenu );
@@ -603,9 +642,21 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bSellTower.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		std::stringstream ss;
+		int money = world.moneyComponents[world.getComponentIndex( grid[selectedGridPos.y][selectedGridPos.x].ent, MONEY )].value;
+		ss << "Sell the selected tower - " << money << " Money Refund";
+		tbTowerInfo->addText( ss.str(), true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "Tower can be sold to refund their cost and free up a grid space.", true );
+		tbTowerInfo->addText( "Walls refund 100% of the cost when sold.", true );
+		tbTowerInfo->addText( "All other towers refund 50% of their total cost including previous upgrade costs when sold." );
+	} );
 	buttons.push_back( &bSellTower );
 
 	// place wall button
+	cost = 5;
 	bPlaceWall.setSize( glm::vec2( 100, 100 ) );
 	bPlaceWall.setPos( glm::vec2( 1920 - 480 + 24, GAME_HEIGHT * 0.75f + 24 ) );
 	bPlaceWall.setText( "Wall" );
@@ -613,6 +664,15 @@ void SpaceInvadersTD::initMenuButtons() {
 		if ( money >= 5 && !placeTowerMode ) {
 			placeTowerMode = true;
 		}
+	} );
+	bPlaceWall.setOnMouseMovementFunction( [&, cost]() {
+		tbTowerInfo->clear();
+		std::stringstream ss;
+		ss << "Place Wall - " << cost << " Money";
+		tbTowerInfo->addText( ss.str(), true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "Walls can be placed on a square on the game grid to block the paths of enemies, forcing them to go around.", true );
+		tbTowerInfo->addText( "Walls can also be upgraded into towers that attack and damage enemies." );
 	} );
 	buttons.push_back( &bPlaceWall );
 
@@ -643,6 +703,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bUpgradeTrue.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "True Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "True towers shoot bullets that ignore all armor types.", true );
+		tbTowerInfo->addText( "True dmg: 10.0 / Void dmg: 0.0 / Plasma dmg: 0.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 0.5 / Bullet speed: 1000.0 / Range: 300.0" );
+	} );
 	buttons.push_back( &bUpgradeTrue );
 
 	// upgrade void button
@@ -671,6 +739,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID;
 			updateButtons = true;
 		}
+	} );
+	bUpgradeVoid.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Void Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "Void towers shoot bullets that deal void damage and upgrade into AOE towers.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 30.0 / Plasma dmg: 0.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
 	} );
 	buttons.push_back( &bUpgradeVoid );
 
@@ -701,19 +777,28 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bUpgradePlasma.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Plasma Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "Plasma towers shoot bullets that deal plasma damage and deal high single target damage.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 10.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 0.25 / Bullet speed: 800.0 / Range: 300.0" );
+	} );
 	buttons.push_back( &bUpgradePlasma );
 
 	// upgrade ice button
+	cost = 10;
 	bUpgradeIce.setSize( glm::vec2( 100, 100 ) );
 	bUpgradeIce.setPos( glm::vec2( 1920 - 480 + 24 + 3 * ( 100 + ( 32 / 3 ) ), GAME_HEIGHT * 0.75f + 24 ) );
 	bUpgradeIce.setText( "Ice" );
-	bUpgradeIce.setOnClickFunction( [&]() {
+	bUpgradeIce.setOnClickFunction( [&, cost]() {
 		// add shoot component to wall
-		if ( money >= 10 ) {
-			money -= 10;
+		if ( money >= cost ) {
+			money -= cost;
 			int shootIndex = EntityFactory::addComponent( grid[selectedGridPos.y][selectedGridPos.x].ent, SHOOT );
 			ShootComponent& shootComp = world.shootComponents[shootIndex];
-			shootComp.attackSpeed = 0.5f;
+			shootComp.attackSpeed = 1.25f;
 			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
 			shootComp.bulletDmg.voidDmg = 0.0f;
@@ -732,6 +817,16 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE;
 			updateButtons = true;
 		}
+	} );
+	bUpgradeIce.setOnMouseMovementFunction( [&, cost]() {
+		tbTowerInfo->clear();
+		std::stringstream ss;
+		ss << "Ice Tower Upgrade - " << cost << " Money";
+		tbTowerInfo->addText( ss.str(), true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "Ice towers shoot bullets that deal ice damage and slow enemy movement speed.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 0.0 / Ice dmg: 30.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.25 / Bullet speed: 600.0 / Range: 600.0 / Slow Strength: 0.25 / Slow Duration: 2.0" );
 	} );
 	buttons.push_back( &bUpgradeIce );
 
@@ -761,6 +856,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bTrueVoid.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "True Void Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals both true and void damage with its bullets.", true );
+		tbTowerInfo->addText( "True dmg: 40.0 / Void dmg: 10.0 / Plasma dmg: 0.0 / Ice dmg: 30.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 600.0" );
+	} );
 	buttons.push_back( &bTrueVoid );
 
 	// upgrade true plasma button
@@ -789,6 +892,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_TRUE_PLASMA;
 			updateButtons = true;
 		}
+	} );
+	bTruePlasma.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "True Plasma Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that loses bullet lockon but shoots a spray of 1 true bullet and 2 plasma bullets like a shotgon.", true );
+		tbTowerInfo->addText( "True dmg: 20.0 / Void dmg: 0.0 / Plasma dmg: 10.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 0.35 / Bullet speed: 800.0 / Range: 400.0" );
 	} );
 	buttons.push_back( &bTruePlasma );
 
@@ -822,6 +933,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bTrueIce.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "True Ice Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals true and ice damage and applies a strong slow to enemies it hits from behind.", true );
+		tbTowerInfo->addText( "True dmg: 30.0 / Void dmg: 0.0 / Plasma dmg: 0.0 / Ice dmg: 10.0", true );
+		tbTowerInfo->addText( "Attack speed: 0.75 / Bullet speed: 500.0 / Range: 750.0 / Slow Strength: 0.4 / Slow Duration: 1.0" );
+	} );
 	buttons.push_back( &bTrueIce );
 
 	// upgrade void true button
@@ -850,6 +969,15 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_TRUE;
 			updateButtons = true;
 		}
+	} );
+	bVoidTrue.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Void True Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals void damage with its bullets. Each bullet additionally has true damage AOE around it.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 40.0 / Plasma dmg: 0.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 300.0 / Range: 500.0", true );
+		tbTowerInfo->addText( "Bullet AOE: True dmg: 1.0 / Attack speed: 0.1 / Range: 200.0" );
 	} );
 	buttons.push_back( &bVoidTrue );
 
@@ -880,6 +1008,15 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bVoidPlasma.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Void Plasma Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals void damage with its bullets. Each bullet acts like a tower while it exists and shoots weak plasma bullets.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 40.0 / Plasma dmg: 0.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0", true );
+		tbTowerInfo->addText( "Bullet Tower: Plasma dmg: 10.0 / Attack speed: 0.4 / Bullet speed: 1000.0 / Range: 500.0" );
+	} );
 	buttons.push_back( &bVoidPlasma );
 
 	// upgrade void true button
@@ -907,6 +1044,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_VOID_ICE;
 			updateButtons = true;
 		}
+	} );
+	bVoidIce.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Void Ice Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals both void and ice damage.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 40.0 / Plasma dmg: 0.0 / Ice dmg: 15.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
 	} );
 	buttons.push_back( &bVoidIce );
 
@@ -936,6 +1081,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bPlasmaTrue.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Plasma True Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals both plasma and void damage.", true );
+		tbTowerInfo->addText( "True dmg: 10.0 / Void dmg: 0.0 / Plasma dmg: 40.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
+	} );
 	buttons.push_back( &bPlasmaTrue );
 
 	// upgrade void true button
@@ -950,7 +1103,7 @@ void SpaceInvadersTD::initMenuButtons() {
 			shootComp.attackSpeed = 1.0f;
 			shootComp.timePassed = shootComp.attackSpeed;
 			shootComp.bulletDmg.trueDmg = 0.0f;
-			shootComp.bulletDmg.voidDmg = 15.0f;
+			shootComp.bulletDmg.voidDmg = 0.0f;
 			shootComp.bulletDmg.plasmaDmg = 40.0f;
 			shootComp.bulletDmg.iceDmg = 0.0f;
 			shootComp.bulletSpeed = 500.0f;
@@ -971,6 +1124,15 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_PLASMA_VOID;
 			updateButtons = true;
 		}
+	} );
+	bPlasmaVoid.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Plasma Void Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals plasma damage with its bullets and applies void AOE damage around it.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 40.0 / Ice dmg: 0.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0", true );
+		tbTowerInfo->addText( "AOE Aura: Void dmg: 3.0 / Attack speed: 0.5 / Range: 150.0" );
 	} );
 	buttons.push_back( &bPlasmaVoid );
 
@@ -1000,6 +1162,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bPlasmaIce.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Plasma Ice Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals plasma damage and ice damage with its bullets.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 40.0 / Ice dmg: 15.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
+	} );
 	buttons.push_back( &bPlasmaIce );
 
 	// upgrade void true button
@@ -1027,6 +1197,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			grid[selectedGridPos.y][selectedGridPos.x].towerType = TOWER_ICE_TRUE;
 			updateButtons = true;
 		}
+	} );
+	bIceTrue.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Ice True Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals ice damage and true damage with its bullets.", true );
+		tbTowerInfo->addText( "True dmg: 10.0 / Void dmg: 0.0 / Plasma dmg: 0.0 / Ice dmg: 40.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
 	} );
 	buttons.push_back( &bIceTrue );
 
@@ -1060,6 +1238,15 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bIceVoid.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Ice Void Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals ice damage with its bullets and then applies a moderate slow and void AOE damage to enemies near targets that are hit.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 0.0 / Ice dmg: 40.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0 / Slow Strength: 0.25 / Slow Duration: 1.0", true );
+		tbTowerInfo->addText( "AOE: Void dmg: 10.0 / Range: 125.0 / Slow Strength: 0.1875 / Slow Duration: 1.0" );
+	} );
 	buttons.push_back( &bIceVoid );
 
 	// upgrade void true button
@@ -1088,6 +1275,14 @@ void SpaceInvadersTD::initMenuButtons() {
 			updateButtons = true;
 		}
 	} );
+	bIcePlasma.setOnMouseMovementFunction( [&]() {
+		tbTowerInfo->clear();
+		tbTowerInfo->addText( "Ice Plasma Tower Upgrade - 10 Money", true );
+		tbTowerInfo->addText( "-----------------------------------------------------------------------------", true );
+		tbTowerInfo->addText( "A tower that deals ice damage and plasma damage with its bullets.", true );
+		tbTowerInfo->addText( "True dmg: 0.0 / Void dmg: 0.0 / Plasma dmg: 15.0 / Ice dmg: 40.0", true );
+		tbTowerInfo->addText( "Attack speed: 1.0 / Bullet speed: 500.0 / Range: 500.0" );
+	} );
 	buttons.push_back( &bIcePlasma );
 
 	// set which towers show which buttons
@@ -1115,6 +1310,7 @@ void SpaceInvadersTD::initMenuButtons() {
 	// register buttons
 	for ( Button*& btn : buttons ) {
 		ServiceLocator::getInput().addOnClickObserver( btn );
+		btn->setOnMouseExitFunction( clearInfoFcn );
 	}
 }
 

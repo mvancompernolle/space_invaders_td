@@ -2,45 +2,51 @@
 #include "../includes/Graphics.h"
 #include "../includes/ResourceManager.h"
 
-Textbox::Textbox( glm::vec2 pos, glm::vec2 size, GLuint borderSize, const font& fontType, GLfloat fontScale ) :
+Textbox::Textbox( glm::vec2 pos, glm::vec2 size, GLuint borderSize, const font& fontType, GLfloat fontScale, bool scrollable ) :
 	pos( pos ), size( size ), borderSize( borderSize ), fontType( fontType ), fontScale( fontScale ), borderColor( glm::vec3( 0.0f ) ),
 	backgroundColor( glm::vec3( 1.0f ) ), textColor( glm::vec3( 0.0f ) ), paddingHorizontal( 8.0f ), paddingVertical( 8.0f ), currHorizontalOffset( 0.0f ),
-	currentLineNumber( 0 ), lineSpacing( 1.5f ), firstLineInView( 0 ), btnSize( 32.0f ), currentMousePos( glm::vec2( -1 ) ), mouseClickOffset( 0.0f ) {
-	// set scroll button textures
-	Texture pressed = ResourceManager::loadTexture( "scroll_btn_pressed.png", GL_TRUE, "scroll_btn_pressed_default" );
-	Texture released = ResourceManager::loadTexture( "scroll_btn_released.png", GL_TRUE, "scroll_btn_released_default" );
-	Texture hover = ResourceManager::loadTexture( "scroll_btn_hover.png", GL_TRUE, "scroll_btn_hover_default" );
-	bScrollUp.setTextures( pressed, released, hover );
-	bScrollUp.setSize( btnSize );
-	bScrollUp.setPos( glm::vec2( pos.x + size.x - borderSize - btnSize.x, pos.y + borderSize ) );
-	bScrollUp.setOnClickFunction( [&]() {
-		if ( firstLineInView > 0 ) {
-			firstLineInView--;
-			updateScrollBar();
-		}
-	} );
-
-	bScrollDown.setTextures( pressed, released, hover );
-	bScrollDown.setSize( btnSize );
-	bScrollDown.setPos( glm::vec2( pos.x + size.x - borderSize - btnSize.x, pos.y + size.y - borderSize - btnSize.y ) );
-	bScrollDown.setRotation( 180 );
-	bScrollDown.setOnClickFunction( [&]() {
-		if ( firstLineInView < currentLineNumber + 1 - getNumLinesThatFit() ) {
-			firstLineInView++;
-			updateScrollBar();
-		}
-	} );
+	currentLineNumber( 0 ), lineSpacing( 1.5f ), firstLineInView( 0 ), btnSize( 32.0f ), currentMousePos( glm::vec2( -1 ) ), mouseClickOffset( 0.0f ),
+	scrollable( scrollable ) {
 
 	// create scroll bar
-	Texture scrollbarPressed = ResourceManager::loadTexture( "scroll_bar_pressed.png", GL_TRUE, "scroll_bar_pressed_default" );
-	Texture scrollbarReleased = ResourceManager::loadTexture( "scroll_bar_released.png", GL_TRUE, "scroll_bar_released_default" );
-	Texture scrollbarHover = ResourceManager::loadTexture( "scroll_bar_hover.png", GL_TRUE, "scroll_bar_hover_default" );
-	bScrollBar.setTextures( scrollbarPressed, scrollbarReleased, scrollbarHover );
-	bScrollBar.setDraggable( GL_TRUE );
-	updateScrollBar();
-	bScrollBar.setOnMouseMovementFunction( [&]() {
-		dragScrollBar();
-	} );
+	if ( scrollable ) {
+		// set scroll button textures
+		Texture pressed = ResourceManager::loadTexture( "scroll_btn_pressed.png", GL_TRUE, "scroll_btn_pressed_default" );
+		Texture released = ResourceManager::loadTexture( "scroll_btn_released.png", GL_TRUE, "scroll_btn_released_default" );
+		Texture hover = ResourceManager::loadTexture( "scroll_btn_hover.png", GL_TRUE, "scroll_btn_hover_default" );
+		bScrollUp.setTextures( pressed, released, hover );
+		bScrollUp.setSize( btnSize );
+		bScrollUp.setPos( glm::vec2( pos.x + size.x - borderSize - btnSize.x, pos.y + borderSize ) );
+		bScrollUp.setOnClickFunction( [&]() {
+			if ( firstLineInView > 0 ) {
+				firstLineInView--;
+				updateScrollBar();
+			}
+		} );
+
+		bScrollDown.setTextures( pressed, released, hover );
+		bScrollDown.setSize( btnSize );
+		bScrollDown.setPos( glm::vec2( pos.x + size.x - borderSize - btnSize.x, pos.y + size.y - borderSize - btnSize.y ) );
+		bScrollDown.setRotation( 180 );
+		bScrollDown.setOnClickFunction( [&]() {
+			if ( firstLineInView < currentLineNumber + 1 - getNumLinesThatFit() ) {
+				firstLineInView++;
+				updateScrollBar();
+			}
+		} );
+
+		Texture scrollbarPressed = ResourceManager::loadTexture( "scroll_bar_pressed.png", GL_TRUE, "scroll_bar_pressed_default" );
+		Texture scrollbarReleased = ResourceManager::loadTexture( "scroll_bar_released.png", GL_TRUE, "scroll_bar_released_default" );
+		Texture scrollbarHover = ResourceManager::loadTexture( "scroll_bar_hover.png", GL_TRUE, "scroll_bar_hover_default" );
+		bScrollBar.setTextures( scrollbarPressed, scrollbarReleased, scrollbarHover );
+		bScrollBar.setDraggable( GL_TRUE );
+		updateScrollBar();
+		bScrollBar.setOnMouseMovementFunction( [&]() {
+			dragScrollBar();
+		} );
+	} else {
+		btnSize = glm::vec2(0.0f);
+	}
 }
 
 Textbox::~Textbox() {
@@ -126,6 +132,7 @@ void Textbox::clear() {
 	tokens.clear();
 	firstLineInView = 0;
 	currentLineNumber = 0;
+	currHorizontalOffset = 0;
 }
 
 void Textbox::setPadding( GLfloat horizontal, GLfloat vertical ) {
@@ -160,7 +167,7 @@ void Textbox::render( Graphics& graphics ) {
 	// render border rectangle
 	graphics.draw2DBox( pos, size, borderColor );
 	// render background rectangle 
-	graphics.draw2DBox( pos + (GLfloat) borderSize, size - borderSize * 2.0f, backgroundColor );
+	graphics.draw2DBox( pos + (GLfloat)borderSize, size - borderSize * 2.0f, backgroundColor );
 
 	if ( tokens.size() == 0 )
 		return;
@@ -177,15 +184,17 @@ void Textbox::render( Graphics& graphics ) {
 	}
 
 	// render scroll buttons
-	bScrollUp.render( graphics );
-	bScrollDown.render( graphics );
-	bScrollBar.render( graphics );
+	if ( scrollable ) {
+		bScrollUp.render( graphics );
+		bScrollDown.render( graphics );
+		bScrollBar.render( graphics );
+	}
 }
 
 GLfloat	Textbox::getStringWidth( const std::string& str ) const {
 	GLfloat width = 0;
 	for ( char c : str ) {
-		width += (fontType.at( c ).advance >> 6) * fontScale;
+		width += ( fontType.at( c ).advance >> 6 ) * fontScale;
 	}
 	return width;
 }
@@ -211,23 +220,29 @@ GLuint Textbox::getFirstTokenOnLine( GLuint line ) {
 
 void Textbox::onClick( glm::vec2 pos ) {
 	mouseClickOffset = pos.y - bScrollBar.getPos().y;
-	bScrollUp.onClick( pos );
-	bScrollDown.onClick( pos );
-	bScrollBar.onClick( pos );
+	if ( scrollable ) {
+		bScrollUp.onClick( pos );
+		bScrollDown.onClick( pos );
+		bScrollBar.onClick( pos );
+	}
 }
 
 void Textbox::onRelease( glm::vec2 pos ) {
 	mouseClickOffset = 0;
-	bScrollUp.onRelease( pos );
-	bScrollDown.onRelease( pos );
-	bScrollBar.onRelease( pos );
+	if ( scrollable ) {
+		bScrollUp.onRelease( pos );
+		bScrollDown.onRelease( pos );
+		bScrollBar.onRelease( pos );
+	}
 }
 
 void Textbox::onMouseMovement( glm::vec2 pos ) {
 	currentMousePos = pos;
-	bScrollUp.onMouseMovement( pos );
-	bScrollDown.onMouseMovement( pos );
-	bScrollBar.onMouseMovement( pos );
+	if ( scrollable ) {
+		bScrollUp.onMouseMovement( pos );
+		bScrollDown.onMouseMovement( pos );
+		bScrollBar.onMouseMovement( pos );
+	}
 }
 
 void Textbox::onHorizontalScroll( GLfloat offset, glm::vec2 pos ) {
@@ -235,7 +250,7 @@ void Textbox::onHorizontalScroll( GLfloat offset, glm::vec2 pos ) {
 }
 
 void Textbox::onVerticalScroll( GLfloat offset, glm::vec2 pos ) {
-	if ( isOverView( pos ) ) {
+	if ( scrollable && isOverView( pos ) ) {
 		if ( offset < 0 ) {
 			if ( firstLineInView < currentLineNumber + 1 - getNumLinesThatFit() ) {
 				firstLineInView++;
@@ -250,34 +265,36 @@ void Textbox::onVerticalScroll( GLfloat offset, glm::vec2 pos ) {
 }
 
 void Textbox::updateScrollBar() {
-	// calculate size
-	glm::vec2 scrollBarSize( btnSize );
-	GLfloat totalYSize = size.y - ( borderSize + btnSize.y ) * 2.0f;
-	GLfloat sizeRatio = getNumLinesThatFit() / ( currentLineNumber + 1.0f );
-	// if not enough text, make scrollbar max size
-	if ( sizeRatio > 1.0f ) {
-		sizeRatio = 1.0f;
-	}
-	scrollBarSize.y = sizeRatio * totalYSize;
-	// set to min size if too small
-	if ( scrollBarSize.y < btnSize.y / 2.0f ) {
-		scrollBarSize.y = btnSize.y / 2.0f;
-	}
-	bScrollBar.setSize( scrollBarSize );
+	if ( scrollable ) {
+		// calculate size
+		glm::vec2 scrollBarSize( btnSize );
+		GLfloat totalYSize = size.y - ( borderSize + btnSize.y ) * 2.0f;
+		GLfloat sizeRatio = getNumLinesThatFit() / ( currentLineNumber + 1.0f );
+		// if not enough text, make scrollbar max size
+		if ( sizeRatio > 1.0f ) {
+			sizeRatio = 1.0f;
+		}
+		scrollBarSize.y = sizeRatio * totalYSize;
+		// set to min size if too small
+		if ( scrollBarSize.y < btnSize.y / 2.0f ) {
+			scrollBarSize.y = btnSize.y / 2.0f;
+		}
+		bScrollBar.setSize( scrollBarSize );
 
-	// calculate pos
-	glm::vec2 scrollBarPos( pos.x + size.x - ( borderSize + btnSize.x ), pos.y + borderSize + btnSize.y );
-	// get where starting line is with respect to total number of lines
-	GLfloat posRatio = firstLineInView / ( currentLineNumber + 1.0f );
-	scrollBarPos.y += totalYSize * posRatio;
-	if ( scrollBarSize.y == btnSize.y / 2.0f && scrollBarPos.y >= pos.y + size.y - borderSize - btnSize.y * 1.5f ) {
-		scrollBarPos.y = pos.y + size.y - borderSize - btnSize.y * 1.5f;
+		// calculate pos
+		glm::vec2 scrollBarPos( pos.x + size.x - ( borderSize + btnSize.x ), pos.y + borderSize + btnSize.y );
+		// get where starting line is with respect to total number of lines
+		GLfloat posRatio = firstLineInView / ( currentLineNumber + 1.0f );
+		scrollBarPos.y += totalYSize * posRatio;
+		if ( scrollBarSize.y == btnSize.y / 2.0f && scrollBarPos.y >= pos.y + size.y - borderSize - btnSize.y * 1.5f ) {
+			scrollBarPos.y = pos.y + size.y - borderSize - btnSize.y * 1.5f;
+		}
+		bScrollBar.setPos( scrollBarPos );
 	}
-	bScrollBar.setPos( scrollBarPos );
 }
 
 void Textbox::dragScrollBar() {
-	if ( currentLineNumber + 1 > getNumLinesThatFit() ) {
+	if ( scrollable && currentLineNumber + 1 > getNumLinesThatFit() ) {
 		GLfloat yOffset = currentMousePos.y - ( mouseClickOffset + bScrollBar.getPos().y );
 		GLfloat totalYSize = size.y - ( borderSize + btnSize.y ) * 2.0f;
 		GLfloat lineRatio = yOffset / totalYSize;
@@ -298,7 +315,7 @@ GLboolean Textbox::isOverView( glm::vec2 pos ) const {
 
 std::fstream &operator<<( std::fstream &fs, const Textbox& t ) {
 	for ( int i = 0; i < t.tokens.size(); ++i ) {
-		if ( t.tokens[i].lineNum != 0 && i != 0 && t.tokens[i].lineNum != t.tokens[i-1].lineNum ) {
+		if ( t.tokens[i].lineNum != 0 && i != 0 && t.tokens[i].lineNum != t.tokens[i - 1].lineNum ) {
 			fs << std::endl;
 		} else {
 			fs << t.tokens[i].str << " ";
